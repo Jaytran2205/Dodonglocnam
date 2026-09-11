@@ -53,3 +53,5 @@ cloudflared.exe
 /stitch_l_c_nam_bronze_showcase/
 /locnam_downloaded_map.json
 /scraped_belux_products.json
+*.bak
+prisma/sqlite_dump.json

@@ -507,6 +507,8 @@ export function ProductDetailClient({
                   <img
                     src={currentImage}
                     alt={product.name}
+                    loading="lazy"
+                    decoding="async"
                     className="max-h-[500px] w-auto object-contain rounded-lg"
                   />
                 </div>
@@ -545,6 +547,8 @@ export function ProductDetailClient({
                           <img
                             src={img}
                             alt={`${product.name} góc chụp ${i + 1}`}
+                            loading="lazy"
+                            decoding="async"
                             className="max-h-[360px] object-contain rounded-lg"
                           />
                         </div>
@@ -737,6 +741,8 @@ export function ProductDetailClient({
                       <img
                         src={thumb}
                         alt={rel.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       />
                     </Link>

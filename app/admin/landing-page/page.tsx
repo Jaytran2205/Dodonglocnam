@@ -288,7 +288,7 @@ export default function AdminLandingPageManager() {
         id: Date.now().toString(),
         title: "Banner mới " + (prev.length + 1),
         subtitle: "",
-        image: "/images/banners/banner_he_thong_xuong.png",
+        image: "/images/banners/banner_he_thong_xuong_moi.jpg",
         link: "/san-pham",
         active: true,
       };
@@ -673,7 +673,7 @@ export default function AdminLandingPageManager() {
                               type="text"
                               value={slide.image || ""}
                               onChange={(e) => handleUpdateBanner(idx, "image", e.target.value)}
-                              placeholder="/images/banners/banner_he_thong_xuong.png"
+                              placeholder="/images/banners/banner_he_thong_xuong_moi.jpg"
                               className="flex-1 px-3 py-1.5 bg-[#0c1420] border border-[#1f2d42] rounded-lg text-white text-xs focus:outline-none focus:border-[#d4af37]"
                             />
                             <label className="px-3 py-1.5 bg-[#d4af37] hover:bg-[#bfa035] text-[#0c1420] rounded-lg text-xs font-bold cursor-pointer flex items-center gap-1 shrink-0 transition-colors shadow-sm">
