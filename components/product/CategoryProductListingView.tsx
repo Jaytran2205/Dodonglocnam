@@ -1,0 +1,723 @@
+"use client";
+
+import React, { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
+import {
+  ChevronRight,
+  ArrowLeft,
+  Heart,
+  SlidersHorizontal,
+  X,
+  Check,
+  ChevronDown,
+  ShoppingCart,
+  Star,
+} from "lucide-react";
+import {
+  MainCategoryData,
+  SubCategoryItem,
+  DetailCategoryItem,
+} from "@/lib/subcategories-data";
+
+export interface ListingProduct {
+  id: string;
+  name: string;
+  slug: string;
+  price: number | null;
+  originalPrice?: number | null;
+  images: string;
+  material?: string | null;
+  dimensions?: string | null;
+  category: {
+    name: string;
+    slug: string;
+  };
+}
+
+export interface BreadcrumbItem {
+  name: string;
+  url?: string;
+}
+
+interface CategoryProductListingViewProps {
+  mainCategory: MainCategoryData;
+  activeSubCategory?: SubCategoryItem;
+  activeDetailCategory?: DetailCategoryItem;
+  products: ListingProduct[];
+  breadcrumbs: BreadcrumbItem[];
+  parentBackHref?: string;
+  parentBackText?: string;
+}
+
+export function CategoryProductListingView({
+  mainCategory,
+  activeSubCategory,
+  activeDetailCategory,
+  products,
+  breadcrumbs,
+  parentBackHref,
+  parentBackText,
+}: CategoryProductListingViewProps) {
+  const [priceFilter, setPriceFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 16;
+
+  // Active filter keywords
+  const activeKeywords = useMemo(() => {
+    if (activeDetailCategory) {
+      return activeDetailCategory.keyword.toLowerCase().split(",").map((k) => k.trim());
+    }
+    if (activeSubCategory) {
+      return activeSubCategory.keyword.toLowerCase().split(",").map((k) => k.trim());
+    }
+    return [];
+  }, [activeDetailCategory, activeSubCategory]);
+
+  const activeTitle = useMemo(() => {
+    if (activeDetailCategory) return activeDetailCategory.name;
+    if (activeSubCategory) return activeSubCategory.name;
+    return mainCategory.name;
+  }, [activeDetailCategory, activeSubCategory, mainCategory]);
+
+  const basePrefix =
+    mainCategory.slug === "qua-tang" || mainCategory.slug === "qua-tang-dong"
+      ? "/qua-tang"
+      : `/san-pham/${mainCategory.slug}`;
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const toggleWishlist = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setWishlist((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleAddToCart = (product: ListingProduct, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const stored = localStorage.getItem("cart");
+      const cart = stored ? JSON.parse(stored) : [];
+      const existingIndex = cart.findIndex((item: any) => item.id === product.id);
+      if (existingIndex > -1) {
+        cart[existingIndex].quantity = (cart[existingIndex].quantity || 1) + 1;
+      } else {
+        cart.push({
+          id: product.id,
+          name: product.name,
+          price: product.price || 0,
+          slug: product.slug,
+          image: parseMainImage(product.images),
+          categorySlug: product.category?.slug || "san-pham",
+          quantity: 1,
+        });
+      }
+      localStorage.setItem("cart", JSON.stringify(cart));
+      window.dispatchEvent(new Event("cartUpdated"));
+
+      setToastMessage(`Đã thêm "${product.name}" vào giỏ hàng!`);
+      setTimeout(() => setToastMessage(null), 3500);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 1. Filter products
+  const filteredProducts = useMemo(() => {
+    const isCrossCategory =
+      mainCategory.slug === "qua-tang" ||
+      mainCategory.slug === "qua-tang-dong" ||
+      activeSubCategory?.id === "tuong-12-con-giap" ||
+      activeSubCategory?.id === "linh-vat-12-con-giap" ||
+      activeSubCategory?.id === "trong-dong-qua-tang";
+
+    let result = isCrossCategory
+      ? [...products]
+      : products.filter((p) => p.category.slug === mainCategory.slug);
+
+    // If keywords exist, filter by them
+    if (activeKeywords.length > 0) {
+      const kwMatched = result.filter((p) => {
+        const pName = p.name.toLowerCase();
+        return activeKeywords.some((kw) => pName.includes(kw));
+      });
+      if (kwMatched.length > 0) {
+        result = kwMatched;
+      }
+    }
+
+    // 2. Price filter
+    if (priceFilter !== "all") {
+      result = result.filter((p) => {
+        const price = p.price || 0;
+        if (price === 0) return true; // Liên hệ
+        switch (priceFilter) {
+          case "under-1m":
+            return price < 1000000;
+          case "1m-3m":
+            return price >= 1000000 && price <= 3000000;
+          case "3m-5m":
+            return price > 3000000 && price <= 5000000;
+          case "5m-10m":
+            return price > 5000000 && price <= 10000000;
+          case "10m-20m":
+            return price > 10000000 && price <= 20000000;
+          case "above-20m":
+            return price > 20000000;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // 3. Sorting
+    result.sort((a, b) => {
+      if (sortBy === "price-asc") {
+        return (a.price || 0) - (b.price || 0);
+      }
+      if (sortBy === "price-desc") {
+        return (b.price || 0) - (a.price || 0);
+      }
+      if (sortBy === "name-asc") {
+        return a.name.localeCompare(b.name, "vi");
+      }
+      // default newest
+      return 0;
+    });
+
+    return result;
+  }, [products, mainCategory.slug, activeKeywords, priceFilter, sortBy]);
+
+  // Reset to page 1 on filter/sort change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [priceFilter, sortBy, activeSubCategory, activeDetailCategory]);
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage]);
+
+  const handlePageChange = (p: number) => {
+    setCurrentPage(p);
+    window.scrollTo({ top: 120, behavior: "smooth" });
+  };
+
+  const parseMainImage = (imagesStr: string) => {
+    try {
+      const parsed = JSON.parse(imagesStr);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+    } catch {
+      if (imagesStr && imagesStr.startsWith("/")) return imagesStr;
+    }
+    return "/images/hero_golden_ship.jpg";
+  };
+
+  const formatPrice = (price: number | null) => {
+    if (!price || price === 0) return "Liên hệ";
+    return price.toLocaleString("vi-VN") + " ₫";
+  };
+
+  return (
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 2xl:px-8 py-6 sm:py-8">
+      {/* 1. Breadcrumbs Navigation */}
+      <nav aria-label="Breadcrumb" className="mb-6 text-xs sm:text-sm text-[#94a3b8] flex items-center flex-wrap gap-2">
+        {breadcrumbs.map((crumb, idx) => {
+          const isLast = idx === breadcrumbs.length - 1;
+          return (
+            <React.Fragment key={idx}>
+              {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#64748b] shrink-0" />}
+              {isLast || !crumb.url ? (
+                <span className="text-[#ffd700] font-bold">{crumb.name}</span>
+              ) : (
+                <Link
+                  href={crumb.url}
+                  className="hover:text-[#ffd700] transition-colors flex items-center gap-1 font-medium"
+                >
+                  {crumb.name}
+                </Link>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </nav>
+
+      {/* 2. Mobile Filter Bar (< lg) */}
+      <div className="lg:hidden flex items-center justify-between gap-3 bg-[#0c1825] p-3 rounded-xl border border-[#1e344d] mb-6">
+        <button
+          onClick={() => setMobileFilterOpen(true)}
+          className="flex items-center gap-2 bg-[#ffd700] text-black font-bold px-3.5 py-2 rounded-lg text-xs active:scale-95 transition-transform"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span>Danh mục & Bộ lọc</span>
+        </button>
+
+        <div className="flex items-center gap-1.5 text-xs text-[#94a3b8]">
+          <span>Sắp xếp:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="bg-[#070e17] border border-[#1e344d] text-white text-xs px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-[#ffd700]"
+          >
+            <option value="newest">Mới nhất</option>
+            <option value="price-asc">Giá: Thấp → Cao</option>
+            <option value="price-desc">Giá: Cao → Thấp</option>
+            <option value="name-asc">Tên A-Z</option>
+          </select>
+        </div>
+      </div>
+
+      {/* 3. Main 2-Column Layout (Sidebar 30% + Product Grid 70%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        {/* ========================================================= */}
+        {/* DESKTOP SIDEBAR (3 cols ~ 25-30%)                         */}
+        {/* ========================================================= */}
+        <aside className="hidden lg:block lg:col-span-3 bg-[#0a1420] border border-[#1e344d] rounded-2xl p-5 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto space-y-6 custom-scrollbar">
+          {/* Back to Parent Button */}
+          {parentBackHref && (
+            <Link
+              href={parentBackHref}
+              className="flex items-center gap-1.5 text-xs text-[#dfb755] hover:text-white font-bold pb-3 border-b border-[#1e344d] w-full transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>‹ {parentBackText || `Trở về danh mục ${mainCategory.name}`}</span>
+            </Link>
+          )}
+
+          {/* Section 1: CÂY THƯ MỤC DANH MỤC */}
+          <div>
+            <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-1.5 border-b-2 border-[#ffd700] mb-3">
+              DANH MỤC {mainCategory.name.toUpperCase()}
+            </h3>
+
+            <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
+              {mainCategory.subCategories.map((sub) => {
+                const isSubActive =
+                  activeSubCategory?.id === sub.id && !activeDetailCategory;
+                const isParentOfActiveDetail = activeSubCategory?.id === sub.id;
+                const subHref = `${basePrefix}/${sub.id}`;
+
+                return (
+                  <div key={sub.id} className="space-y-1">
+                    {/* Subcategory Parent Link */}
+                    <Link
+                      href={subHref}
+                      className={`text-xs py-1 transition-colors flex items-center justify-between select-none ${
+                        isSubActive
+                          ? "text-[#ffd700] font-black"
+                          : "text-[#cbd5e1] hover:text-[#ffd700] font-medium"
+                      }`}
+                    >
+                      <span className="truncate">{sub.name}</span>
+                      {isSubActive && (
+                        <span className="text-[10px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0">
+                          ACTIVE
+                        </span>
+                      )}
+                    </Link>
+
+                    {/* Children List (Indent 20px, branch ├─) if this sub is expanded */}
+                    {sub.children && sub.children.length > 0 && isParentOfActiveDetail && (
+                      <div className="pl-5 space-y-1 border-l border-[#1e344d] ml-1.5 my-1">
+                        {sub.children.map((child) => {
+                          const isChildActive = activeDetailCategory?.id === child.id;
+                          return (
+                            <Link
+                              key={child.id}
+                              href={`${basePrefix}/${sub.id}/${child.id}`}
+                              className={`text-[11px] py-0.5 transition-colors flex items-center gap-1.5 select-none ${
+                                isChildActive
+                                  ? "text-[#ffd700] font-black"
+                                  : "text-[#94a3b8] hover:text-[#ffd700] font-medium"
+                              }`}
+                            >
+                              <span className="text-[#64748b]">├─</span>
+                              <span className="truncate">{child.name}</span>
+                              {isChildActive && (
+                                <span className="text-[9px] bg-[#ffd700] text-black font-black px-1 py-0.2 rounded shrink-0">
+                                  ACTIVE
+                                </span>
+                              )}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 2: BỘ LỌC KHOẢNG GIÁ (7 Mức chuẩn) */}
+          <div>
+            <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-1.5 border-b-2 border-[#ffd700] mb-3">
+              KHOẢNG GIÁ
+            </h3>
+            <div className="space-y-2">
+              {[
+                { id: "all", label: "Tất cả mức giá" },
+                { id: "under-1m", label: "Dưới 1 triệu" },
+                { id: "1m-3m", label: "Từ 1 triệu - 3 triệu" },
+                { id: "3m-5m", label: "Từ 3 triệu - 5 triệu" },
+                { id: "5m-10m", label: "Từ 5 triệu - 10 triệu" },
+                { id: "10m-20m", label: "Từ 10 triệu - 20 triệu" },
+                { id: "above-20m", label: "Trên 20 triệu" },
+              ].map((range) => (
+                <label
+                  key={range.id}
+                  className="flex items-center gap-2.5 text-xs text-[#cbd5e1] hover:text-[#ffd700] cursor-pointer py-0.5 select-none"
+                >
+                  <input
+                    type="radio"
+                    name="priceFilter"
+                    checked={priceFilter === range.id}
+                    onChange={() => setPriceFilter(range.id)}
+                    className="text-[#ffd700] focus:ring-[#ffd700] bg-[#070e17] border-[#1e344d]"
+                  />
+                  <span>{range.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        {/* ========================================================= */}
+        {/* PRODUCT GRID SECTION (9 cols ~ 70-75%)                    */}
+        {/* ========================================================= */}
+        <section className="lg:col-span-9 space-y-6">
+          {/* Header Bar */}
+          <div className="bg-[#0a1524] border border-[#1e344d] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="font-serif text-xl sm:text-2xl font-black text-[#ffd700] uppercase tracking-wide">
+                {activeTitle}
+              </h1>
+              <p className="text-xs text-[#94a3b8] mt-1 font-medium">
+                Hiển thị <span className="text-[#ffd700] font-bold">{filteredProducts.length}</span> sản phẩm
+              </p>
+            </div>
+
+            {/* Desktop Sort Dropdown */}
+            <div className="hidden sm:flex items-center gap-2 text-xs text-[#94a3b8]">
+              <span>Sắp xếp:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-[#070e17] border border-[#1e344d] text-white text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-[#ffd700]"
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="price-asc">Giá: Thấp → Cao</option>
+                <option value="price-desc">Giá: Cao → Thấp</option>
+                <option value="name-asc">Tên A-Z</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Product Grid 4 Columns */}
+          {paginatedProducts.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+              {paginatedProducts.map((p) => {
+                const mainImg = parseMainImage(p.images);
+                const isWished = wishlist.includes(p.id);
+                // Detail page href: keep within current hierarchy or direct
+                const detailHref = `/san-pham/${p.category.slug}/${p.slug}`;
+
+                return (
+                  <div
+                    key={p.id}
+                    className="group bg-[#0a1524] border border-[#1e344d] rounded-xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all duration-300 flex flex-col justify-between"
+                  >
+                    {/* Image Area */}
+                    <div className="relative aspect-square overflow-hidden bg-[#070e17]">
+                      <Link href={detailHref} className="block w-full h-full">
+                        <img
+                          src={mainImg}
+                          alt={p.name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      </Link>
+
+                      {/* Wishlist Heart Button (Top-Right) */}
+                      <button
+                        type="button"
+                        onClick={(e) => toggleWishlist(p.id, e)}
+                        className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                          isWished
+                            ? "bg-red-600 text-white shadow-md scale-110"
+                            : "bg-black/60 text-white/80 hover:text-red-500 hover:bg-black/80"
+                        }`}
+                        aria-label="Thêm vào yêu thích"
+                      >
+                        <Heart
+                          className={`w-4 h-4 ${isWished ? "fill-white" : ""}`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-grow gap-2">
+                      <Link href={detailHref}>
+                        <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-[#ffd700] transition-colors line-clamp-2 min-h-[38px] leading-snug">
+                          {p.name}
+                        </h3>
+                      </Link>
+
+                      {/* 5 Stars Rating & Score */}
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <div className="flex items-center text-[#ffd700]">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="w-3 h-3 fill-[#ffd700] text-[#ffd700]" />
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-[#94a3b8] font-bold">5/5</span>
+                      </div>
+
+                      {/* Price Row */}
+                      <div className="pt-1.5 border-t border-[#1e344d]/60 flex items-baseline justify-between gap-2">
+                        <span className="text-xs sm:text-sm font-black text-[#ffd700]">
+                          {formatPrice(p.price)}
+                        </span>
+                        {p.originalPrice && p.originalPrice > (p.price || 0) && (
+                          <span className="text-[10px] text-[#64748b] line-through">
+                            {formatPrice(p.originalPrice)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Two Action Buttons: Giỏ Hàng (Trắng) & Chi Tiết (Vàng) */}
+                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-2 mt-auto">
+                        <button
+                          type="button"
+                          onClick={(e) => handleAddToCart(p, e)}
+                          className="bg-white hover:bg-slate-100 text-[#801019] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-white"
+                          title="Thêm vào giỏ hàng"
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5 text-[#801019] shrink-0" />
+                          <span className="truncate">Giỏ Hàng</span>
+                        </button>
+                        <Link
+                          href={detailHref}
+                          className="bg-[#ffd700] hover:bg-[#ffe082] text-[#070e17] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-[#ffd700]"
+                          title="Xem chi tiết sản phẩm"
+                        >
+                          <span className="truncate">Chi Tiết</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="bg-[#0a1524] border border-[#1e344d] rounded-2xl p-12 text-center space-y-3">
+              <p className="text-sm sm:text-base text-[#cbd5e1]">
+                Hiện chưa có sản phẩm phù hợp với bộ lọc trong mục{" "}
+                <span className="text-[#ffd700] font-bold">{activeTitle}</span>.
+              </p>
+              <button
+                type="button"
+                onClick={() => setPriceFilter("all")}
+                className="text-xs font-bold text-[#ffd700] hover:underline"
+              >
+                Xóa bộ lọc giá để xem tất cả
+              </button>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-6">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0a1524] border border-[#1e344d] text-[#cbd5e1] hover:text-[#ffd700] hover:border-[#ffd700] disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              >
+                ← Trang trước
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                const isActive = p === currentPage;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => handlePageChange(p)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      isActive
+                        ? "bg-[#ffd700] text-black shadow-md scale-105"
+                        : "bg-[#0a1524] border border-[#1e344d] text-[#cbd5e1] hover:text-[#ffd700] hover:border-[#ffd700]"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0a1524] border border-[#1e344d] text-[#cbd5e1] hover:text-[#ffd700] hover:border-[#ffd700] disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              >
+                Trang sau →
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* ========================================================= */}
+      {/* MOBILE FILTER MODAL DRAWER                                */}
+      {/* ========================================================= */}
+      {mobileFilterOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in"
+            onClick={() => setMobileFilterOpen(false)}
+          />
+
+          <div className="relative ml-auto w-[85%] max-w-[340px] h-full bg-[#0a1420] border-l border-[#1e344d] p-5 overflow-y-auto z-10 flex flex-col justify-between space-y-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-[#1e344d]">
+                <h3 className="font-serif text-sm font-bold text-[#ffd700] uppercase">
+                  DANH MỤC & BỘ LỌC
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setMobileFilterOpen(false)}
+                  className="p-1 rounded-lg text-[#94a3b8] hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Mobile Category Tree */}
+              <div>
+                <h4 className="text-xs font-extrabold text-[#ffd700] uppercase mb-2">
+                  DANH MỤC {mainCategory.name}
+                </h4>
+                <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                  {mainCategory.subCategories.map((sub) => {
+                    const isSubActive =
+                      activeSubCategory?.id === sub.id && !activeDetailCategory;
+                    const isParentOfActiveDetail = activeSubCategory?.id === sub.id;
+
+                    return (
+                      <div key={sub.id} className="space-y-1">
+                        <Link
+                          href={`${basePrefix}/${sub.id}`}
+                          onClick={() => setMobileFilterOpen(false)}
+                          className={`text-xs py-1 block ${
+                            isSubActive
+                              ? "text-[#ffd700] font-black"
+                              : "text-[#cbd5e1]"
+                          }`}
+                        >
+                          {sub.name}
+                        </Link>
+
+                        {sub.children && isParentOfActiveDetail && (
+                          <div className="pl-4 space-y-1 border-l border-[#1e344d]">
+                            {sub.children.map((child) => {
+                              const isChildActive =
+                                activeDetailCategory?.id === child.id;
+                              return (
+                                <Link
+                                  key={child.id}
+                                  href={`${basePrefix}/${sub.id}/${child.id}`}
+                                  onClick={() => setMobileFilterOpen(false)}
+                                  className={`text-[11px] py-0.5 block ${
+                                    isChildActive
+                                      ? "text-[#ffd700] font-black"
+                                      : "text-[#94a3b8]"
+                                  }`}
+                                >
+                                  ├─ {child.name}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Mobile Price Filter */}
+              <div>
+                <h4 className="text-xs font-extrabold text-[#ffd700] uppercase mb-2">
+                  KHOẢNG GIÁ
+                </h4>
+                <div className="space-y-2">
+                  {[
+                    { id: "all", label: "Tất cả mức giá" },
+                    { id: "under-1m", label: "Dưới 1 triệu" },
+                    { id: "1m-3m", label: "Từ 1 triệu - 3 triệu" },
+                    { id: "3m-5m", label: "Từ 3 triệu - 5 triệu" },
+                    { id: "5m-10m", label: "Từ 5 triệu - 10 triệu" },
+                    { id: "10m-20m", label: "Từ 10 triệu - 20 triệu" },
+                    { id: "above-20m", label: "Trên 20 triệu" },
+                  ].map((range) => (
+                    <label
+                      key={range.id}
+                      className="flex items-center gap-2 text-xs text-[#cbd5e1] py-0.5"
+                    >
+                      <input
+                        type="radio"
+                        name="mobilePriceFilter"
+                        checked={priceFilter === range.id}
+                        onChange={() => setPriceFilter(range.id)}
+                        className="text-[#ffd700] focus:ring-[#ffd700] bg-[#070e17] border-[#1e344d]"
+                      />
+                      <span>{range.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileFilterOpen(false)}
+              className="w-full py-2.5 rounded-lg bg-[#ffd700] text-black font-bold text-xs uppercase"
+            >
+              Áp dụng bộ lọc
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification for Cart Addition */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-4 sm:right-6 z-50 bg-[#0c1825] border-2 border-[#ffd700] text-white px-4 py-3 rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.85)] flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 max-w-sm">
+          <div className="w-8 h-8 rounded-full bg-[#ffd700] text-black flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+            ✓
+          </div>
+          <div className="text-xs flex-grow">
+            <p className="font-bold text-[#ffd700]">Giỏ hàng Lộc Nam</p>
+            <p className="text-slate-200 line-clamp-1 mt-0.5">{toastMessage}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="text-slate-400 hover:text-white p-1 text-sm font-bold"
+            aria-label="Đóng thông báo"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,55 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# binaries & archives
+cloudflared.exe
+*.exe
+*.zip
+*.rar
+
+# scratch scripts & root media
+/*.py
+/*.js
+!/postcss.config.mjs
+!/next.config.mjs
+/*.html
+/*.bat
+/*.jpg
+/*.png
+/*.webp
+/stitch_l_c_nam_bronze_showcase/
+/locnam_downloaded_map.json
+/scraped_belux_products.json

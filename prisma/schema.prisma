@@ -1,0 +1,126 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("ADMIN") // ADMIN, STAFF
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  order       Int       @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id               String      @id @default(cuid())
+  name             String
+  slug             String      @unique
+  price            Float?
+  originalPrice    Float?
+  material         String?
+  dimensions       String?
+  weight           String?
+  shortDescription String?
+  description      String?
+  images           String      // JSON string array of URLs
+  isFeatured       Boolean     @default(false)
+  inStock          Boolean     @default(true)
+  order            Int         @default(0)
+  categoryId       String
+  category         Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems       OrderItem[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  summary     String?
+  content     String
+  thumbnail   String?
+  category    String   @default("KIẾN THỨC ĐỒ ĐỒNG")
+  isPublished Boolean  @default(true)
+  viewCount   Int      @default(0)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  orderCode    String      @unique
+  customerName String
+  phone        String
+  email        String?
+  address      String
+  note         String?
+  totalPrice   Float       @default(0)
+  status       String      @default("PENDING") // PENDING, PROCESSING, DELIVERED, CANCELLED
+  items        OrderItem[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name      String
+  price     Float
+  quantity  Int      @default(1)
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String   @unique
+  email      String?
+  address    String?
+  totalSpent Float    @default(0)
+  orderCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ContactMessage {
+  id              String   @id @default(cuid())
+  fullName        String
+  phone           String
+  email           String?
+  content         String
+  productInterest String?
+  status          String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, CANCELLED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Setting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  group       String   @default("GENERAL") // GENERAL, CONTACT, BANNER, SEO
+  description String?
+  updatedAt   DateTime @updatedAt
+}

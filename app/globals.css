@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0a0c;
+  --surface: #121214;
+  --surface-strong: #18181a;
+  --on-background: #f6f0df;
+  --primary: #d4af37;
+  --primary-strong: #f1d27c;
+  --secondary: #c79d3d;
+  --outline: rgba(212, 175, 55, 0.35);
+  --muted: #b7ad9c;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(212, 175, 55, 0.12), transparent 32%),
+    linear-gradient(180deg, #0b0b0d 0%, #101012 100%);
+  color: var(--on-background);
+  font-family: var(--font-sans), 'Inter', sans-serif;
+  overflow-x: clip;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif), 'Noto Serif', serif;
+  color: #f5e7b4;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+textarea,
+textarea:focus,
+textarea:hover,
+textarea:active {
+  resize: none !important;
+  max-width: 100% !important;
+}
+
+input, textarea, select, button {
+  touch-action: manipulation;
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.75);
+  color: #120d08;
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 34px -18px rgba(212, 175, 55, 0.35);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #141414;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4af37 0%, #b68a2a 100%);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e7c76d 0%, #d4af37 100%);
+}
+
+/* ========================================================= */
+/* INFINITE CONTINUOUS MARQUEE ANIMATIONS (NO BLUR / FADE)   */
+/* ========================================================= */
+@keyframes marquee-loop {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-loop {
+  display: flex;
+  width: max-content;
+  animation: marquee-loop 32s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-loop:hover {
+  animation-play-state: paused;
+}

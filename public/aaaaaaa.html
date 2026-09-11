@@ -1,0 +1,377 @@
+<!DOCTYPE html><html class="light" lang="vi"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ĐỨC ĐỒNG LỘC NAM - Tinh Hoa Đúc Đồng Việt</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Noto+Serif:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-primary": "#fbb5b3",
+                      "on-tertiary-fixed": "#410004",
+                      "inverse-on-surface": "#f4f1e8",
+                      "tertiary-fixed-dim": "#ffb3ad",
+                      "primary-fixed-dim": "#fbb5b3",
+                      "outline-variant": "#d6c2c1",
+                      "surface-container": "#f1eee5",
+                      "on-primary-container": "#d79594",
+                      "surface-dim": "#dddad1",
+                      "on-error-container": "#93000a",
+                      "surface-container-lowest": "#ffffff",
+                      "on-surface": "#1c1c17",
+                      "on-error": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#5e411c",
+                      "surface-container-low": "#f6f3ea",
+                      "on-primary": "#ffffff",
+                      "surface-container-highest": "#e5e2da",
+                      "error": "#ba1a1a",
+                      "surface-tint": "#864f4f",
+                      "secondary": "#785831",
+                      "on-tertiary-container": "#fb827b",
+                      "primary": "#43191a",
+                      "surface": "#fcf9f0",
+                      "secondary-container": "#fed2a1",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#5d2e2e",
+                      "inverse-surface": "#31312b",
+                      "on-secondary-fixed": "#2a1700",
+                      "on-secondary-container": "#795932",
+                      "secondary-fixed": "#ffddb8",
+                      "surface-bright": "#fcf9f0",
+                      "primary-fixed": "#ffdad8",
+                      "on-primary-fixed-variant": "#6a3938",
+                      "tertiary": "#530308",
+                      "tertiary-fixed": "#ffdad7",
+                      "background": "#fcf9f0",
+                      "tertiary-container": "#721b1b",
+                      "on-tertiary-fixed-variant": "#812625",
+                      "on-primary-fixed": "#350f10",
+                      "surface-variant": "#e5e2da",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#e9bf8f",
+                      "on-background": "#1c1c17",
+                      "outline": "#847372",
+                      "on-surface-variant": "#524343",
+                      "surface-container-high": "#ebe8df"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "lg": "48px",
+                      "base": "8px",
+                      "container-max": "1280px",
+                      "md": "24px",
+                      "sm": "12px",
+                      "xs": "4px",
+                      "xl": "80px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Noto Serif"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Noto Serif"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Noto Serif"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(45, 27, 20, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased font-body-md text-body-md selection:bg-primary selection:text-on-primary">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline sticky top-0 z-50">
+<div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-20">
+<!-- Brand Logo -->
+<a href="#" class="flex items-center h-12">
+    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbKrGrijSE3O_EuIhDSPo9aAknC0eF4UCqBMTVFpQdmyyAEJ2TfK8lckXVUWhlHK37ToQNlikY3XykUK8TXW84gRkTYmGJOHasfT5Zd4mfPvTCYiyGCCiSq1Ij43rBucqPpqtgLz4Z-aWya4D0fYQEwQxkLTZfdcHyxpR_xZkcC0BctBPiC7tBfpr5lY39uPFNgzbY6s--x9x8LDm58j3hWGYBVqMYN5f622_pE1ESlKf73NZaWomJEQ" alt="ĐỨC ĐỒNG LỘC NAM Logo" class="h-full w-auto object-contain">
+</a>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-md">
+<a class="text-primary dark:text-primary-fixed border-b-2 border-primary font-bold pb-1 font-label-sm text-label-sm" href="#">TRANG CHỦ</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-body-md hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300 font-label-sm text-label-sm" href="#">TƯỢNG ĐỒNG</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-body-md hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300 font-label-sm text-label-sm" href="#">ĐỒ THỜ</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-body-md hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300 font-label-sm text-label-sm" href="#">QUÀ TẶNG</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-body-md hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300 font-label-sm text-label-sm" href="#">LIÊN HỆ</a>
+</nav>
+<!-- Trailing Icons -->
+<div class="flex items-center gap-4 text-primary dark:text-primary-fixed">
+<button aria-label="Search" class="hover:text-tertiary transition-colors">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button aria-label="Shopping Cart" class="hover:text-tertiary transition-colors">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+</button>
+<button aria-label="Menu" class="md:hidden hover:text-tertiary transition-colors">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+</div>
+</div>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative w-full max-w-container-max mx-auto px-gutter py-xl">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-lg items-center">
+<!-- Text Content -->
+<div class="order-2 lg:order-1 space-y-6">
+<div class="inline-flex items-center gap-2 text-secondary font-label-sm text-label-sm uppercase tracking-wider mb-2">
+<span class="w-8 h-[1px] bg-secondary"></span>
+                        Nghệ Thuật Truyền Thống
+                    </div>
+<h1 class="font-display-lg text-display-lg text-primary">TINH HOA ĐỨC ĐỒNG VIỆT</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
+                        Khám phá di sản đúc đồng qua những tác phẩm thủ công tinh xảo, mang đậm hồn cốt văn hóa và sự tài hoa của nghệ nhân Lộc Nam.
+                    </p>
+<div class="flex flex-wrap gap-4 pt-4">
+<a class="inline-flex items-center justify-center px-6 py-3 bg-primary text-on-primary font-label-sm text-label-sm border border-outline hover:bg-tertiary transition-colors rounded-sm hover-lift" href="#">
+                            XEM SẢN PHẨM
+                        </a>
+<a class="inline-flex items-center justify-center px-6 py-3 bg-transparent text-secondary border border-secondary font-label-sm text-label-sm hover:bg-surface-container transition-colors rounded-sm hover-lift" href="#">
+                            NHẬN TƯ VẤN
+                        </a>
+</div>
+</div>
+<!-- Image Collage -->
+<div class="order-1 lg:order-2 grid grid-cols-2 gap-4 h-[500px]">
+<div class="rounded-sm border border-outline overflow-hidden hover-lift h-full mt-8">
+<img class="w-full h-full object-cover" data-alt="A highly detailed realistic photograph of a traditional Vietnamese bronze foundry. A skilled artisan is carefully pouring glowing molten bronze from a crucible into a mould. Sparks are flying. The setting is a rustic workshop with dramatic, warm lighting emphasizing the heat and the craftsmanship. The color palette features deep browns, glowing oranges, and soft cream walls in the background, creating a mood of ancient heritage and high-end artisanal craft." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTrJEcLUMYnp_Lxlr9s3KdTG6bx57VuzUZ66lOlXUIXiKILkwOYLsRw69Pp8UTunG0tyGwUXNEU_xzCvxuhpmjsMuLj-sOaCiTkKweGCxauPCNisJHmY630D_4LvMKzNLW630h8aY--tMzRo553g5iIYuhuViASuKFhO1zaNTiPeZHi15S4QG2sCTdtuw5TIRWoaUn0w8rnjTyVepo51B2KeeljwQhkLYze4nZHSIbTbuXnzhzPD5VUA">
+</div>
+<div class="rounded-sm border border-outline overflow-hidden hover-lift h-full mb-8">
+<img class="w-full h-full object-cover" data-alt="A highly detailed realistic close-up photograph of a magnificent, aged bronze statue of a traditional Vietnamese figure or mythical creature. The statue exhibits exquisite craftsmanship with intricate textures and a rich, dark patina. It is displayed on a clean, soft cream pedestal against a matching cream background. The lighting is soft and directional, highlighting the metallic sheen and the depth of the sculpted details, conveying quiet luxury and museum-quality art." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXLHkzk8WCtjhXA7EjNwGRB7-Q_1-_b0PL62eQi5iCQxDIcVvoDQBf0S7lykx1KpMUwCQCbyueeM7GLUZ6o1vPLwNL3Yj7Iic68c6Prbwb5zNcSd6bNAO2Si34bWEo2D2sWY95Mo0yYYIqvA7ob4lQmbiUd4PbCGzp66PTLgbYhAffKAmrGRcg1fuEQdQTzpLadanqjZns0KOTxAnB82aUM0ISl-Zkieaa9lea8ufcKlpJAxdpYSSCKw">
+</div>
+</div>
+</div>
+</section>
+<!-- Divider -->
+<div class="w-full max-w-container-max mx-auto px-gutter py-md flex items-center justify-center">
+<div class="w-full max-w-md flex items-center gap-4 text-outline">
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+<span class="material-symbols-outlined text-sm">diamond</span>
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+</div>
+</div>
+<!-- Featured Products -->
+<section class="w-full max-w-container-max mx-auto px-gutter py-xl">
+<div class="text-center mb-12">
+<h2 class="font-headline-lg text-headline-lg text-primary mb-4">SẢN PHẨM NỔI BẬT</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto">
+                    Những kiệt tác đúc đồng mang dấu ấn thời gian, được chế tác tỉ mỉ cho không gian tâm linh và trang trí cao cấp.
+                </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Product Card 1 -->
+<div class="group bg-surface-container-lowest border border-outline rounded-sm p-4 hover-lift flex flex-col h-full">
+<div class="aspect-square mb-4 overflow-hidden rounded-sm bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A realistic, high-quality photograph of a beautifully crafted traditional bronze statue, possibly of a deity or historical figure, isolated on a soft cream background. The bronze has a warm, slightly aged finish. The lighting is studio-quality, emphasizing the fine details of the face and robes. The overall mood is serene and luxurious, fitting for a high-end Vietnamese art gallery." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzmklt7eRBjBIdojXLEHR-1b2XoOaDKROCA4XpnIBpWxY3MSRPgdTFpsi83lOToiaT7oMcPQqKHNj0MeEmeZZ_INNTGojHZodJj5DloUcr21QXfkwnHeW4zpqWTm5IxsMyxLkvpHqmot8UE-ajenviwqGcqjAl2OvSuZz9Yx7QdxFMbs4s3rMSwABtm0gDhQahExCIGaSC1xQwxwQDnUdwjWOHiP11vewTYgJmPbYf-TH0r5-RYSaauQ">
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div>
+<div class="inline-block px-2 py-1 bg-surface-container-high text-secondary font-label-sm text-label-sm rounded-sm mb-2">Đồng Nguyên Chất</div>
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Tượng Đồng</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-4">Tác phẩm nghệ thuật khắc họa chân thực và sống động.</p>
+</div>
+<a class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary text-on-primary font-label-sm text-label-sm border border-outline hover:bg-tertiary transition-colors rounded-sm mt-auto" href="#">
+                            Xem Chi Tiết
+                        </a>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="group bg-surface-container-lowest border border-outline rounded-sm p-4 hover-lift flex flex-col h-full">
+<div class="aspect-square mb-4 overflow-hidden rounded-sm bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A realistic, high-quality photograph of a set of traditional Vietnamese bronze worship items (Đồ Thờ Cúng), such as an incense burner and candle holders. They are meticulously crafted with intricate dragon and lotus motifs, finished in a dark, polished bronze. The items are arranged elegantly on a soft cream surface against a cream background. The lighting highlights the metallic textures, conveying a sense of sacred heritage and premium craftsmanship." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCs0uIhuTl2qCxpyWrK_BKdgxWCbsWNI3-hgjzFAexflOsizAOnAuuz2EsfqX7eWCKcAyUknxYq0fDJsyfnxbQy0kh02-PkUC91A0_qHjLeOS0eoK-RQq1ybhx2z4Sq9nRpJ7gshFObztiWgg7dHKaUg2wxUKtgVyRgteow1CHmM3m9_km1BODx5nDzkzY0ou6aep7r6wUs73wOg8ZexjOdw4mzdTCgMPG05qgBZy06a4zGMrLrcQnDUw">
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div>
+<div class="inline-block px-2 py-1 bg-surface-container-high text-secondary font-label-sm text-label-sm rounded-sm mb-2">Mạ Vàng Tinh Xảo</div>
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Đồ Thờ Cúng</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-4">Bộ đồ thờ trang nghiêm, thể hiện lòng thành kính tổ tiên.</p>
+</div>
+<a class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary text-on-primary font-label-sm text-label-sm border border-outline hover:bg-tertiary transition-colors rounded-sm mt-auto" href="#">
+                            Xem Chi Tiết
+                        </a>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="group bg-surface-container-lowest border border-outline rounded-sm p-4 hover-lift flex flex-col h-full">
+<div class="aspect-square mb-4 overflow-hidden rounded-sm bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A realistic, high-quality photograph of a luxurious bronze gift item, perhaps an ornate bronze vase or a stylized miniature sculpture, intended as a corporate or premium gift. The bronze features a warm, rich tone. It is beautifully presented on a soft cream backdrop. The lighting is crisp and sophisticated, highlighting the item's elegant curves and flawless finish, embodying 'Quiet Luxury'." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKmcNZM8kn9EljJ6mQONNGUOKgz87B9SVp8Rdxxe-meTs-zlCaTD7SvgeEj-2hzs6TwB1OnI9DRHBHL7cQcgfMNkpUw4SKJYJlP7ClqungUbAhlbLPnqEUuOwQ16Dyi07trssAQsBdTiU76egiE6dhF3F8jl7Wiy8q1Ka2bMOG7WrAhsuuyW4neH2JSc1Gm7hZqyecT31LNu1SDjBSbdwUy4n6JcL6hrP7j_1rwk7XP7lWdbHfmS0IRw">
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div>
+<div class="inline-block px-2 py-1 bg-surface-container-high text-secondary font-label-sm text-label-sm rounded-sm mb-2">Chế Tác Thủ Công</div>
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Quà Tặng Đồng</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-4">Món quà đẳng cấp, mang ý nghĩa phong thủy và văn hóa sâu sắc.</p>
+</div>
+<a class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary text-on-primary font-label-sm text-label-sm border border-outline hover:bg-tertiary transition-colors rounded-sm mt-auto" href="#">
+                            Xem Chi Tiết
+                        </a>
+</div>
+</div>
+</div>
+</section>
+<!-- Service Bar -->
+<section class="bg-surface-container py-12 border-y border-outline-variant">
+<div class="w-full max-w-container-max mx-auto px-gutter grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+<div class="flex flex-col items-center gap-3">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="handshake">handshake</span>
+<h4 class="font-headline-md text-body-lg text-primary">Tư Vấn Trực Tiếp</h4>
+<p class="font-body-md text-label-sm text-on-surface-variant">Từ nghệ nhân lành nghề</p>
+</div>
+<div class="flex flex-col items-center gap-3">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="verified">verified</span>
+<h4 class="font-headline-md text-body-lg text-primary">Chất Lượng Thật</h4>
+<p class="font-body-md text-label-sm text-on-surface-variant">Bảo hành trọn đời</p>
+</div>
+<div class="flex flex-col items-center gap-3">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="diamond">diamond</span>
+<h4 class="font-headline-md text-body-lg text-primary">Giá Trị Lưu Truyền</h4>
+<p class="font-body-md text-label-sm text-on-surface-variant">Kiệt tác vượt thời gian</p>
+</div>
+<div class="flex flex-col items-center gap-3">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="local_shipping">local_shipping</span>
+<h4 class="font-headline-md text-body-lg text-primary">Giao Hàng An Toàn</h4>
+<p class="font-body-md text-label-sm text-on-surface-variant">Đóng gói chuẩn bảo tàng</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-highest dark:bg-primary-container border-t border-outline-variant full-width bottom-0">
+<div class="w-full py-xl px-gutter grid grid-cols-1 md:grid-cols-4 gap-lg max-w-container-max mx-auto">
+<!-- Column 1: Brand & About -->
+<div class="space-y-4">
+<div class="font-headline-md text-headline-md text-primary dark:text-primary-fixed">
+                    ĐỨC ĐỒNG LỘC NAM
+                </div>
+<p class="font-body-md text-body-md text-on-surface-variant dark:text-on-primary-fixed-variant">
+                    Lưu giữ tinh hoa nghề đúc đồng truyền thống, mang đến những kiệt tác nghệ thuật đẳng cấp cho không gian của bạn.
+                </p>
+</div>
+<!-- Column 2: Links -->
+<div class="space-y-4">
+<h4 class="font-headline-md text-body-lg text-on-surface dark:text-on-primary-container font-bold mb-4">Liên Kết</h4>
+<ul class="space-y-2">
+<li class=""><a class="font-body-md text-body-md text-on-surface-variant dark:text-on-primary-fixed-variant hover:text-tertiary dark:hover:text-tertiary-fixed-dim transition-all focus:ring-1 focus:ring-primary inline-block" href="#">Về Chúng Tôi</a></li>
+<li class=""><a class="font-body-md text-body-md text-on-surface-variant dark:text-on-primary-fixed-variant hover:text-tertiary dark:hover:text-tertiary-fixed-dim transition-all focus:ring-1 focus:ring-primary inline-block" href="#">Chính Sách Bảo Hành</a></li>
+<li class=""><a class="font-body-md text-body-md text-on-surface-variant dark:text-on-primary-fixed-variant hover:text-tertiary dark:hover:text-tertiary-fixed-dim transition-all focus:ring-1 focus:ring-primary inline-block" href="#">Hướng Dẫn Thanh Toán</a></li>
+<li class=""><a class="font-body-md text-body-md text-on-surface-variant dark:text-on-primary-fixed-variant hover:text-tertiary dark:hover:text-tertiary-fixed-dim transition-all focus:ring-1 focus:ring-primary inline-block" href="#">Hệ Thống Cửa Hàng</a></li>
+</ul>
+</div>
+<!-- Column 3: Contact Detailed -->
+<div class="space-y-4 md:col-span-2">
+<h4 class="font-headline-md text-body-lg text-on-surface dark:text-on-primary-container font-bold mb-4">Liên Hệ</h4>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="call">call</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant">Hotline / Zalo</p>
+<a class="font-headline-md text-body-lg text-primary hover:underline" href="tel:0900000000">0900 000 000</a>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="location_on">location_on</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant">Xưởng Đúc Đồng</p>
+<a class="font-body-md text-body-md text-primary hover:underline flex items-center gap-1" href="#">
+                                Xem Bản Đồ <span class="material-symbols-outlined text-sm" data-icon="open_in_new">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+<div class="pt-4 border-t border-outline-variant w-fit mt-4">
+<a class="inline-flex items-center gap-2 text-secondary hover:text-primary transition-colors font-label-sm text-label-sm uppercase tracking-wider" href="#">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+                        Gửi Thắc Mắc &amp; Yêu Cầu
+                    </a>
+</div>
+</div>
+</div>
+<!-- Bottom Bar -->
+<div class="w-full border-t border-outline-variant py-6 mt-8 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-outline-variant mb-2" data-icon="trip_origin">trip_origin</span>
+<p class="font-body-md text-label-sm text-on-surface-variant text-center">
+                © 2024 ĐỨC ĐỒNG LỘC NAM. TINH HOA ĐỨC ĐỒNG VIỆT.
+            </p>
+</div>
+</footer>
+
+
+</body></html>
