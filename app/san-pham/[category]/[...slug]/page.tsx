@@ -76,7 +76,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
       openGraph: {
         title: `${product.name} | Đồ Đồng Lộc Nam`,
         description: product.shortDescription || `Chi tiết sản phẩm ${product.name}`,
-        images: [{ url: mainImage.startsWith("http") ? mainImage : `https://dodonglocnam.com${mainImage}` }],
+        images: [{ url: mainImage.startsWith("http") ? mainImage : `https://www.quatanglocnam.com${mainImage}` }],
       },
     };
   }
@@ -125,10 +125,10 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
           <BreadcrumbJsonLd
             items={[
-              { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-              { name: "Sản Phẩm", url: "https://dodonglocnam.com/san-pham" },
-              { name: mainCat.name, url: `https://dodonglocnam.com/san-pham/${categorySlug}` },
-              { name: subCategory.name, url: `https://dodonglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
+              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+              { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
+              { name: mainCat.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
+              { name: subCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
             ]}
           />
 
@@ -193,11 +193,11 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
           <BreadcrumbJsonLd
             items={[
-              { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-              { name: "Sản Phẩm", url: "https://dodonglocnam.com/san-pham" },
-              { name: mainCat.name, url: `https://dodonglocnam.com/san-pham/${categorySlug}` },
-              { name: subCategory.name, url: `https://dodonglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
-              { name: detailCategory.name, url: `https://dodonglocnam.com/san-pham/${categorySlug}/${subCategory.id}/${detailCategory.id}` },
+              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+              { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
+              { name: mainCat.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
+              { name: subCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
+              { name: detailCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}/${detailCategory.id}` },
             ]}
           />
 
@@ -261,10 +261,10 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
           <BreadcrumbJsonLd
             items={[
-              { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-              { name: "Sản Phẩm", url: "https://dodonglocnam.com/san-pham" },
-              { name: mainCat.name, url: `https://dodonglocnam.com/san-pham/${categorySlug}` },
-              { name: subCategory.name, url: `https://dodonglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
+              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+              { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
+              { name: mainCat.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
+              { name: subCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
             ]}
           />
 
@@ -314,7 +314,7 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
       parsedImages = [product.images || "/images/hero_golden_ship.jpg"];
     }
 
-    const fullUrl = `https://dodonglocnam.com/san-pham/${categorySlug}/${slugs.join("/")}`;
+    const fullUrl = `https://www.quatanglocnam.com/san-pham/${categorySlug}/${slugs.join("/")}`;
 
     const relatedProducts = relatedProductsData.map((rel) => {
       let relImages: string[] = [];
@@ -388,7 +388,7 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         <BreadcrumbJsonLd
           items={breadcrumbItems.map((b) => ({
             name: b.name,
-            url: b.url ? `https://dodonglocnam.com${b.url}` : fullUrl,
+            url: b.url ? `https://www.quatanglocnam.com${b.url}` : fullUrl,
           }))}
         />
 
@@ -396,7 +396,7 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
           name={product.name}
           description={product.shortDescription || product.description || product.name}
           images={parsedImages.map((img) =>
-            img.startsWith("http") ? img : `https://dodonglocnam.com${img}`
+            img.startsWith("http") ? img : `https://www.quatanglocnam.com${img}`
           )}
           price={product.price}
           categoryName={product.category.name}

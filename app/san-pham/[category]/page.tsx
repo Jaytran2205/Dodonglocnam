@@ -66,12 +66,12 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       "đồ đồng cao cấp",
     ].join(", "),
     alternates: {
-      canonical: `https://dodonglocnam.com/san-pham/${categorySlug}`,
+      canonical: `https://www.quatanglocnam.com/san-pham/${categorySlug}`,
     },
     openGraph: {
       title: title,
       description: description,
-      url: `https://dodonglocnam.com/san-pham/${categorySlug}`,
+      url: `https://www.quatanglocnam.com/san-pham/${categorySlug}`,
       siteName: "Đồ Đồng Lộc Nam",
       locale: "vi_VN",
       type: "website",
@@ -129,9 +129,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
         <BreadcrumbJsonLd
           items={[
-            { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-            { name: "Sản Phẩm", url: "https://dodonglocnam.com/san-pham" },
-            { name: catName, url: `https://dodonglocnam.com/san-pham/${categorySlug}` },
+            { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+            { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
+            { name: catName, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
           ]}
         />
 
@@ -182,9 +182,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-          { name: "Sản Phẩm", url: "https://dodonglocnam.com/san-pham" },
-          { name: catName, url: `https://dodonglocnam.com/san-pham/${categorySlug}` },
+          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+          { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
+          { name: catName, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
         ]}
       />
 

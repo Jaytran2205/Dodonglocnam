@@ -18,13 +18,13 @@ export const metadata: Metadata = {
     "đồ đồng lộc nam",
   ].join(", "),
   alternates: {
-    canonical: "https://dodonglocnam.com/video",
+    canonical: "https://www.quatanglocnam.com/video",
   },
   openGraph: {
     title: "Thư Viện Video Quy Trình Đúc Đồng | Đồ Đồng Lộc Nam",
     description:
       "Video thực tế quy trình đúc đồng truyền thống và chế tác quà tặng cao cấp mạ vàng 24k.",
-    url: "https://dodonglocnam.com/video",
+    url: "https://www.quatanglocnam.com/video",
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -74,8 +74,8 @@ export default function VideoPage() {
       {/* Breadcrumb Schema for Google */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-          { name: "Video", url: "https://dodonglocnam.com/video" },
+          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+          { name: "Video", url: "https://www.quatanglocnam.com/video" },
         ]}
       />
 

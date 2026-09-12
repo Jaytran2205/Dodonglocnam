@@ -21,13 +21,13 @@ export const metadata: Metadata = {
     "đồ đồng nam định",
   ].join(", "),
   alternates: {
-    canonical: "https://dodonglocnam.com/gioi-thieu",
+    canonical: "https://www.quatanglocnam.com/gioi-thieu",
   },
   openGraph: {
     title: "Giới Thiệu Xưởng Đúc Đồ Đồng Lộc Nam | Tinh Hoa Ý Yên Nam Định",
     description:
       "Lịch sử phát triển và sứ mệnh gìn giữ tinh hoa đúc đồng Việt Nam của thương hiệu Đồ Đồng Lộc Nam.",
-    url: "https://dodonglocnam.com/gioi-thieu",
+    url: "https://www.quatanglocnam.com/gioi-thieu",
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -54,8 +54,8 @@ export default function AboutPage() {
       {/* Breadcrumb Schema for Google */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-          { name: "Giới Thiệu", url: "https://dodonglocnam.com/gioi-thieu" },
+          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+          { name: "Giới Thiệu", url: "https://www.quatanglocnam.com/gioi-thieu" },
         ]}
       />
 

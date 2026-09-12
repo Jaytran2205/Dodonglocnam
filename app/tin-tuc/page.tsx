@@ -24,13 +24,13 @@ export const metadata: Metadata = {
     "đồ đồng nam định",
   ].join(", "),
   alternates: {
-    canonical: "https://dodonglocnam.com/tin-tuc",
+    canonical: "https://www.quatanglocnam.com/tin-tuc",
   },
   openGraph: {
     title: "Tin Tức & Cẩm Nang Đồ Đồng Phong Thủy | Đồ Đồng Lộc Nam",
     description:
       "Tổng hợp kiến thức tâm linh, phong thủy thờ cúng và nghệ thuật đúc đồng truyền thống Nam Định từ các nghệ nhân kỳ cựu.",
-    url: "https://dodonglocnam.com/tin-tuc",
+    url: "https://www.quatanglocnam.com/tin-tuc",
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -57,8 +57,8 @@ export default function TinTucPage() {
       {/* Breadcrumb Schema for Google */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-          { name: "Tin Tức & Cẩm Nang", url: "https://dodonglocnam.com/tin-tuc" },
+          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+          { name: "Tin Tức & Cẩm Nang", url: "https://www.quatanglocnam.com/tin-tuc" },
         ]}
       />
 

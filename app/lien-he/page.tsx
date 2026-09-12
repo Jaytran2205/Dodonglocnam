@@ -20,13 +20,13 @@ export const metadata: Metadata = {
     "báo giá đồ thờ bằng đồng",
   ].join(", "),
   alternates: {
-    canonical: "https://dodonglocnam.com/lien-he",
+    canonical: "https://www.quatanglocnam.com/lien-he",
   },
   openGraph: {
     title: "Liên Hệ Xưởng Đúc Đồ Đồng Lộc Nam | Hotline & Showroom",
     description:
       "Địa chỉ showroom Hà Nội và xưởng đúc truyền thống Ý Yên Nam Định của Đồ Đồng Lộc Nam.",
-    url: "https://dodonglocnam.com/lien-he",
+    url: "https://www.quatanglocnam.com/lien-he",
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -53,8 +53,8 @@ export default function ContactPage() {
       {/* Breadcrumb Schema for Google */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-          { name: "Liên Hệ", url: "https://dodonglocnam.com/lien-he" },
+          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+          { name: "Liên Hệ", url: "https://www.quatanglocnam.com/lien-he" },
         ]}
       />
 

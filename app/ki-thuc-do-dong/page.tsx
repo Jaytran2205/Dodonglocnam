@@ -23,13 +23,13 @@ export const metadata: Metadata = {
     "đồ đồng nam định",
   ].join(", "),
   alternates: {
-    canonical: "https://dodonglocnam.com/ki-thuc-do-dong",
+    canonical: "https://www.quatanglocnam.com/ki-thuc-do-dong",
   },
   openGraph: {
     title: "Kiến Thức Đồ Đồng & Cẩm Nang Phong Thủy Gia Tiên | Đồ Đồng Lộc Nam",
     description:
       "Toàn bộ kinh nghiệm chọn đồ đồng, bài trí ban thờ và kiến thức đúc đồng truyền thống từ nghệ nhân Ý Yên Nam Định.",
-    url: "https://dodonglocnam.com/ki-thuc-do-dong",
+    url: "https://www.quatanglocnam.com/ki-thuc-do-dong",
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -56,8 +56,8 @@ export default function KnowledgePage() {
       {/* Breadcrumb Schema for Google */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-          { name: "Kiến Thức Đồ Đồng", url: "https://dodonglocnam.com/ki-thuc-do-dong" },
+          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+          { name: "Kiến Thức Đồ Đồng", url: "https://www.quatanglocnam.com/ki-thuc-do-dong" },
         ]}
       />
 

@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { articlesData } from "./tin-tuc/articlesData";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://dodonglocnam.com";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.quatanglocnam.com";
 
   // Static routes
   const staticRoutes: MetadataRoute.Sitemap = [

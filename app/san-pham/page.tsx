@@ -27,13 +27,13 @@ export const metadata: Metadata = {
     "đúc đồng ý yên",
   ].join(", "),
   alternates: {
-    canonical: "https://dodonglocnam.com/san-pham",
+    canonical: "https://www.quatanglocnam.com/san-pham",
   },
   openGraph: {
     title: "Tất Cả Sản Phẩm Đồ Đồng Cao Cấp | Đồ Đồng Lộc Nam",
     description:
       "Tuyển tập kiệt tác đồ đồng mỹ nghệ thủ công tinh xảo của xưởng Đồ Đồng Lộc Nam - Nam Định. Đồng chuẩn 100%, bảo hành trọn đời.",
-    url: "https://dodonglocnam.com/san-pham",
+    url: "https://www.quatanglocnam.com/san-pham",
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -83,8 +83,8 @@ export default async function AllProductsPage({ searchParams }: AllProductsPageP
       {/* Breadcrumb Schema for Google SERP */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-          { name: "Sản Phẩm", url: "https://dodonglocnam.com/san-pham" },
+          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+          { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
         ]}
       />
 

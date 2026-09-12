@@ -31,12 +31,12 @@ export async function generateMetadata(): Promise<Metadata> {
       "quà tặng lộc nam",
     ].join(", "),
     alternates: {
-      canonical: "https://dodonglocnam.com/qua-tang",
+      canonical: "https://www.quatanglocnam.com/qua-tang",
     },
     openGraph: {
       title,
       description,
-      url: "https://dodonglocnam.com/qua-tang",
+      url: "https://www.quatanglocnam.com/qua-tang",
       siteName: "Đồ Đồng Lộc Nam",
       locale: "vi_VN",
       type: "website",
@@ -85,8 +85,8 @@ export default async function QuaTangPage() {
     <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-          { name: "Quà Tặng", url: "https://dodonglocnam.com/qua-tang" },
+          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+          { name: "Quà Tặng", url: "https://www.quatanglocnam.com/qua-tang" },
         ]}
       />
 

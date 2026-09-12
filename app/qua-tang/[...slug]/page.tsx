@@ -74,7 +74,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
       openGraph: {
         title: `${product.name} | Đồ Đồng Lộc Nam`,
         description: product.shortDescription || `Chi tiết sản phẩm ${product.name}`,
-        images: [{ url: mainImage.startsWith("http") ? mainImage : `https://dodonglocnam.com${mainImage}` }],
+        images: [{ url: mainImage.startsWith("http") ? mainImage : `https://www.quatanglocnam.com${mainImage}` }],
       },
     };
   }
@@ -120,9 +120,9 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
         <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
           <BreadcrumbJsonLd
             items={[
-              { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-              { name: "Quà Tặng", url: "https://dodonglocnam.com/qua-tang" },
-              { name: subCategory.name, url: `https://dodonglocnam.com/qua-tang/${subCategory.id}` },
+              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+              { name: "Quà Tặng", url: "https://www.quatanglocnam.com/qua-tang" },
+              { name: subCategory.name, url: `https://www.quatanglocnam.com/qua-tang/${subCategory.id}` },
             ]}
           />
 
@@ -177,10 +177,10 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
         <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
           <BreadcrumbJsonLd
             items={[
-              { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-              { name: "Quà Tặng", url: "https://dodonglocnam.com/qua-tang" },
-              { name: subCategory.name, url: `https://dodonglocnam.com/qua-tang/${subCategory.id}` },
-              { name: detailCategory.name, url: `https://dodonglocnam.com/qua-tang/${subCategory.id}/${detailCategory.id}` },
+              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+              { name: "Quà Tặng", url: "https://www.quatanglocnam.com/qua-tang" },
+              { name: subCategory.name, url: `https://www.quatanglocnam.com/qua-tang/${subCategory.id}` },
+              { name: detailCategory.name, url: `https://www.quatanglocnam.com/qua-tang/${subCategory.id}/${detailCategory.id}` },
             ]}
           />
 
@@ -255,11 +255,11 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
           product={{
             name: product.name,
             description: product.shortDescription || `${product.name} đúc thủ công tại Đồ Đồng Lộc Nam`,
-            images: images.map((img) => img.startsWith("http") ? img : `https://dodonglocnam.com${img}`),
+            images: images.map((img) => img.startsWith("http") ? img : `https://www.quatanglocnam.com${img}`),
             sku: product.sku || product.slug,
             price: product.price ? product.price.toString() : "0",
             category: product.category?.name || "Quà Tặng",
-            url: `https://dodonglocnam.com/qua-tang/${slugs.join("/")}`,
+            url: `https://www.quatanglocnam.com/qua-tang/${slugs.join("/")}`,
           }}
         />
 

@@ -42,12 +42,12 @@ export default function HomePage() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Đồ Đồng Lộc Nam",
-    url: "https://dodonglocnam.com",
+    url: "https://www.quatanglocnam.com",
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://dodonglocnam.com/san-pham?search={search_term_string}",
+        urlTemplate: "https://www.quatanglocnam.com/san-pham?search={search_term_string}",
       },
       "query-input": "required name=search_term_string",
     },

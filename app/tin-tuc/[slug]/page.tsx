@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const article = articlesData.find((a) => a.slug === slug);
   if (!article) return { title: "Không tìm thấy bài viết | Đồ Đồng Lộc Nam" };
 
-  const url = `https://dodonglocnam.com/tin-tuc/${article.slug}`;
+  const url = `https://www.quatanglocnam.com/tin-tuc/${article.slug}`;
 
   return {
     title: `${article.title} | Đồ Đồng Lộc Nam`,
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       locale: "vi_VN",
       images: [
         {
-          url: article.image.startsWith("http") ? article.image : `https://dodonglocnam.com${article.image}`,
+          url: article.image.startsWith("http") ? article.image : `https://www.quatanglocnam.com${article.image}`,
           width: 1200,
           height: 630,
           alt: article.title,
@@ -66,15 +66,15 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   if (!article) notFound();
 
   const related = articlesData.filter((a) => a.slug !== slug).slice(0, 3);
-  const articleUrl = `https://dodonglocnam.com/tin-tuc/${article.slug}`;
+  const articleUrl = `https://www.quatanglocnam.com/tin-tuc/${article.slug}`;
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#fbf9f5] text-[#1a1a1a]">
       {/* 1. Breadcrumb Schema */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://dodonglocnam.com" },
-          { name: "Tin Tức", url: "https://dodonglocnam.com/tin-tuc" },
+          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
+          { name: "Tin Tức", url: "https://www.quatanglocnam.com/tin-tuc" },
           { name: article.title, url: articleUrl },
         ]}
       />
@@ -83,7 +83,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
       <ArticleJsonLd
         title={article.title}
         description={article.summary}
-        image={article.image.startsWith("http") ? article.image : `https://dodonglocnam.com${article.image}`}
+        image={article.image.startsWith("http") ? article.image : `https://www.quatanglocnam.com${article.image}`}
         datePublished="2026-08-27T08:00:00+07:00"
         author={article.author}
         url={articleUrl}
