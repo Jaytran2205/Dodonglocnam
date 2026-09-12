@@ -147,23 +147,44 @@ export default async function ArticleDetailPage({ params }: PageProps) {
           {/* Article Body */}
           <div className="space-y-4 text-xs sm:text-sm text-[#374151] leading-relaxed">
             {article.content.map((paragraph, index) => {
+              if (paragraph.startsWith("## ")) {
+                return (
+                  <h2 key={index} className="font-serif font-bold text-lg sm:text-xl text-[#0c1825] pt-6 pb-2 border-b border-[#e2d5bd] text-primary">
+                    {paragraph.replace("## ", "")}
+                  </h2>
+                );
+              }
               if (paragraph.startsWith("### ")) {
                 return (
-                  <h2 key={index} className="font-serif font-bold text-base sm:text-lg text-[#0c1825] pt-4 pb-1 border-b border-[#e2d5bd]">
+                  <h3 key={index} className="font-serif font-bold text-base sm:text-lg text-[#b8860b] pt-4 pb-1">
                     {paragraph.replace("### ", "")}
-                  </h2>
+                  </h3>
+                );
+              }
+              if (paragraph.startsWith("#### ")) {
+                return (
+                  <h4 key={index} className="font-bold text-sm sm:text-base text-[#0c1825] pt-2">
+                    {paragraph.replace("#### ", "")}
+                  </h4>
+                );
+              }
+              if (paragraph.startsWith("> ")) {
+                return (
+                  <div key={index} className="p-4 my-3 bg-[#fbf9f5] border-l-4 border-[#b8860b] rounded-r-xl text-[#4b5563] text-xs sm:text-sm italic leading-relaxed">
+                    {paragraph.replace("> ", "")}
+                  </div>
                 );
               }
               if (paragraph.startsWith("- ")) {
                 return (
                   <div key={index} className="flex items-start gap-2 pl-2">
-                    <span className="text-[#b8860b] font-bold">•</span>
+                    <span className="text-[#b8860b] font-bold mt-0.5">•</span>
                     <span>{paragraph.replace("- ", "")}</span>
                   </div>
                 );
               }
               return (
-                <p key={index}>
+                <p key={index} className="leading-relaxed">
                   {paragraph}
                 </p>
               );

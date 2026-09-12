@@ -19,8 +19,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Đồ Đồng Lộc Nam | Đúc Đồng Ý Yên Nam Định - Tượng Đồng Chân Dung, Đồ Thờ Cúng Cao Cấp",
-  description: "Đồ Đồng Lộc Nam - Thương hiệu đúc đồng truyền thống Ý Yên, Nam Định. Chuyên đúc đồng chân dung truyền thần, đồ thờ cúng bằng đồng, tượng đồng phong thủy, trống đồng, chuông đồng đẹp và tinh xảo bậc nhất.",
+  title: "Đồ Đồng Lộc Nam | Đúc Đồng Ý Yên Nam Định & Đồ Thờ Cao Cấp",
+  description: "Đồ Đồng Lộc Nam - Thương hiệu đúc đồng truyền thống Ý Yên, Nam Định. Chuyên đúc tượng chân dung, đồ thờ cúng bằng đồng, tranh đồng và trống đồng cao cấp.",
   keywords: [
     "đồ đồng lộc nam",
     "đồ đồng nam định",
