@@ -515,6 +515,7 @@ export function ModernHeader() {
                               <Link
                                 key={cat.id}
                                 href={cat.href}
+                                prefetch={true}
                                 onMouseEnter={() => setHoveredProductCategory(cat.id)}
                                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                                   isSelected
@@ -543,6 +544,7 @@ export function ModernHeader() {
                             </span>
                             <Link
                               href={activeGroup.href}
+                              prefetch={true}
                               className="text-[11px] text-[#dfb755] hover:underline font-semibold"
                             >
                               Xem tất cả ›
@@ -559,6 +561,7 @@ export function ModernHeader() {
                             {activeGroup.subItems.map((sub, i) => (
                               <Link
                                 key={i}
+                                prefetch={true}
                                 href={(sub as any).href || `${activeGroup.href}${
                                   activeGroup.href.includes("?") ? "&" : "?"
                                 }sub=${encodeURIComponent(sub.query)}`}
@@ -598,6 +601,7 @@ export function ModernHeader() {
 
                           <Link
                             href={activeGroup.href}
+                            prefetch={true}
                             className="mt-3.5 text-center text-xs font-black uppercase text-[#0b1622] bg-gradient-to-r from-[#dfb755] via-[#f5db8b] to-[#b8860b] hover:brightness-110 py-2.5 px-4 rounded-xl transition-all shadow-[0_2px_15px_rgba(223,183,85,0.4)] active:scale-95 block w-full"
                           >
                             Xem tất cả sản phẩm
@@ -644,6 +648,7 @@ export function ModernHeader() {
                               <Link
                                 key={group.id}
                                 href={group.href}
+                                prefetch={true}
                                 onMouseEnter={() => setHoveredGiftCategory(group.id)}
                                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                                   isSelected
@@ -672,6 +677,7 @@ export function ModernHeader() {
                             </span>
                             <Link
                               href={activeGift.href}
+                              prefetch={true}
                               className="text-[11px] text-[#dfb755] hover:underline font-semibold"
                             >
                               Xem tất cả ›
@@ -689,6 +695,7 @@ export function ModernHeader() {
                               <Link
                                 key={i}
                                 href={item.href}
+                                prefetch={true}
                                 className="text-[11px] xl:text-xs font-bold text-[#e2e8f0] hover:text-[#ffd700] hover:translate-x-0.5 transition-all py-1.5 border-b border-[#1c2e42]/35 block uppercase tracking-wide leading-snug break-words"
                               >
                                 {item.label}
@@ -704,7 +711,7 @@ export function ModernHeader() {
                               <img
                                 key={activeGift.defaultDemo.image}
                                 src={activeGift.defaultDemo.image}
-                                alt={activeGift.defaultDemo.title}
+                                alt={activeGift.title}
                                 className="w-full h-full object-cover animate-fadeIn transition-transform duration-500 hover:scale-105"
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
@@ -723,7 +730,10 @@ export function ModernHeader() {
                             </p>
                           </div>
 
-                          <Link href="/qua-tang" className="mt-3.5 text-center text-xs font-black uppercase text-[#0b1622] bg-gradient-to-r from-[#dfb755] via-[#f5db8b] to-[#b8860b] hover:brightness-110 py-2.5 px-4 rounded-xl transition-all shadow-[0_2px_15px_rgba(223,183,85,0.4)] active:scale-95 block w-full"
+                          <Link
+                            href="/qua-tang"
+                            prefetch={true}
+                            className="mt-3.5 text-center text-xs font-black uppercase text-[#0b1622] bg-gradient-to-r from-[#dfb755] via-[#f5db8b] to-[#b8860b] hover:brightness-110 py-2.5 px-4 rounded-xl transition-all shadow-[0_2px_15px_rgba(223,183,85,0.4)] active:scale-95 block w-full"
                           >
                             Xem tất cả quà tặng
                           </Link>

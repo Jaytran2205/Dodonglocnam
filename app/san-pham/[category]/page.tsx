@@ -20,6 +20,21 @@ interface CategoryPageProps {
 
 export const revalidate = 60;
 
+export async function generateStaticParams() {
+  const mainCategories = DEFAULT_HIERARCHICAL_CATEGORIES.map((c) => ({
+    category: c.slug,
+  }));
+  const extraCategories = [
+    { category: "qua-tang-dong" },
+    { category: "qua-tang" },
+    { category: "cup-golf" },
+    { category: "vat-pham-my-nghe" },
+    { category: "thi-cong-tu-duong" },
+    { category: "duc-chuong-cong-trinh" },
+  ];
+  return [...mainCategories, ...extraCategories];
+}
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const categorySlug = params.category;
   const category = await prisma.category.findUnique({
@@ -97,10 +112,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   const mainCategoryData = findMainCategory(categorySlug);
 
-  // Check if category exists in DB as well
-  const dbCategory = await prisma.category.findUnique({
-    where: { slug: categorySlug },
-  });
+  // Check if category exists in DB only if not found in static subcategories
+  const dbCategory = !mainCategoryData
+    ? await prisma.category.findUnique({
+        where: { slug: categorySlug },
+      })
+    : null;
 
   if (!mainCategoryData && !dbCategory) {
     notFound();

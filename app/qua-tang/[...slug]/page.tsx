@@ -24,6 +24,30 @@ interface SlugPageProps {
 
 export const revalidate = 60;
 
+export async function generateStaticParams() {
+  const mainCat = findMainCategory("qua-tang");
+  if (!mainCat) return [];
+
+  const paramsList: { slug: string[] }[] = [];
+
+  mainCat.subCategories.forEach((sub) => {
+    paramsList.push({ slug: [sub.id] });
+    if (sub.aliases) {
+      sub.aliases.forEach((a) => paramsList.push({ slug: [a] }));
+    }
+    if (sub.children) {
+      sub.children.forEach((child) => {
+        paramsList.push({ slug: [sub.id, child.id] });
+        if (child.aliases) {
+          child.aliases.forEach((ca) => paramsList.push({ slug: [sub.id, ca] }));
+        }
+      });
+    }
+  });
+
+  return paramsList;
+}
+
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { slug: slugs } = params;
   const lastSlug = slugs[slugs.length - 1];
