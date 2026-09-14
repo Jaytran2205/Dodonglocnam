@@ -52,8 +52,26 @@ export default function AdminProductsPage() {
   });
   const [saving, setSaving] = useState(false);
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  const fetchProducts = async (forceRefresh = false) => {
+    // 0ms instant render from sessionStorage cache if available
+    if (!forceRefresh) {
+      try {
+        const cached = sessionStorage.getItem("locnam_admin_products_cache");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.products && Array.isArray(parsed.products)) {
+            setProducts(parsed.products);
+            if (parsed.categories && Array.isArray(parsed.categories)) {
+              setCategories(parsed.categories);
+            }
+            setLoading(false);
+          }
+        }
+      } catch (_) {}
+    } else {
+      setLoading(true);
+    }
+
     try {
       const [res, catRes] = await Promise.all([
         fetch("/api/admin/products"),
@@ -64,12 +82,23 @@ export default function AdminProductsPage() {
         catRes.json()
       ]);
 
-      if (data.success) setProducts(data.products);
+      if (data.success) {
+        setProducts(data.products);
+      }
       if (catData.success) {
         setCategories(catData.categories);
         if (!formData.categoryId && catData.categories.length > 0) {
           setFormData((prev) => ({ ...prev, categoryId: catData.categories[0].id }));
         }
+      }
+
+      if (data.success && catData.success) {
+        try {
+          sessionStorage.setItem("locnam_admin_products_cache", JSON.stringify({
+            products: data.products,
+            categories: catData.categories
+          }));
+        } catch (_) {}
       }
     } catch (e) {
       console.error(e);
