@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
   Phone,
@@ -20,6 +20,26 @@ import {
 
 export function ModernHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Instant Prefetch on Mount for Zero-Latency Navigation
+  useEffect(() => {
+    const popularRoutes = [
+      "/san-pham/do-tho-cung",
+      "/san-pham/tuong-dong",
+      "/san-pham/tranh-dong",
+      "/san-pham/trong-dong",
+      "/san-pham",
+      "/qua-tang",
+      "/du-an",
+      "/gioi-thieu",
+    ];
+    popularRoutes.forEach((route) => {
+      try {
+        router.prefetch(route);
+      } catch {}
+    });
+  }, [router]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

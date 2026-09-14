@@ -37,11 +37,12 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const categorySlug = params.category;
-  const category = await prisma.category.findUnique({
-    where: { slug: categorySlug },
-  });
-
   const mainCatData = findMainCategory(categorySlug);
+  const category = !mainCatData
+    ? await prisma.category.findUnique({
+        where: { slug: categorySlug },
+      })
+    : null;
   const catName = mainCatData?.name || category?.name || "Danh Mục Sản Phẩm";
 
   const categoryTitles: Record<string, string> = {
