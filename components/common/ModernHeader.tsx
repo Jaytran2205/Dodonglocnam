@@ -32,6 +32,7 @@ export function ModernHeader() {
       "/san-pham",
       "/qua-tang",
       "/du-an",
+      "/tin-tuc",
       "/gioi-thieu",
     ];
     popularRoutes.forEach((route) => {
@@ -774,6 +775,16 @@ export function ModernHeader() {
               <span>DỰ ÁN</span>
             </Link>
 
+            {/* TIN TỨC */}
+            <Link
+              href="/tin-tuc"
+              prefetch={true}
+              className={getNavBoxClass("/tin-tuc")}
+              title="Tin tức, cẩm nang phong thủy & kiến thức đồ đồng"
+            >
+              <span>TIN TỨC</span>
+            </Link>
+
             {/* 5. VỀ CHÚNG TÔI (Dropdown: Giới thiệu công ty & Dịch vụ CSKH) */}
             <div
               className="relative flex-shrink-0"
@@ -1056,6 +1067,19 @@ export function ModernHeader() {
                 className="flex items-center justify-between p-3 rounded-md bg-[#122234]/70 border border-[#1c2c3d] text-xs font-bold text-[#e2e8f0] hover:text-[#ffd700] hover:border-[#ffd700] transition-all"
               >
                 <span>DỰ ÁN</span>
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              </Link>
+
+              {/* TIN TỨC */}
+              <Link
+                href="/tin-tuc"
+                prefetch={true}
+                className="flex items-center justify-between p-3 rounded-md bg-[#122234]/70 border border-[#1c2c3d] text-xs font-bold text-[#e2e8f0] hover:text-[#ffd700] hover:border-[#ffd700] transition-all"
+              >
+                <span className="flex items-center gap-2">
+                  <span>TIN TỨC</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#dfb755]/20 text-[#ffd700]">Cẩm nang</span>
+                </span>
                 <ChevronRight className="w-4 h-4 text-gray-500" />
               </Link>
 

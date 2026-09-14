@@ -1,0 +1,185 @@
+{
+  "orders": [
+    {
+      "id": "cmtbij2iq001913ae2zvk3f58",
+      "orderCode": "LN-2026-001",
+      "customerName": "Nguyễn Văn Hùng",
+      "phone": "0912345678",
+      "email": "hung.nguyen@gmail.com",
+      "address": "Quận Cầu Giấy, Hà Nội",
+      "note": "Giao hàng giờ hành chính",
+      "totalPrice": 6200000,
+      "status": "DELIVERED",
+      "createdAt": "2026-08-27T12:42:28.610Z",
+      "updatedAt": "2026-08-27T12:42:28.610Z",
+      "items": [
+        {
+          "id": "cmtbij2iq001a13ae3m5p6462",
+          "orderId": "cmtbij2iq001913ae2zvk3f58",
+          "productId": null,
+          "name": "Tượng Ngựa Bằng Đồng Mạ Vàng – Đứng Thỏi Vàng Chiêu Tài Cao 36cm",
+          "price": 6200000,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": "cmtbij2j0001b13aenxa4tahj",
+      "orderCode": "LN-2026-002",
+      "customerName": "Trần Thị Mai",
+      "phone": "0987654321",
+      "email": "mai.tran@gmail.com",
+      "address": "Quận 1, TP. Hồ Chí Minh",
+      "note": "Đóng kiện gỗ cẩn thận vận chuyển máy bay",
+      "totalPrice": 38000000,
+      "status": "PROCESSING",
+      "createdAt": "2026-08-27T12:42:28.620Z",
+      "updatedAt": "2026-08-27T12:42:28.620Z",
+      "items": [
+        {
+          "id": "cmtbij2j0001c13aed1oj4b60",
+          "orderId": "cmtbij2j0001b13aenxa4tahj",
+          "productId": null,
+          "name": "Bộ Ngũ Sự Khảm Ngũ Sắc Thất Lân Vờn Cầu 70cm",
+          "price": 38000000,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": "cmtbij2j8001d13aeiymy4nn6",
+      "orderCode": "LN-2026-003",
+      "customerName": "Lê Hoàng Long",
+      "phone": "0903112233",
+      "email": "long.le@gmail.com",
+      "address": "TP. Đà Nẵng",
+      "note": "Tư vấn hướng đặt tượng phong thủy",
+      "totalPrice": 5000000,
+      "status": "PENDING",
+      "createdAt": "2026-08-27T12:42:28.629Z",
+      "updatedAt": "2026-08-27T12:42:28.629Z",
+      "items": [
+        {
+          "id": "cmtbij2j8001e13aehh51xkun",
+          "orderId": "cmtbij2j8001d13aeiymy4nn6",
+          "productId": null,
+          "name": "Rồng Vàng Rước Phúc Đón Lộc Bằng Đồng Dát Vàng 9999",
+          "price": 5000000,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": "cmtbij2ji001f13aecliimhge",
+      "orderCode": "LN-2026-004",
+      "customerName": "Phạm Minh Đức",
+      "phone": "0978998877",
+      "email": "duc.pham@gmail.com",
+      "address": "TP. Hải Phòng",
+      "note": "Giao nhanh trước rằm",
+      "totalPrice": 9200000,
+      "status": "DELIVERED",
+      "createdAt": "2026-08-27T12:42:28.638Z",
+      "updatedAt": "2026-08-27T12:42:28.638Z",
+      "items": [
+        {
+          "id": "cmtbij2ji001g13aeptkqdhac",
+          "orderId": "cmtbij2ji001f13aecliimhge",
+          "productId": null,
+          "name": "Tượng Ngựa – Tam Mã Bằng Đồng Mạ Vàng Cao 23cm",
+          "price": 4500000,
+          "quantity": 1
+        },
+        {
+          "id": "cmtbij2ji001h13aeztyxujyf",
+          "orderId": "cmtbij2ji001f13aecliimhge",
+          "productId": null,
+          "name": "Tượng Mèo Tài Lộc Bằng Đồng Dát Vàng 9999",
+          "price": 3800000,
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "id": "cmtbitav800002kg2g1i73b4f",
+      "orderCode": "LN-2026-8197",
+      "customerName": "Kiểm Thử Viên Tự Động",
+      "phone": "0999888777",
+      "email": "test.order@gmail.com",
+      "address": "172 Lê Trọng Tấn, Hà Nội",
+      "note": "Giao hàng mẫu kiểm tra hệ thống",
+      "totalPrice": 6200000,
+      "status": "PENDING",
+      "createdAt": "2026-08-27T12:50:25.987Z",
+      "updatedAt": "2026-08-27T12:50:25.987Z",
+      "items": [
+        {
+          "id": "cmtbitava00022kg2rdbun73h",
+          "orderId": "cmtbitav800002kg2g1i73b4f",
+          "productId": null,
+          "name": "Tượng Ngựa Bằng Đồng Mạ Vàng – Đứng Thỏi Vàng Chiêu Tài Cao 36cm",
+          "price": 6200000,
+          "quantity": 1
+        }
+      ]
+    }
+  ],
+  "customers": [
+    {
+      "id": "cmtbij2hs001513aev5801c38",
+      "name": "Nguyễn Văn Hùng",
+      "phone": "0912345678",
+      "email": "hung.nguyen@gmail.com",
+      "address": "Quận Cầu Giấy, Hà Nội",
+      "totalSpent": 11200000,
+      "orderCount": 2,
+      "createdAt": "2026-08-27T12:42:28.576Z",
+      "updatedAt": "2026-08-27T12:42:28.576Z"
+    },
+    {
+      "id": "cmtbij2i0001613aephzoirg9",
+      "name": "Trần Thị Mai",
+      "phone": "0987654321",
+      "email": "mai.tran@gmail.com",
+      "address": "Quận 1, TP. Hồ Chí Minh",
+      "totalSpent": 38000000,
+      "orderCount": 1,
+      "createdAt": "2026-08-27T12:42:28.585Z",
+      "updatedAt": "2026-08-27T12:42:28.585Z"
+    },
+    {
+      "id": "cmtbij2i7001713aeukl0gq0x",
+      "name": "Lê Hoàng Long",
+      "phone": "0903112233",
+      "email": "long.le@gmail.com",
+      "address": "TP. Đà Nẵng",
+      "totalSpent": 5000000,
+      "orderCount": 1,
+      "createdAt": "2026-08-27T12:42:28.592Z",
+      "updatedAt": "2026-08-27T12:42:28.592Z"
+    },
+    {
+      "id": "cmtbij2if001813aeeee0n7x4",
+      "name": "Phạm Minh Đức",
+      "phone": "0978998877",
+      "email": "duc.pham@gmail.com",
+      "address": "TP. Hải Phòng",
+      "totalSpent": 9200000,
+      "orderCount": 2,
+      "createdAt": "2026-08-27T12:42:28.599Z",
+      "updatedAt": "2026-08-27T12:42:28.599Z"
+    },
+    {
+      "id": "cmtbitavk00032kg2obgtg95x",
+      "name": "Kiểm Thử Viên Tự Động",
+      "phone": "0999888777",
+      "email": "test.order@gmail.com",
+      "address": "172 Lê Trọng Tấn, Hà Nội",
+      "totalSpent": 6200000,
+      "orderCount": 1,
+      "createdAt": "2026-08-27T12:50:26.001Z",
+      "updatedAt": "2026-08-27T12:50:26.001Z"
+    }
+  ],
+  "backedUpAt": "2026-09-14T10:28:27.289Z"
+}

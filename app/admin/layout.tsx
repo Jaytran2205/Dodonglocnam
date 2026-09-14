@@ -35,7 +35,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
-    if (!isLoginPage) {
+    if (isLoginPage) return;
+
+    if (!adminUser) {
       fetch("/api/admin/auth/me")
         .then((res) => res.json())
         .then((data) => {
@@ -46,18 +48,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }
         })
         .catch(() => router.push("/admin/login"));
-
-      // Fetch pending orders count for badge
-      fetch("/api/admin/orders?status=PENDING")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.orders) {
-            setPendingOrdersCount(data.orders.length);
-          }
-        })
-        .catch(() => {});
     }
-  }, [pathname, isLoginPage, router]);
+
+    // Fetch pending orders count for badge once
+    fetch("/api/admin/orders?status=PENDING")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.orders) {
+          setPendingOrdersCount(data.orders.length);
+        }
+      })
+      .catch(() => {});
+  }, [isLoginPage, router]);
 
   if (isLoginPage) {
     return <>{children}</>;

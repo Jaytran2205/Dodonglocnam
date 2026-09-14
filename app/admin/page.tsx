@@ -73,12 +73,18 @@ export default function AdminDashboardPage() {
   const recentOrders = data?.recentOrders || [];
   const topProducts = data?.topProducts || [];
   const monthlyRevenue = data?.monthlyRevenue || {
-    "T3": 42000000,
-    "T4": 56000000,
-    "T5": 78000000,
-    "T6": 64000000,
-    "T7": 89000000,
-    "T8": 112000000
+    "Thg 1": 0,
+    "Thg 2": 0,
+    "Thg 3": 0,
+    "Thg 4": 0,
+    "Thg 5": 0,
+    "Thg 6": 0,
+    "Thg 7": 0,
+    "Thg 8": 0,
+    "Thg 9": 0,
+    "Thg 10": 0,
+    "Thg 11": 0,
+    "Thg 12": 0
   };
 
   const months = Object.keys(monthlyRevenue);
@@ -281,7 +287,7 @@ export default function AdminDashboardPage() {
                   <div className="p-2 rounded-lg bg-[#d4af37]/15 text-[#d4af37]">
                     <Package className="w-4 h-4" />
                   </div>
-                  <span>Quản Lý 113 Sản Phẩm</span>
+                  <span>Quản Lý {stats.totalProducts || 329} Sản Phẩm</span>
                 </div>
                 <ArrowUpRight className="w-4 h-4 text-gray-500 group-hover:text-[#d4af37] transition-colors" />
               </Link>

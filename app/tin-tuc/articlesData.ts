@@ -19,7 +19,7 @@ export const articlesData: Article[] = [
     category: "CẨM NANG PHONG THỦY",
     date: "14/09/2026",
     author: "Nghệ nhân Đồ Đồng Lộc Nam",
-    image: "/images/do-tho-dong.jpg",
+    image: "/images/locnam_real/locnam_bo_do_tho.jpg",
     readTime: "11 phút đọc",
     keywords: [
       "cách sắp xếp bàn thờ gia tiên",
@@ -237,7 +237,7 @@ export const articlesData: Article[] = [
     category: "CẨM NANG PHONG THỦY",
     date: "12/09/2026",
     author: "Nghệ nhân Đồ Đồng Lộc Nam",
-    image: "/images/locnam_real/locnam_bo_do_tho.jpg",
+    image: "/images/locnam_real/locnam_dinh_dong.jpg",
     readTime: "12 phút đọc",
     keywords: [
       "bộ đồ thờ bằng đồng",
@@ -396,7 +396,7 @@ export const articlesData: Article[] = [
     category: "BẠN CÓ BIẾT",
     date: "25/08/2026",
     author: "Đồ Đồng Lộc Nam",
-    image: "/images/do-tho-day-du-ma-vang.jpg",
+    image: "/images/bo-do-tho-ma-vang.jpg",
     readTime: "4 phút đọc",
     keywords: ["đồ đồng đẹp", "đồ đồng nam định", "đồ đồng lộc nam", "tượng đồng phong thủy", "bộ ngũ sự khảm ngũ sắc"],
     content: [
@@ -418,7 +418,7 @@ export const articlesData: Article[] = [
     category: "KIẾN THỨC ĐỒ ĐỒNG",
     date: "24/08/2026",
     author: "Đồ Đồng Lộc Nam",
-    image: "/images/qua-trong-dong-dong-son.jpg",
+    image: "/images/locnam_real/locnam_trong_dong.jpg",
     readTime: "6 phút đọc",
     keywords: ["trống đồng đông sơn", "đồ đồng đẹp", "đồ đồng nam định", "quà tặng trống đồng", "đồ đồng lộc nam"],
     content: [

@@ -55,12 +55,16 @@ export default function AdminProductsPage() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/products");
-      const data = await res.json();
-      if (data.success) setProducts(data.products);
+      const [res, catRes] = await Promise.all([
+        fetch("/api/admin/products"),
+        fetch("/api/admin/categories")
+      ]);
+      const [data, catData] = await Promise.all([
+        res.json(),
+        catRes.json()
+      ]);
 
-      const catRes = await fetch("/api/admin/categories");
-      const catData = await catRes.json();
+      if (data.success) setProducts(data.products);
       if (catData.success) {
         setCategories(catData.categories);
         if (!formData.categoryId && catData.categories.length > 0) {
