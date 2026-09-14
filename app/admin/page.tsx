@@ -241,8 +241,12 @@ export default function AdminDashboardPage() {
                 Doanh số bán hàng thực tế qua hệ thống (Đơn vị: VNĐ)
               </p>
             </div>
-            <span className="px-3 py-1 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold rounded-lg">
-              Tăng trưởng ổn định
+            <span className={`px-3 py-1 text-xs font-bold rounded-lg border ${
+              (stats.totalRevenue ?? 0) > 0
+                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                : "bg-[#152236] text-[#94a3b8] border-[#334155]/50"
+            }`}>
+              {(stats.totalRevenue ?? 0) > 0 ? "Tăng trưởng ổn định" : "Chưa có phát sinh"}
             </span>
           </div>
 
