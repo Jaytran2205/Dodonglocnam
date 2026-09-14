@@ -22,6 +22,15 @@ export async function generateStaticParams() {
   }));
 }
 
+function formatIsoDate(dateStr: string) {
+  const parts = dateStr.split("/");
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T08:00:00+07:00`;
+  }
+  return "2026-08-27T08:00:00+07:00";
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const article = articlesData.find((a) => a.slug === slug);
@@ -42,6 +51,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url: url,
       siteName: "Đồ Đồng Lộc Nam",
       locale: "vi_VN",
+      publishedTime: formatIsoDate(article.date),
+      authors: [article.author],
       images: [
         {
           url: article.image.startsWith("http") ? article.image : `https://www.quatanglocnam.com${article.image}`,
@@ -84,7 +95,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
         title={article.title}
         description={article.summary}
         image={article.image.startsWith("http") ? article.image : `https://www.quatanglocnam.com${article.image}`}
-        datePublished="2026-08-27T08:00:00+07:00"
+        datePublished={formatIsoDate(article.date)}
         author={article.author}
         url={articleUrl}
       />
