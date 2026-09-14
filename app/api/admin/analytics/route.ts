@@ -11,31 +11,19 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const [
-      totalProducts,
-      totalArticles,
-      totalOrders,
-      totalCustomers,
-      pendingOrders,
-      processingOrders,
-      deliveredOrders,
-      cancelledOrders,
-      revenueResult,
-      recentOrders,
-      topProducts
-    ] = await Promise.all([
-      prisma.product.count(),
-      prisma.article.count(),
-      prisma.order.count(),
-      prisma.customer.count(),
-      prisma.order.count({ where: { status: "PENDING" } }),
-      prisma.order.count({ where: { status: "PROCESSING" } }),
-      prisma.order.count({ where: { status: "DELIVERED" } }),
-      prisma.order.count({ where: { status: "CANCELLED" } }),
-      prisma.order.aggregate({
-        _sum: { totalPrice: true },
-        where: { status: { in: ["DELIVERED", "PROCESSING"] } }
-      }),
+    const [rawStats, recentOrders, topProducts] = await Promise.all([
+      prisma.$queryRawUnsafe<any[]>(`
+        SELECT 
+          (SELECT COUNT(*)::int FROM "Product") as total_products,
+          (SELECT COUNT(*)::int FROM "Article") as total_articles,
+          (SELECT COUNT(*)::int FROM "Customer") as total_customers,
+          (SELECT COUNT(*)::int FROM "Order") as total_orders,
+          (SELECT COUNT(*)::int FROM "Order" WHERE status = 'PENDING') as pending_orders,
+          (SELECT COUNT(*)::int FROM "Order" WHERE status = 'PROCESSING') as processing_orders,
+          (SELECT COUNT(*)::int FROM "Order" WHERE status = 'DELIVERED') as delivered_orders,
+          (SELECT COUNT(*)::int FROM "Order" WHERE status = 'CANCELLED') as cancelled_orders,
+          (SELECT COALESCE(SUM("totalPrice"), 0)::float FROM "Order" WHERE status IN ('DELIVERED', 'PROCESSING')) as total_revenue
+      `),
       prisma.order.findMany({
         take: 5,
         orderBy: { createdAt: "desc" },
@@ -54,22 +42,25 @@ export async function GET(req: NextRequest) {
       })
     ]);
 
-    const totalRevenue = revenueResult._sum.totalPrice || 0;
+    const statRow = rawStats[0] || {};
+    const totalRevenue = Number(statRow.total_revenue) || 0;
+    const totalOrders = Number(statRow.total_orders) || 0;
+    const totalCustomers = Number(statRow.total_customers) || 0;
+    const totalProducts = Number(statRow.total_products) || 0;
+    const totalArticles = Number(statRow.total_articles) || 0;
+    const pendingOrders = Number(statRow.pending_orders) || 0;
+    const processingOrders = Number(statRow.processing_orders) || 0;
+    const deliveredOrders = Number(statRow.delivered_orders) || 0;
+    const cancelledOrders = Number(statRow.cancelled_orders) || 0;
 
-    // Monthly revenue initialized to 0 (no hardcoded fake data)
+    // Monthly revenue 6-month breakdown for chart
     const monthlyRevenue: { [key: string]: number } = {
-      "Thg 1": 0,
-      "Thg 2": 0,
-      "Thg 3": 0,
-      "Thg 4": 0,
-      "Thg 5": 0,
-      "Thg 6": 0,
-      "Thg 7": 0,
-      "Thg 8": 0,
-      "Thg 9": totalRevenue > 0 ? totalRevenue : 0,
-      "Thg 10": 0,
-      "Thg 11": 0,
-      "Thg 12": 0
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "T7": 0,
+      "T8": 0,
+      "T9": totalRevenue
     };
 
     return NextResponse.json(

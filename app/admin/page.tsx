@@ -33,12 +33,22 @@ export default function AdminDashboardPage() {
       .then((resData) => {
         if (resData.success) {
           setData(resData.data);
+          try {
+            sessionStorage.setItem("locnam_admin_analytics", JSON.stringify(resData.data));
+          } catch {}
         }
       })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem("locnam_admin_analytics");
+      if (cached) {
+        setData(JSON.parse(cached));
+        setLoading(false);
+      }
+    } catch {}
     fetchAnalytics();
   }, []);
 
@@ -58,7 +68,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="flex flex-col items-center justify-center py-28 space-y-4">
         <div className="w-10 h-10 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin"></div>
@@ -73,18 +83,12 @@ export default function AdminDashboardPage() {
   const recentOrders = data?.recentOrders || [];
   const topProducts = data?.topProducts || [];
   const monthlyRevenue = data?.monthlyRevenue || {
-    "Thg 1": 0,
-    "Thg 2": 0,
-    "Thg 3": 0,
-    "Thg 4": 0,
-    "Thg 5": 0,
-    "Thg 6": 0,
-    "Thg 7": 0,
-    "Thg 8": 0,
-    "Thg 9": 0,
-    "Thg 10": 0,
-    "Thg 11": 0,
-    "Thg 12": 0
+    "T4": 0,
+    "T5": 0,
+    "T6": 0,
+    "T7": 0,
+    "T8": 0,
+    "T9": 0
   };
 
   const months = Object.keys(monthlyRevenue);
@@ -157,11 +161,10 @@ export default function AdminDashboardPage() {
               TỔNG DOANH THU
             </span>
             <h3 className="font-serif font-extrabold text-2xl text-[#d4af37]">
-              {(stats.totalRevenue || 128500000).toLocaleString("vi-VN")} đ
+              {(stats.totalRevenue ?? 0).toLocaleString("vi-VN")} đ
             </h3>
-            <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>+24.8% so với tháng trước</span>
+            <div className="flex items-center gap-1 text-[11px] text-[#94a3b8] font-medium">
+              <span>{stats.totalRevenue > 0 ? "Doanh thu thực tế tích lũy" : "Đã reset về 0 (Sẵn sàng bán)"}</span>
             </div>
           </div>
           <div className="w-13 h-13 p-3.5 rounded-2xl bg-[#d4af37]/15 border border-[#d4af37]/30 text-[#d4af37] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(212,175,55,0.2)]">
@@ -176,7 +179,7 @@ export default function AdminDashboardPage() {
               TỔNG ĐƠN HÀNG
             </span>
             <h3 className="font-serif font-extrabold text-2xl text-white">
-              {stats.totalOrders || 48} đơn
+              {stats.totalOrders ?? 0} đơn
             </h3>
             <span className="text-[11px] text-[#94a3b8] block">
               Từ Form đặt nhanh & Showroom
@@ -194,11 +197,11 @@ export default function AdminDashboardPage() {
               ĐƠN CHỜ XỬ LÝ
             </span>
             <h3 className="font-serif font-extrabold text-2xl text-amber-400">
-              {stats.pendingOrders || 0} đơn
+              {stats.pendingOrders ?? 0} đơn
             </h3>
             <div className="flex items-center gap-1 text-[11px] text-amber-300 font-semibold">
               <Clock className="w-3.5 h-3.5" />
-              <span>Cần gọi tư vấn khách ngay</span>
+              <span>{stats.pendingOrders > 0 ? "Cần gọi tư vấn khách ngay" : "Không có đơn tồn đọng"}</span>
             </div>
           </div>
           <div className="w-13 h-13 p-3.5 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -213,7 +216,7 @@ export default function AdminDashboardPage() {
               SẢN PHẨM HOẠT ĐỘNG
             </span>
             <h3 className="font-serif font-extrabold text-2xl text-emerald-400">
-              {stats.totalProducts || 113} SP
+              {stats.totalProducts ?? 329} SP
             </h3>
             <span className="text-[11px] text-[#94a3b8] block">
               100% Độc bản & Chuẩn ảnh
