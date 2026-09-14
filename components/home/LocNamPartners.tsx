@@ -195,6 +195,8 @@ export function LocNamPartners() {
                 src={current.image}
                 alt={current.name}
                 className={`w-full h-full object-cover ${current.objectPos || "object-center"} transition-all duration-700 animate-fadeIn`}
+                loading="lazy"
+                decoding="async"
               />
 
               {/* Direct Google Map badge */}

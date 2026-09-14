@@ -177,6 +177,8 @@ export function HomeHeroSlider() {
                     alt={slide.title || "Banner Đồ Đồng Lộc Nam"}
                     className="w-full h-full object-cover object-center relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]"
                     loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "low"}
+                    decoding={index === 0 ? "sync" : "async"}
                   />
                 </div>
 

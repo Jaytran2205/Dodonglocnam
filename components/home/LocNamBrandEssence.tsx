@@ -202,6 +202,8 @@ export function LocNamBrandEssence() {
                       src={rev.image}
                       alt={rev.product}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      loading="lazy"
+                      decoding="async"
                     />
 
                     {/* Tag badge on image */}

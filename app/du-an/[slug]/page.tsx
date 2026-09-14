@@ -24,6 +24,12 @@ interface ProjectDetailPageProps {
   };
 }
 
+export async function generateStaticParams() {
+  return projectsData.map((project) => ({
+    slug: project.slug,
+  }));
+}
+
 export async function generateMetadata({ params }: ProjectDetailPageProps): Promise<Metadata> {
   const project = projectsData.find((p) => p.slug === params.slug);
   if (!project) {

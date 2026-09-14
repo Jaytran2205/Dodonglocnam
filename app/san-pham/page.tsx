@@ -9,7 +9,7 @@ import { FloatingContact } from "@/components/common/FloatingContact";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { CategorySeoContent } from "@/components/product/CategorySeoContent";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Tất Cả Sản Phẩm Đồ Đồng Cao Cấp Ý Yên Nam Định | Đồ Đồng Lộc Nam",
@@ -54,17 +54,7 @@ export const metadata: Metadata = {
   },
 };
 
-interface AllProductsPageProps {
-  searchParams?: {
-    sub?: string;
-    category?: string;
-  };
-}
-
-export default async function AllProductsPage({ searchParams }: AllProductsPageProps) {
-  const initialSub = searchParams?.sub;
-  const initialCategory = searchParams?.category;
-
+export default async function AllProductsPage() {
   const products = await prisma.product.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -94,8 +84,6 @@ export default async function AllProductsPage({ searchParams }: AllProductsPageP
         <LeGiaProductListing
           products={products}
           categories={categories}
-          currentCategorySlug={initialCategory}
-          initialSub={initialSub}
           pageTitle="TẤT CẢ SẢN PHẨM"
         />
 

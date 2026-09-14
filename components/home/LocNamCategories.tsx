@@ -95,6 +95,8 @@ export function LocNamCategories() {
                   src={cat.image}
                   alt={cat.title}
                   className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
             </Link>
@@ -115,6 +117,8 @@ export function LocNamCategories() {
                   src={cat.image}
                   alt={cat.title}
                   className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#060c14]/95 via-[#060c14]/40 to-transparent opacity-90 group-hover:opacity-75 transition-opacity" />
               </div>

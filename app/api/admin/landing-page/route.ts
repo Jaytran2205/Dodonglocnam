@@ -2,13 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 
+export const revalidate = 300;
+
 export async function GET() {
   const settings = await prisma.setting.findMany();
   const settingsMap: { [key: string]: string } = {};
   settings.forEach(s => {
     settingsMap[s.key] = s.value;
   });
-  return NextResponse.json({ success: true, settings: settingsMap, list: settings });
+  return NextResponse.json(
+    { success: true, settings: settingsMap, list: settings },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    }
+  );
 }
 
 export async function POST(req: NextRequest) {

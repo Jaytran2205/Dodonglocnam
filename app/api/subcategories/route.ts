@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { DEFAULT_HIERARCHICAL_CATEGORIES } from "@/lib/subcategories-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function GET() {
   try {
@@ -21,7 +21,14 @@ export async function GET() {
               banner: cat.banner || def?.banner || "/images/trong-dong-viet-nam.jpg",
             };
           });
-          return NextResponse.json({ success: true, data: merged });
+          return NextResponse.json(
+            { success: true, data: merged },
+            {
+              headers: {
+                "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+              },
+            }
+          );
         }
       } catch (err) {
         console.error("Parse subcategories_catalog error:", err);
@@ -29,15 +36,27 @@ export async function GET() {
     }
 
     // Default fallback
-    return NextResponse.json({
-      success: true,
-      data: DEFAULT_HIERARCHICAL_CATEGORIES,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: DEFAULT_HIERARCHICAL_CATEGORIES,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (error) {
     console.error("Public GET Subcategories Error:", error);
     return NextResponse.json(
       { success: true, data: DEFAULT_HIERARCHICAL_CATEGORIES },
-      { status: 200 }
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
     );
   }
 }

@@ -57,6 +57,8 @@ export function LocNamProjectsSection() {
                 src={mainProject.image}
                 alt={mainProject.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                loading="lazy"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
@@ -135,6 +137,8 @@ export function LocNamProjectsSection() {
                     src={project.image}
                     alt={project.title}
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent sm:hidden" />
                   <span className="absolute bottom-1.5 left-1.5 sm:hidden px-1.5 py-0.5 bg-black/80 text-[#dfb755] text-[9px] font-bold rounded">

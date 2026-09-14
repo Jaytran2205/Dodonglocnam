@@ -12,7 +12,7 @@ import { ModernFooter } from "@/components/common/ModernFooter";
 import { FloatingContact } from "@/components/common/FloatingContact";
 import { FaqJsonLd } from "@/components/seo/JsonLd";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default function HomePage() {
   const homeFaqs = [

@@ -122,6 +122,8 @@ export function LocNamVideos() {
                       src={vid.image}
                       alt={vid.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-95 group-hover:brightness-105"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-black/30 group-hover:bg-black/15 transition-colors pointer-events-none" />
 

@@ -444,6 +444,7 @@ export function LeGiaProductListing({
                       alt={sub.name}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                   </div>
@@ -933,6 +934,7 @@ function ListingProductCard({
               alt={product.name}
               className="w-full h-full object-contain group-hover/img:scale-105 transition-all duration-300"
               loading="lazy"
+              decoding="async"
             />
           </Link>
 
