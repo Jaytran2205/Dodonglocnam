@@ -100,6 +100,37 @@ export default async function ArticleDetailPage({ params }: PageProps) {
         url={articleUrl}
       />
 
+      {article.slug === "nghe-nhan-duong-ba-tien" && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Person",
+              "name": "Dương Bá Tiến",
+              "jobTitle": "Nghệ nhân đúc đồng",
+              "award": "Nghệ nhân bàn tay vàng",
+              "worksFor": {
+                "@type": "Organization",
+                "name": "Công ty TNHH Cơ Khí Đúc Lộc Nam",
+                "url": "https://www.quatanglocnam.com",
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressLocality": "Ý Yên",
+                  "addressRegion": "Nam Định",
+                  "addressCountry": "VN"
+                }
+              },
+              "hasOccupation": {
+                "@type": "Occupation",
+                "name": "Nghệ nhân đúc đồng",
+                "experienceRequirements": "40 năm kinh nghiệm"
+              }
+            }),
+          }}
+        />
+      )}
+
       <ModernHeader />
 
       <main className="flex-grow max-w-[1040px] mx-auto px-4 sm:px-6 py-8 w-full">
@@ -178,6 +209,22 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                     {paragraph.replace("#### ", "")}
                   </h4>
                 );
+              }
+              if (paragraph.startsWith("![") && paragraph.includes("](") && paragraph.endsWith(")")) {
+                const match = paragraph.match(/^!\[(.*?)\]\((.*?)\)$/);
+                if (match) {
+                  const [, alt, src] = match;
+                  return (
+                    <figure key={index} className="my-6 rounded-xl overflow-hidden border border-[#e2d5bd] bg-[#fbf9f5] shadow-sm">
+                      <img src={src} alt={alt} className="w-full max-h-[520px] object-cover" />
+                      {alt && (
+                        <figcaption className="p-3 text-center text-xs text-[#6b7280] italic bg-white border-t border-[#f0eae0]">
+                          {alt}
+                        </figcaption>
+                      )}
+                    </figure>
+                  );
+                }
               }
               if (paragraph.startsWith("> ")) {
                 return (

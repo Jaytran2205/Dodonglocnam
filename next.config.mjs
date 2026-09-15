@@ -165,6 +165,12 @@ const nextConfig = {
       ],
     },
   ],
+  rewrites: async () => [
+    {
+      source: '/gioi-thieu/:slug',
+      destination: '/tin-tuc/:slug',
+    },
+  ],
 };
 
 export default nextConfig;
