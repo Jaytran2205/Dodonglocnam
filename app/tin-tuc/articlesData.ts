@@ -19,7 +19,7 @@ export const articlesData: Article[] = [
     category: "NGHỆ NHÂN & LÀNG NGHỀ",
     date: "15/09/2026",
     author: "Đồ Đồng Lộc Nam",
-    image: "/images/locnam_real/le-trao-bang-vinh-danh-cup-ban-tay-vang-loc-nam.png",
+    image: "/images/artisan-foundry.jpg",
     readTime: "8 phút đọc",
     keywords: [
       "nghệ nhân đúc đồng",
@@ -39,7 +39,6 @@ export const articlesData: Article[] = [
     ],
     content: [
       "Giữa cái nôi của làng nghề đúc đồng Vạn Điểm – Ý Yên, Nam Định với lịch sử hơn 900 năm hưng thịnh, cái tên Nghệ nhân Dương Bá Tiến – người sáng lập Công ty TNHH Cơ Khí Đúc Lộc Nam đã trở thành biểu tượng cho sự bền bỉ, tài hoa và lòng tận tụy gìn giữ ngọn lửa nghề truyền thống. Với hơn bốn thập kỷ miệt mài bên khuôn đất, lò nung, người nghệ nhân mang danh hiệu 'Bàn Tay Vàng' không chỉ kế thừa tinh hoa của tiền nhân mà còn nâng tầm từng thỏi đồng thô ráp trở thành những kiệt tác đồ thờ, tượng đồng và tranh đồng mỹ nghệ mang hồn cốt dân tộc, vang danh khắp mọi miền Tổ quốc và vươn ra bạn bè quốc tế.",
-      "![Nghệ nhân Dương Bá Tiến vinh dự nhận Cúp Bàn Tay Vàng trong Chương trình Vinh danh Thương hiệu truyền thống, Gia truyền Làng nghề Việt](/images/locnam_real/le-trao-bang-vinh-danh-cup-ban-tay-vang-loc-nam.png)",
       "## Hành Trình 40 Năm Cống Hiến Cho Nghề Đúc Đồng",
       "Sinh ra và lớn lên trên mảnh đất địa linh nhân kiệt Ý Yên, tuổi thơ của nghệ nhân Dương Bá Tiến đã gắn liền với tiếng búa gõ lách cách, mùi đất sét làm khuôn nồng ấm và ánh lửa bập bùng từ những mẻ đồng sôi sục. Được các bậc tiền bối trong dòng tộc truyền trao ngọn lửa nhiệt huyết từ thuở niên thiếu, ông xem nghề đúc đồng thủ công không đơn thuần là kế sinh nhai, mà là nghiệp duyên cả đời phải phụng sự.",
       "Những ngày đầu học nghề là chuỗi ngày gian nan thử thách bản lĩnh. Thời điểm đó, kỹ thuật đúc đồng hoàn toàn dựa vào kinh nghiệm thủ công truyền miệng: từ khâu chọn đất sét dẻo quánh pha trấu mục, căn chỉnh nhiệt độ lò nung bằng mắt thường ở ngưỡng trên 1.200°C, cho đến khoảnh khắc rót đồng đòi hỏi sự chuẩn xác tuyệt đối từng giây. Đã có những mẻ đồng hỏng, những pho tượng rỗ bề mặt hay nứt vỡ khuôn ép ông phải làm lại từ đầu. Nhưng chính từ những thử thách khắc nghiệt ấy, ý chí sắt đá và đôi bàn tay tài hoa của người con đất Nam Định ngày càng được tôi luyện sắc sảo.",
@@ -47,6 +46,7 @@ export const articlesData: Article[] = [
       "Hơn 40 năm lao động sáng tạo không ngơi nghỉ, nghệ nhân Dương Bá Tiến đã đưa tinh hoa nghề cổ truyền bước qua thăng trầm thời đại, khẳng định chỗ đứng vững chắc của Đúc đồng Lộc Nam trên bản đồ thủ công mỹ nghệ Việt Nam.",
       "## Danh Hiệu 'Nghệ Nhân Bàn Tay Vàng' - Niềm Tự Hào Của Làng Nghề",
       "Sự tận tụy chí công vô tư và trình độ kỹ nghệ xuất sắc của ông đã được Nhà nước và các hiệp hội làng nghề ghi nhận bằng danh hiệu cao quý: Nghệ nhân Bàn Tay Vàng. Đây không chỉ là một danh xưng danh dự, mà là sự tôn vinh xứng đáng cho một đời người cống hiến trọn vẹn vì sự nghiệp bảo tồn di sản văn hóa phi vật thể của dân tộc.",
+      "![Nghệ nhân Dương Bá Tiến vinh dự nhận Cúp Bàn Tay Vàng trong Chương trình Vinh danh Thương hiệu truyền thống, Gia truyền Làng nghề Việt](/images/locnam_real/le-trao-bang-vinh-danh-cup-ban-tay-vang-loc-nam.png)",
       "Để được phong tặng danh hiệu 'Bàn Tay Vàng', người nghệ nhân phải trải qua quá trình thẩm định nghiêm ngặt về tài năng sáng tạo, số lượng tác phẩm tiêu biểu có giá trị nghệ thuật cao và những đóng góp tích cực cho cộng đồng làng nghề Ý Yên – Nam Định. Danh hiệu cúp vàng và bằng chứng nhận là bảo chứng thép cho tài năng chạm khắc tinh xảo, khả năng truyền thần vào từng pho tượng Phật, tượng danh nhân, và các bộ đại tự câu đối trang nghiêm.",
       "![Bằng chứng nhận Cúp Bàn Tay Vàng trao tặng cho Ông Dương Bá Tiến - Công ty TNHH Cơ Khí Đúc Lộc Nam](/images/locnam_real/bang-chung-nhan-cup-ban-tay-vang-duong-ba-tien.png)",
       "![Cận cảnh Cúp Bàn Tay Vàng danh giá mạ vàng trao tặng Nghệ nhân Dương Bá Tiến tại Ý Yên Nam Định](/images/locnam_real/cup-ban-tay-vang-duong-ba-tien-loc-nam.png)",

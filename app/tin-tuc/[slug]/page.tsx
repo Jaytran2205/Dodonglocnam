@@ -215,10 +215,17 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                 if (match) {
                   const [, alt, src] = match;
                   return (
-                    <figure key={index} className="my-6 rounded-xl overflow-hidden border border-[#e2d5bd] bg-[#fbf9f5] shadow-sm">
-                      <img src={src} alt={alt} className="w-full max-h-[520px] object-cover" />
+                    <figure key={index} className="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-[#fbf9f5] shadow-sm max-w-2xl mx-auto">
+                      <div className="p-2 sm:p-4 flex items-center justify-center bg-white/60">
+                        <img
+                          src={src}
+                          alt={alt}
+                          loading="lazy"
+                          className="max-w-full max-h-[560px] w-auto h-auto object-contain rounded-lg shadow-sm"
+                        />
+                      </div>
                       {alt && (
-                        <figcaption className="p-3 text-center text-xs text-[#6b7280] italic bg-white border-t border-[#f0eae0]">
+                        <figcaption className="p-3.5 text-center text-xs sm:text-sm text-[#5a4a32] italic bg-[#fbf9f5] border-t border-[#e2d5bd]/60 font-serif">
                           {alt}
                         </figcaption>
                       )}
