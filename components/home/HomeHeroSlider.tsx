@@ -18,7 +18,7 @@ const DEFAULT_SLIDES: BannerSlide[] = [
     id: "banner-thiet-ke-thi-cong",
     title: "THIẾT KẾ - ĐÚC - THI CÔNG CÁC CÔNG TRÌNH TRÊN TOÀN QUỐC",
     subtitle: "Hotline: 0836 122 222 - 0846 699 997 | Đúc Đồng Lộc Nam",
-    image: "/images/banners/banner_thiet_ke_thi_cong_toan_quoc.jpg",
+    image: "/images/banners/banner_thiet_ke_thi_cong_toan_quoc.png",
     link: "/du-an",
     active: true,
   },
