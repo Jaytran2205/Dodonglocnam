@@ -214,19 +214,19 @@ export default function AdminLandingPageManager() {
 
   const [sliderBanners, setSliderBanners] = useState<any[]>([
     {
+      id: "banner-thiet-ke-thi-cong",
+      title: "THIẾT KẾ - ĐÚC - THI CÔNG CÁC CÔNG TRÌNH TRÊN TOÀN QUỐC",
+      subtitle: "Hotline: 0836 122 222 - 0846 699 997 | Đúc Đồng Lộc Nam",
+      image: "/images/banners/banner_thiet_ke_thi_cong_toan_quoc.jpg",
+      link: "/du-an",
+      active: true,
+    },
+    {
       id: "1",
       title: "HỆ THỐNG XƯỞNG SẢN XUẤT & CỬA HÀNG TRƯNG BÀY",
       subtitle: "Đúc Đồng Gia Truyền Dương Bá Tiến - 4 Cơ Sở Toàn Quốc",
       image: "/images/banners/banner_he_thong_xuong_ultra.jpg",
       link: "/gioi-thieu",
-      active: true,
-    },
-    {
-      id: "2",
-      title: "THIẾT KẾ - ĐÚC - THI CÔNG TƯỢNG ĐÀI VÀ CÔNG TRÌNH TÂM LINH",
-      subtitle: "Đúc Tượng Phật, Tượng Danh Nhân, Tượng Anh Hùng Dân Tộc",
-      image: "/images/banners/banner_duc_tuong_dai.jpg",
-      link: "/san-pham/tuong-dong",
       active: true,
     },
     {
@@ -243,6 +243,14 @@ export default function AdminLandingPageManager() {
       subtitle: "Dát Vàng Tượng Phật, Đồ Thờ Cúng, Nội Thất Biệt Thự & Lâu Đài",
       image: "/images/banners/banner_dat_vang_thi_cong.jpg",
       link: "/san-pham/do-tho-cung",
+      active: true,
+    },
+    {
+      id: "2",
+      title: "THIẾT KẾ - ĐÚC - THI CÔNG TƯỢNG ĐÀI VÀ CÔNG TRÌNH TÂM LINH",
+      subtitle: "Đúc Tượng Phật, Tượng Danh Nhân, Tượng Anh Hùng Dân Tộc",
+      image: "/images/banners/banner_duc_tuong_dai.jpg",
+      link: "/san-pham/tuong-dong",
       active: true,
     },
   ]);
