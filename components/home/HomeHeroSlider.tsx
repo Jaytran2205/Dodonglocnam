@@ -38,22 +38,6 @@ const DEFAULT_SLIDES: BannerSlide[] = [
     link: "/san-pham/qua-tang-dong",
     active: true,
   },
-  {
-    id: "4",
-    title: "NHẬN DÁT VÀNG 9999 - THI CÔNG DỰ ÁN TRÊN TOÀN QUỐC",
-    subtitle: "Dát Vàng Tượng Phật, Đồ Thờ Cúng, Nội Thất Biệt Thự & Lâu Đài",
-    image: "/images/banners/banner_dat_vang_thi_cong.jpg",
-    link: "/san-pham/do-tho-cung",
-    active: true,
-  },
-  {
-    id: "2",
-    title: "THIẾT KẾ - ĐÚC - THI CÔNG TƯỢNG ĐÀI VÀ CÔNG TRÌNH TÂM LINH",
-    subtitle: "Đúc Tượng Phật, Tượng Danh Nhân, Tượng Anh Hùng Dân Tộc",
-    image: "/images/banners/banner_duc_tuong_dai.jpg",
-    link: "/san-pham/tuong-dong",
-    active: true,
-  },
 ];
 
 export function HomeHeroSlider() {
