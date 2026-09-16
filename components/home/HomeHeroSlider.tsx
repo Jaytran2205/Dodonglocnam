@@ -18,7 +18,7 @@ const DEFAULT_SLIDES: BannerSlide[] = [
     id: "banner-he-thong-showroom",
     title: "HỆ THỐNG 1 XƯỞNG SẢN XUẤT & 3 CỬA HÀNG TRƯNG BÀY",
     subtitle: "Đúc Đồng Gia Truyền Dương Bá Tiến - Hà Nội, Nam Định, Ninh Bình",
-    image: "/images/banners/banner_he_thong_showroom_xuong.png",
+    image: "/images/banners/banner_he_thong_showroom_xuong_v2.png",
     link: "/gioi-thieu",
     active: true,
   },
