@@ -18,7 +18,7 @@ const DEFAULT_SLIDES: BannerSlide[] = [
     id: "banner-he-thong-showroom",
     title: "HỆ THỐNG 1 XƯỞNG SẢN XUẤT & 3 CỬA HÀNG TRƯNG BÀY",
     subtitle: "Đúc Đồng Gia Truyền Dương Bá Tiến - Hà Nội, Nam Định, Ninh Bình",
-    image: "/images/banners/banner_he_thong_showroom_xuong_v2.png",
+    image: "/images/banners/banner_he_thong_showroom_xuong_v3.webp",
     link: "/gioi-thieu",
     active: true,
   },
@@ -152,7 +152,7 @@ export function HomeHeroSlider() {
   return (
     <section
       aria-label="Banner nổi bật Đồ Đồng Lộc Nam"
-      className="relative w-full aspect-[2.35/1] min-h-[220px] max-h-[calc(100vh-80px)] bg-[#0c1825] border-b border-[#e6dbc8] overflow-hidden select-none"
+      className="relative w-full aspect-[2.35/1] min-h-[220px] max-h-[calc(100vh-80px)] bg-[#fbf4ea] border-b border-[#e6dbc8] overflow-hidden select-none"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}

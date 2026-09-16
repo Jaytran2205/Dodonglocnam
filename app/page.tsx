@@ -62,6 +62,16 @@ export default function HomePage() {
       />
       <FaqJsonLd faqs={homeFaqs} />
 
+      {/* Preload first hero banner image for instant LCP render */}
+      <link
+        rel="preload"
+        as="image"
+        href="/images/banners/banner_he_thong_showroom_xuong_v3.webp"
+        type="image/webp"
+        // @ts-ignore
+        fetchPriority="high"
+      />
+
       {/* 1. Header with Top Announcement Bar & Brand Nav */}
       <ModernHeader />
 
