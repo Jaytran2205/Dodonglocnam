@@ -66,8 +66,7 @@ export default async function QuaTangPage() {
 
   const catName = "Quà Tặng";
   const catBanner = mainCategoryData.banner || "/images/collections/cat_qua_tang.jpg";
-  const catDesc =
-    "Tuyển tập quà tặng bằng đồng mạ vàng 24k cao cấp chế tác thủ công tinh xảo: quà tặng đối tượng (doanh nghiệp, khách hàng, sếp, cha mẹ, thầy cô), quà tặng sự kiện (tết, tân gia, ngày cưới, mừng thọ, 20/11, 20/10 và 8/3, cúp, huy chương, biển chức danh) và quà tặng phong thủy chiêu tài hút lộc.";
+  const catDesc = undefined;
 
   const breadcrumbs = [
     { name: "Trang chủ", url: "/" },

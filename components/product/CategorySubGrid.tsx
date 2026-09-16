@@ -39,71 +39,74 @@ export function CategorySubGrid({
   parentBackText,
 }: CategorySubGridProps) {
   return (
-    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 2xl:px-8 py-6 sm:py-8">
-      {/* 1. Breadcrumbs Navigation */}
-      <nav aria-label="Breadcrumb" className="mb-6 text-xs sm:text-sm text-[#94a3b8] flex items-center flex-wrap gap-2">
-        {breadcrumbs.map((crumb, idx) => {
-          const isLast = idx === breadcrumbs.length - 1;
-          return (
-            <React.Fragment key={idx}>
-              {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#64748b] shrink-0" />}
-              {isLast || !crumb.url ? (
-                <span className="text-[#ffd700] font-bold">{crumb.name}</span>
-              ) : (
-                <Link
-                  href={crumb.url}
-                  className="hover:text-[#ffd700] transition-colors flex items-center gap-1 font-medium"
-                >
-                  {crumb.name}
-                </Link>
-              )}
-            </React.Fragment>
-          );
-        })}
-      </nav>
-
-      {/* Back Button (if parentBackHref provided) */}
-      {parentBackHref && (
-        <div className="mb-5">
-          <Link
-            href={parentBackHref}
-            className="inline-flex items-center gap-1.5 text-xs text-[#dfb755] hover:text-white font-bold transition-colors py-1.5 px-3 rounded-lg bg-[#0d1b2a] border border-[#1e344d] hover:border-[#dfb755] active:scale-95"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>‹ {parentBackText || "Trở về danh mục cấp trên"}</span>
-          </Link>
-        </div>
-      )}
-
-      {/* 2. Header Section */}
-      <div className="text-center mb-6 sm:mb-8">
-        <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-black text-[#ffd700] tracking-wide uppercase">
-          {title}
-        </h1>
-        <div className="w-20 h-0.5 bg-gradient-to-r from-transparent via-[#ffd700] to-transparent mx-auto mt-3 mb-3 rounded-full" />
-        {subtitle && (
-          <p className="text-xs sm:text-sm text-[#94a3b8] uppercase tracking-wider font-semibold">
-            {subtitle}
-          </p>
-        )}
-        {description && (
-          <p className="max-w-3xl mx-auto text-xs sm:text-sm text-[#cbd5e1] mt-2 leading-relaxed">
-            {description}
-          </p>
-        )}
-      </div>
-
-      {/* Category Banner Hero */}
+    <div className="w-full">
+      {/* 1. Full-Width Edge-to-Edge Category Banner */}
       {banner && (
-        <div className="mb-8 sm:mb-12 rounded-2xl overflow-hidden shadow-2xl border border-[#1e344d]/60 aspect-[21/9] sm:aspect-[24/9] w-full relative bg-[#0c1825]">
+        <section aria-label={`Banner danh mục ${title}`} className="w-full relative aspect-[1920/818] min-h-[160px] sm:min-h-[220px] bg-[#0c1825] border-b border-[#1e344d]/60 overflow-hidden shadow-2xl">
           <img
             src={banner}
             alt={title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-center"
             loading="eager"
+            fetchPriority="high"
           />
-        </div>
+        </section>
       )}
+
+      {/* 2. Main Content Container */}
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 2xl:px-8 py-6 sm:py-8">
+        {/* Breadcrumbs Navigation */}
+        <nav aria-label="Breadcrumb" className="mb-6 text-xs sm:text-sm text-[#94a3b8] flex items-center flex-wrap gap-2">
+          {breadcrumbs.map((crumb, idx) => {
+            const isLast = idx === breadcrumbs.length - 1;
+            return (
+              <React.Fragment key={idx}>
+                {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#64748b] shrink-0" />}
+                {isLast || !crumb.url ? (
+                  <span className="text-[#ffd700] font-bold">{crumb.name}</span>
+                ) : (
+                  <Link
+                    href={crumb.url}
+                    className="hover:text-[#ffd700] transition-colors flex items-center gap-1 font-medium"
+                  >
+                    {crumb.name}
+                  </Link>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </nav>
+
+        {/* Back Button (if parentBackHref provided) */}
+        {parentBackHref && (
+          <div className="mb-5">
+            <Link
+              href={parentBackHref}
+              className="inline-flex items-center gap-1.5 text-xs text-[#dfb755] hover:text-white font-bold transition-colors py-1.5 px-3 rounded-lg bg-[#0d1b2a] border border-[#1e344d] hover:border-[#dfb755] active:scale-95"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>‹ {parentBackText || "Trở về danh mục cấp trên"}</span>
+            </Link>
+          </div>
+        )}
+
+        {/* Header Section */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-black text-[#ffd700] tracking-wide uppercase">
+            {title}
+          </h1>
+          <div className="w-20 h-0.5 bg-gradient-to-r from-transparent via-[#ffd700] to-transparent mx-auto mt-3 mb-3 rounded-full" />
+          {subtitle && (
+            <p className="text-xs sm:text-sm text-[#94a3b8] uppercase tracking-wider font-semibold">
+              {subtitle}
+            </p>
+          )}
+          {description && (
+            <p className="max-w-3xl mx-auto text-xs sm:text-sm text-[#cbd5e1] mt-2 leading-relaxed">
+              {description}
+            </p>
+          )}
+        </div>
 
       {/* 3. Grid Cards 3 Columns with Auto-Centered Last Row */}
       <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-6 gap-6 sm:gap-8">
@@ -166,6 +169,7 @@ export function CategorySubGrid({
           </Link>
         );
       })}
+        </div>
       </div>
     </div>
   );
