@@ -34,8 +34,16 @@ const DEFAULT_SLIDES: BannerSlide[] = [
     id: "3",
     title: "THIẾT KẾ CHẾ TÁC QUÀ TẶNG THEO YÊU CẦU - KIẾN TẠO DẤU ẤN THƯƠNG HIỆU",
     subtitle: "Quà Tặng Doanh Nghiệp, Hội Nghị, Cúp Vinh Danh, Thuyền Buồm Mạ Vàng",
-    image: "/images/banners/banner_che_tac_qua_tang.jpg",
+    image: "/images/banners/banner_che_tac_qua_tang_v2.webp",
     link: "/san-pham/qua-tang-dong",
+    active: true,
+  },
+  {
+    id: "banner-dat-vang-thi-cong",
+    title: "NHẬN DÁT VÀNG - THI CÔNG DỰ ÁN TRÊN TOÀN QUỐC",
+    subtitle: "Hotline: 0836 122 222 - 0846 699 997 | Đúc Đồng Lộc Nam",
+    image: "/images/banners/banner_dat_vang_thi_cong_v2.webp",
+    link: "/san-pham/do-tho-cung",
     active: true,
   },
 ];
