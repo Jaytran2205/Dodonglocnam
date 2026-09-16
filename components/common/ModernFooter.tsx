@@ -22,7 +22,7 @@ export function ModernFooter() {
     hotline2: "0846 699 997",
     email: "dodonglocnam1102@gmail.com",
     facebook_url: "https://facebook.com/dodonglocnam",
-    youtube_url: "https://youtube.com/dodonglocnam",
+    youtube_url: "https://youtube.com/@xuongducdonglocnamyyennamdinh",
     zalo: "0846699997",
     footer_about:
       "Xưởng đúc đồng Lộc Nam chuyên đúc tượng chân dung truyền thần, đồ thờ cúng gia tiên, quà tặng mạ vàng 24k, mô hình thuyền buồm phong thủy và trống đồng Đông Sơn cao cấp.",

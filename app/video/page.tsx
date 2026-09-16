@@ -47,24 +47,24 @@ export const metadata: Metadata = {
 
 const videos = [
   {
-    title: "Trải nghiệm không gian trưng bày và sản phẩm Lộc Nam",
-    image: "/images/hero_golden_ship.jpg",
-    href: "https://www.youtube.com/watch?v=4eOyBmy9Epg",
+    title: "Quá trình đúc tượng phật tại xưởng Ý Yên - Nam Định",
+    image: "/images/videos/NUnVlHO1mEU.jpg",
+    href: "https://www.youtube.com/watch?v=NUnVlHO1mEU",
   },
   {
-    title: "Quy trình chế tác thuyền buồm phong thủy mạ vàng 24k",
-    image: "/images/cat_lanh_dao.jpg",
-    href: "https://www.youtube.com/watch?v=SgLqX9il5a8&t=2s",
+    title: "Lắp đặt, vận chuyển bàn giao Tôn Tượng Phật về tỉnh Bến Tre",
+    image: "/images/videos/o-vHwLilgjM.jpg",
+    href: "https://www.youtube.com/watch?v=o-vHwLilgjM",
   },
   {
-    title: "Nghệ thuật đúc tượng đồng truyền thần giống thật 99%",
-    image: "/images/cat_phong_thuy.jpg",
-    href: "https://www.youtube.com/watch?v=ONd94hL1Afk",
+    title: "Thi công lắp đặt Tượng Thánh Mẫu Tổ Nghề May Mặc tại Ninh Bình",
+    image: "/images/videos/wmWQK2MBn3c.jpg",
+    href: "https://www.youtube.com/watch?v=wmWQK2MBn3c",
   },
   {
-    title: "Bộ sưu tập trống đồng Đông Sơn và mặt trống phong thủy",
-    image: "/images/cat_khai_truong.jpg",
-    href: "https://www.youtube.com/watch?v=QwSbY31TVes&t=1s",
+    title: "QUÀ TẶNG BẰNG ĐỒNG MẠ VÀNG - ĐỒNG TIỀN THÁI BÌNH HƯNG BẢO",
+    image: "/images/videos/ctwWCrZZwk4.jpg",
+    href: "https://www.youtube.com/watch?v=ctwWCrZZwk4",
   },
 ];
 

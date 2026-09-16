@@ -213,7 +213,7 @@ export function LocalBusinessJsonLd({
     ],
     sameAs: [
       "https://facebook.com/dodonglocnam",
-      "https://youtube.com/dodonglocnam",
+      "https://youtube.com/@xuongducdonglocnamyyennamdinh",
     ],
   };
 

@@ -104,7 +104,7 @@ export default function RootLayout({
     },
     "sameAs": [
       "https://facebook.com/dodonglocnam",
-      "https://youtube.com/dodonglocnam"
+      "https://youtube.com/@xuongducdonglocnamyyennamdinh"
     ]
   };
 
