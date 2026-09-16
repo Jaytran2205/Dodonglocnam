@@ -349,7 +349,7 @@ export default function AdminProductsPage() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchProducts}
+            onClick={() => fetchProducts()}
             className="p-2.5 bg-[#111c2e] hover:bg-[#152236] text-[#d4af37] border border-[#d4af37]/30 rounded-xl transition-all shadow"
             title="Tải lại danh sách"
           >

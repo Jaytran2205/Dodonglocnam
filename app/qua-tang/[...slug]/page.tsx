@@ -252,8 +252,7 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
     if (images.length === 0) {
       images = ["/images/hero_golden_ship.jpg"];
     }
-
-    const relatedProducts = await prisma.product.findMany({
+    const relatedProductsData = await prisma.product.findMany({
       where: {
         categoryId: product.categoryId,
         id: { not: product.id },
@@ -266,35 +265,67 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
       },
     });
 
-    const breadcrumbs = [
-      { name: "Trang chủ", url: "/" },
-      { name: "Quà tặng", url: "/qua-tang" },
-      ...(subCategory ? [{ name: subCategory.name, url: `/qua-tang/${subCategory.id}` }] : []),
-      { name: product.name },
-    ];
+    const relatedProducts = relatedProductsData.map((rel) => {
+      let relImages: string[] = [];
+      try {
+        relImages = JSON.parse(rel.images);
+      } catch {
+        relImages = [rel.images || "/images/hero_golden_ship.jpg"];
+      }
+      return {
+        id: rel.id,
+        name: rel.name,
+        slug: rel.slug,
+        price: rel.price,
+        images: relImages,
+        category: { slug: rel.category.slug },
+      };
+    });
+
+    const productClientData = {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      material: product.material,
+      dimensions: product.dimensions,
+      weight: product.weight,
+      shortDescription: product.shortDescription,
+      description: product.description,
+      images: images,
+      category: {
+        name: product.category.name,
+        slug: product.category.slug,
+      },
+    };
+
+    const fullUrl = `https://www.quatanglocnam.com/qua-tang/${slugs.join("/")}`;
 
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
+      <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-[#e2e8f0] antialiased">
         <ProductJsonLd
-          product={{
-            name: product.name,
-            description: product.shortDescription || `${product.name} đúc thủ công tại Đồ Đồng Lộc Nam`,
-            images: images.map((img) => img.startsWith("http") ? img : `https://www.quatanglocnam.com${img}`),
-            sku: product.sku || product.slug,
-            price: product.price ? product.price.toString() : "0",
-            category: product.category?.name || "Quà Tặng",
-            url: `https://www.quatanglocnam.com/qua-tang/${slugs.join("/")}`,
-          }}
+          name={product.name}
+          description={product.shortDescription || `${product.name} đúc thủ công tại Đồ Đồng Lộc Nam`}
+          images={images.map((img) => (img.startsWith("http") ? img : `https://www.quatanglocnam.com${img}`))}
+          sku={`LOCNAM-${product.slug.toUpperCase()}`}
+          price={product.price}
+          categoryName={product.category?.name || "Quà Tặng"}
+          url={fullUrl}
         />
 
         <ModernHeader />
 
-        <main className="flex-grow">
+        <main className="flex-grow max-w-[1440px] mx-auto px-4 sm:px-6 2xl:px-8 py-4 w-full">
           <ProductDetailClient
-            product={product}
-            images={images}
+            product={productClientData}
             relatedProducts={relatedProducts}
-            breadcrumbs={breadcrumbs}
+            hotline1="0836 122 222"
+            hotline2="0846 699 997"
+            cleanPhone1="0836122222"
+            cleanPhone2="0846699997"
+            zaloPhone="0846699997"
+            fullUrl={fullUrl}
           />
         </main>
 
