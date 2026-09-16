@@ -60,15 +60,15 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
     slug: "trong-dong",
     banner: "/images/trong-dong-viet-nam.jpg",
     subCategories: [
-      { id: "trong-dong-luu-niem", name: "Trống đồng lưu niệm", keyword: "lưu niệm", image: "/images/golden_ai/qua_trong_dong.jpg" },
-      { id: "qua-trong-dong-co-lon", name: "Quả trống đồng cỡ lớn", keyword: "cỡ lớn", image: "/images/golden_ai/qua_trong_dong.jpg" },
-      { id: "mat-trong-dong", name: "Mặt trống đồng", keyword: "mặt trống", image: "/images/golden_ai/mat_trong_dong.jpg" },
+      { id: "trong-dong-luu-niem", name: "Trống đồng lưu niệm", keyword: "lưu niệm", image: "/images/trong-dong/trong-dong-luu-niem.jpg" },
+      { id: "qua-trong-dong-co-lon", name: "Quả trống đồng cỡ lớn", keyword: "cỡ lớn", image: "/images/trong-dong/qua-trong-dong-co-lon.jpg" },
+      { id: "mat-trong-dong", name: "Mặt trống đồng", keyword: "mặt trống", image: "/images/trong-dong/mat-trong-dong.jpg" },
     ],
   },
   {
     name: "Tranh đồng",
     slug: "tranh-dong",
-    banner: "/images/collections/cat_tranh_dong.jpg",
+    banner: "/images/banners/banner_danh_muc_tranh_dong.jpg",
     subCategories: [
       { id: "tranh-bat-ma", name: "Tranh Bát Mã", keyword: "bát mã", image: "/images/locnam_real/locnam_tranh_bat_ma.jpg" },
       { id: "tranh-thuan-buom", name: "Tranh Thuận Buồm Xuôi Gió", keyword: "thuận buồm", image: "/images/golden_ai/tranh_thuan_buom.jpg" },
@@ -99,7 +99,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
   {
     name: "Tượng đồng",
     slug: "tuong-dong",
-    banner: "/images/tuong-dong-le-gia.jpg",
+    banner: "/images/banners/banner_danh_muc_tuong_dong.jpg",
     subCategories: [
       {
         id: "tuong-truyen-than",
@@ -186,7 +186,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
     name: "Quà tặng",
     slug: "qua-tang",
     aliases: ["qua-tang-dong"],
-    banner: "/images/collections/cat_qua_tang.jpg",
+    banner: "/images/banners/banner_danh_muc_qua_tang.jpg",
     subCategories: [
       {
         id: "qua-tang-doi-tuong",

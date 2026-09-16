@@ -76,7 +76,7 @@ export function CategorySubGrid({
       )}
 
       {/* 2. Header Section */}
-      <div className="text-center mb-8 sm:mb-12">
+      <div className="text-center mb-6 sm:mb-8">
         <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-black text-[#ffd700] tracking-wide uppercase">
           {title}
         </h1>
@@ -92,6 +92,18 @@ export function CategorySubGrid({
           </p>
         )}
       </div>
+
+      {/* Category Banner Hero */}
+      {banner && (
+        <div className="mb-8 sm:mb-12 rounded-2xl overflow-hidden shadow-2xl border border-[#1e344d]/60 aspect-[21/9] sm:aspect-[24/9] w-full relative bg-[#0c1825]">
+          <img
+            src={banner}
+            alt={title}
+            className="w-full h-full object-cover"
+            loading="eager"
+          />
+        </div>
+      )}
 
       {/* 3. Grid Cards 3 Columns with Auto-Centered Last Row */}
       <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-6 gap-6 sm:gap-8">
