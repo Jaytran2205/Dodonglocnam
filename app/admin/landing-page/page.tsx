@@ -214,19 +214,19 @@ export default function AdminLandingPageManager() {
 
   const [sliderBanners, setSliderBanners] = useState<any[]>([
     {
+      id: "banner-he-thong-showroom",
+      title: "HỆ THỐNG 1 XƯỞNG SẢN XUẤT & 3 CỬA HÀNG TRƯNG BÀY",
+      subtitle: "Đúc Đồng Gia Truyền Dương Bá Tiến - Hà Nội, Nam Định, Ninh Bình",
+      image: "/images/banners/banner_he_thong_showroom_xuong.png",
+      link: "/gioi-thieu",
+      active: true,
+    },
+    {
       id: "banner-thiet-ke-thi-cong",
       title: "THIẾT KẾ - ĐÚC - THI CÔNG CÁC CÔNG TRÌNH TRÊN TOÀN QUỐC",
       subtitle: "Hotline: 0836 122 222 - 0846 699 997 | Đúc Đồng Lộc Nam",
       image: "/images/banners/banner_thiet_ke_thi_cong_toan_quoc.png",
       link: "/du-an",
-      active: true,
-    },
-    {
-      id: "1",
-      title: "HỆ THỐNG XƯỞNG SẢN XUẤT & CỬA HÀNG TRƯNG BÀY",
-      subtitle: "Đúc Đồng Gia Truyền Dương Bá Tiến - 4 Cơ Sở Toàn Quốc",
-      image: "/images/banners/banner_he_thong_xuong_ultra.jpg",
-      link: "/gioi-thieu",
       active: true,
     },
     {
