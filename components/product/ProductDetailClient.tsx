@@ -29,6 +29,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { QuickOrderForm } from "./QuickOrderForm";
+import { getWatermarkedImageUrl } from "@/lib/utils";
 
 interface ProductData {
   id: string | number;
@@ -190,7 +191,7 @@ export function ProductDetailClient({
           <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-[#070e17] border border-[#1c2c3d] shadow-inner flex items-center justify-center group">
             {/* Main Image */}
             <img
-              src={currentImage}
+              src={getWatermarkedImageUrl(currentImage)}
               alt={product.name}
               className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
             />
@@ -236,12 +237,6 @@ export function ProductDetailClient({
               </div>
             )}
 
-            {/* Bottom Sub-Banner Label */}
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-r from-[#1c3328]/95 via-[#234233]/90 to-[#1c3328]/95 border-t border-[#3b6d54]/50 py-2 px-4 text-center">
-              <span className="font-serif text-xs sm:text-sm font-bold text-[#bbf7d0] tracking-wide truncate block">
-                {product.name}
-              </span>
-            </div>
           </div>
 
           {/* Thumbnails Row */}
@@ -261,7 +256,7 @@ export function ProductDetailClient({
                     }`}
                   >
                     <img
-                      src={img}
+                      src={getWatermarkedImageUrl(img)}
                       alt={`${product.name} thumbnail ${idx + 1}`}
                       className="w-full h-full object-contain"
                     />
@@ -768,7 +763,7 @@ export function ProductDetailClient({
                       className="block aspect-square overflow-hidden bg-[#070e17] rounded-lg relative p-2 mb-2"
                     >
                       <img
-                        src={thumb}
+                        src={getWatermarkedImageUrl(thumb)}
                         alt={rel.name}
                         loading="lazy"
                         decoding="async"

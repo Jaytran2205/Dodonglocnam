@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Phone, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
 
 interface ProductItem {
   id: string;
@@ -78,7 +78,7 @@ export function ProductShowcaseSection({
                   className="block relative aspect-square bg-[#F6EDE0]/60 overflow-hidden"
                 >
                   <img
-                    src={displayImage}
+                    src={getWatermarkedImageUrl(displayImage)}
                     alt={prod.name}
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                   />

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { ZoomIn, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { getWatermarkedImageUrl } from "@/lib/utils";
 
 interface ProductGalleryProps {
   images: string[];
@@ -29,7 +30,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
         {/* Main Big Image Frame */}
         <div className="relative aspect-square max-h-[420px] w-full rounded-xl border border-[#e2d5bd] bg-white overflow-hidden group shadow-sm flex items-center justify-center">
           <img
-            src={currentImage}
+            src={getWatermarkedImageUrl(currentImage)}
             alt={productName}
             className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
           />
@@ -58,7 +59,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                     : "border-gray-200 opacity-70 hover:opacity-100 hover:border-[#b8860b]"
                 }`}
               >
-                <img src={img} alt={`${productName} thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
+                <img src={getWatermarkedImageUrl(img)} alt={`${productName} thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
               </button>
             ))}
           </div>
@@ -78,7 +79,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
           <div className="relative max-w-4xl max-h-[85vh] w-full flex items-center justify-center">
             <img
-              src={currentImage}
+              src={getWatermarkedImageUrl(currentImage)}
               alt={productName}
               className="max-w-full max-h-[80vh] object-contain rounded-lg"
             />

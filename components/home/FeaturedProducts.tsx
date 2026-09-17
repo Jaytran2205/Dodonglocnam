@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Phone, ArrowRight } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
 
 interface ProductItem {
   id: string;
@@ -97,7 +97,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
                   className="block aspect-square mb-3 overflow-hidden rounded-sm bg-[#FAF6ED] relative border border-[#E5DAC3]/60"
                 >
                   <img
-                    src={displayImage}
+                    src={getWatermarkedImageUrl(displayImage)}
                     alt={prod.name}
                     loading="lazy"
                     decoding="async"

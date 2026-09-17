@@ -14,6 +14,7 @@ import {
   Filter,
   ArrowLeft,
 } from "lucide-react";
+import { getWatermarkedImageUrl } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -885,7 +886,7 @@ function ListingProductCard({
             className="w-full h-full flex items-center justify-center"
           >
             <img
-              src={currentImage}
+              src={getWatermarkedImageUrl(currentImage)}
               alt={product.name}
               className="w-full h-full object-contain group-hover/img:scale-105 transition-all duration-300"
               loading="lazy"

@@ -19,7 +19,7 @@ import {
   SubCategoryItem,
   DetailCategoryItem,
 } from "@/lib/subcategories-data";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
 
 export interface ListingProduct {
   id: string;
@@ -717,7 +717,7 @@ function ListingProductCard({
       <div className="relative aspect-square overflow-hidden bg-[#070e17] group/cardimg">
         <Link href={detailHref} className="block w-full h-full">
           <img
-            src={currentImg}
+            src={getWatermarkedImageUrl(currentImg)}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"

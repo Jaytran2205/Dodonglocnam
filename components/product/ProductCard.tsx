@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Star, ShoppingCart } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
 
 export interface ProductData {
   id: string;
@@ -89,7 +89,7 @@ export function ProductCard({ product }: ProductCardProps) {
           className="block aspect-[4/3] sm:aspect-square mb-2 overflow-hidden rounded-xl bg-white border border-[#F3EDE2] p-2.5 relative flex items-center justify-center group/img"
         >
           <img
-            src={currentDisplayImage}
+            src={getWatermarkedImageUrl(currentDisplayImage)}
             alt={product.name}
             loading="lazy"
             decoding="async"

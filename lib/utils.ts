@@ -27,3 +27,11 @@ export function slugify(text: string): string {
     .replace(/-+/g, "-")
     .trim();
 }
+
+export function getWatermarkedImageUrl(url: string | null | undefined): string {
+  if (!url) return "/images/logo.png";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.includes("?")) return url;
+  return `${url}?v=locnam_wm3`;
+}
+

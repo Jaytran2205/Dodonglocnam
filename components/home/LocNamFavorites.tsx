@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Heart, ShoppingBag } from "lucide-react";
+import { getWatermarkedImageUrl } from "@/lib/utils";
 
 export function LocNamFavorites() {
   const [wishlist, setWishlist] = useState<number[]>([]);
@@ -93,7 +94,7 @@ export function LocNamFavorites() {
                     </span>
 
                     <img
-                      src={prod.image}
+                      src={getWatermarkedImageUrl(prod.image)}
                       alt={prod.name}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"

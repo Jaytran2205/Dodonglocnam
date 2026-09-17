@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Phone } from "lucide-react";
+import { getWatermarkedImageUrl } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -96,7 +97,7 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
                     className="block aspect-square overflow-hidden bg-[#FAF6EB] relative p-3 border-b border-[#E8DCC4]"
                   >
                     <img
-                      src={thumb}
+                      src={getWatermarkedImageUrl(thumb)}
                       alt={product.name}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                     />
