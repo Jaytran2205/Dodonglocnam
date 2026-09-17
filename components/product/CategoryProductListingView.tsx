@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
+  ChevronLeft,
   ArrowLeft,
   Heart,
   SlidersHorizontal,
@@ -18,6 +19,7 @@ import {
   SubCategoryItem,
   DetailCategoryItem,
 } from "@/lib/subcategories-data";
+import { formatPrice } from "@/lib/utils";
 
 export interface ListingProduct {
   id: string;
@@ -424,98 +426,16 @@ export function CategoryProductListingView({
           {/* Product Grid 4 Columns */}
           {paginatedProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-              {paginatedProducts.map((p) => {
-                const mainImg = parseMainImage(p.images);
-                const isWished = wishlist.includes(p.id);
-                // Detail page href: keep within current hierarchy or direct
-                const detailHref = `/san-pham/${p.category.slug}/${p.slug}`;
-
-                return (
-                  <div
-                    key={p.id}
-                    className="group bg-[#0a1524] border border-[#1e344d] rounded-xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all duration-300 flex flex-col justify-between"
-                  >
-                    {/* Image Area */}
-                    <div className="relative aspect-square overflow-hidden bg-[#070e17]">
-                      <Link href={detailHref} className="block w-full h-full">
-                        <img
-                          src={mainImg}
-                          alt={p.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                      </Link>
-
-                      {/* Wishlist Heart Button (Top-Right) */}
-                      <button
-                        type="button"
-                        onClick={(e) => toggleWishlist(p.id, e)}
-                        className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                          isWished
-                            ? "bg-red-600 text-white shadow-md scale-110"
-                            : "bg-black/60 text-white/80 hover:text-red-500 hover:bg-black/80"
-                        }`}
-                        aria-label="Thêm vào yêu thích"
-                      >
-                        <Heart
-                          className={`w-4 h-4 ${isWished ? "fill-white" : ""}`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Product Info */}
-                    <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-grow gap-2">
-                      <Link href={detailHref}>
-                        <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-[#ffd700] transition-colors line-clamp-2 min-h-[38px] leading-snug">
-                          {p.name}
-                        </h3>
-                      </Link>
-
-                      {/* 5 Stars Rating & Score */}
-                      <div className="flex items-center gap-1.5 pt-0.5">
-                        <div className="flex items-center text-[#ffd700]">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="w-3 h-3 fill-[#ffd700] text-[#ffd700]" />
-                          ))}
-                        </div>
-                        <span className="text-[10px] text-[#94a3b8] font-bold">5/5</span>
-                      </div>
-
-                      {/* Price Row */}
-                      <div className="pt-1.5 border-t border-[#1e344d]/60 flex items-baseline justify-between gap-2">
-                        <span className="text-xs sm:text-sm font-black text-[#ffd700]">
-                          {formatPrice(p.price)}
-                        </span>
-                        {p.originalPrice && p.originalPrice > (p.price || 0) && (
-                          <span className="text-[10px] text-[#64748b] line-through">
-                            {formatPrice(p.originalPrice)}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Two Action Buttons: Giỏ Hàng (Trắng) & Chi Tiết (Vàng) */}
-                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-2 mt-auto">
-                        <button
-                          type="button"
-                          onClick={(e) => handleAddToCart(p, e)}
-                          className="bg-white hover:bg-slate-100 text-[#801019] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-white"
-                          title="Thêm vào giỏ hàng"
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5 text-[#801019] shrink-0" />
-                          <span className="truncate">Giỏ Hàng</span>
-                        </button>
-                        <Link
-                          href={detailHref}
-                          className="bg-[#ffd700] hover:bg-[#ffe082] text-[#070e17] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-[#ffd700]"
-                          title="Xem chi tiết sản phẩm"
-                        >
-                          <span className="truncate">Chi Tiết</span>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {paginatedProducts.map((p) => (
+                <ListingProductCard
+                  key={p.id}
+                  product={p}
+                  isWished={wishlist.includes(p.id)}
+                  mainCategorySlug={mainCategory.slug}
+                  onToggleWishlist={toggleWishlist}
+                  onAddToCart={handleAddToCart}
+                />
+              ))}
             </div>
           ) : (
             <div className="bg-[#0a1524] border border-[#1e344d] rounded-2xl p-12 text-center space-y-3">
@@ -718,6 +638,194 @@ export function CategoryProductListingView({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Interactive Dark Luxury Product Card with Multi-Image Dots & Preview Arrows
+// ---------------------------------------------------------------------------
+interface ListingProductCardProps {
+  product: ListingProduct;
+  isWished: boolean;
+  mainCategorySlug: string;
+  onToggleWishlist: (id: string, e: React.MouseEvent) => void;
+  onAddToCart: (p: ListingProduct, e: React.MouseEvent) => void;
+}
+
+function ListingProductCard({
+  product,
+  isWished,
+  mainCategorySlug,
+  onToggleWishlist,
+  onAddToCart,
+}: ListingProductCardProps) {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  let imageList: string[] = [];
+  try {
+    const parsed = JSON.parse(product.images);
+    if (Array.isArray(parsed)) {
+      imageList = parsed.filter((img) => typeof img === "string" && img.trim().length > 0);
+    } else if (typeof parsed === "string") {
+      imageList = [parsed];
+    }
+  } catch {
+    if (product.images) imageList = [product.images];
+  }
+  if (imageList.length === 0) {
+    imageList = ["/images/locnam_real/locnam_qua_doanh_nghiep.jpg"];
+  }
+
+  const hasMultiple = imageList.length > 1;
+  const currentImg = hasMultiple
+    ? imageList[activeImageIndex % imageList.length]
+    : imageList[0];
+
+  const detailHref =
+    mainCategorySlug === "qua-tang"
+      ? `/qua-tang/${product.slug}`
+      : `/san-pham/${product.category.slug}/${product.slug}`;
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev + 1) % imageList.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
+  };
+
+  return (
+    <div className="group bg-[#0a1524] border border-[#1e344d] rounded-xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all duration-300 flex flex-col justify-between">
+      {/* Image Area */}
+      <div className="relative aspect-square overflow-hidden bg-[#070e17] group/cardimg">
+        <Link href={detailHref} className="block w-full h-full">
+          <img
+            src={currentImg}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        </Link>
+
+        {/* Navigation Dots if multiple images */}
+        {hasMultiple && (
+          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 shadow-lg">
+            {imageList.map((_, dotIdx) => {
+              const isActive = (activeImageIndex % imageList.length) === dotIdx;
+              return (
+                <button
+                  key={dotIdx}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveImageIndex(dotIdx);
+                  }}
+                  onMouseEnter={() => setActiveImageIndex(dotIdx)}
+                  aria-label={`Xem ảnh ${dotIdx + 1}`}
+                  className={`rounded-full transition-all duration-300 ${
+                    isActive
+                      ? "w-4 h-1.5 bg-[#ffd700] shadow-[0_0_8px_rgba(255,215,0,0.8)]"
+                      : "w-1.5 h-1.5 bg-white/60 hover:bg-white hover:scale-125"
+                  }`}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Prev / Next Chevrons on Hover (Desktop) */}
+        {hasMultiple && (
+          <>
+            <button
+              type="button"
+              onClick={prevImage}
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 text-white/90 hover:text-[#ffd700] flex items-center justify-center opacity-0 group-hover/cardimg:opacity-100 transition-opacity z-20 backdrop-blur-sm border border-white/15"
+              aria-label="Ảnh trước"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={nextImage}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 text-white/90 hover:text-[#ffd700] flex items-center justify-center opacity-0 group-hover/cardimg:opacity-100 transition-opacity z-20 backdrop-blur-sm border border-white/15"
+              aria-label="Ảnh tiếp theo"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </>
+        )}
+
+        {/* Wishlist Heart Button (Top-Right) */}
+        <button
+          type="button"
+          onClick={(e) => onToggleWishlist(product.id, e)}
+          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all z-20 ${
+            isWished
+              ? "bg-red-600 text-white shadow-md scale-110"
+              : "bg-black/60 text-white/80 hover:text-red-500 hover:bg-black/80 backdrop-blur-sm"
+          }`}
+          aria-label="Thêm vào yêu thích"
+        >
+          <Heart className={`w-4 h-4 ${isWished ? "fill-white" : ""}`} />
+        </button>
+      </div>
+
+      {/* Product Info */}
+      <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-grow gap-2">
+        <Link href={detailHref}>
+          <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-[#ffd700] transition-colors line-clamp-2 min-h-[38px] leading-snug">
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* 5 Stars Rating & Score */}
+        <div className="flex items-center gap-1.5 pt-0.5">
+          <div className="flex items-center text-[#ffd700]">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-3 h-3 fill-[#ffd700] text-[#ffd700]" />
+            ))}
+          </div>
+          <span className="text-[10px] text-[#94a3b8] font-bold">5/5</span>
+        </div>
+
+        {/* Price Row */}
+        <div className="pt-1.5 border-t border-[#1e344d]/60 flex items-baseline justify-between gap-2">
+          <span className="text-xs sm:text-sm font-black text-[#ffd700]">
+            {formatPrice(product.price)}
+          </span>
+          {product.originalPrice && product.originalPrice > (product.price || 0) && (
+            <span className="text-[10px] text-[#64748b] line-through">
+              {formatPrice(product.originalPrice)}
+            </span>
+          )}
+        </div>
+
+        {/* Two Action Buttons: Giỏ Hàng (Trắng) & Chi Tiết (Vàng) */}
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-2 mt-auto">
+          <button
+            type="button"
+            onClick={(e) => onAddToCart(product, e)}
+            className="bg-white hover:bg-slate-100 text-[#801019] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-white"
+            title="Thêm vào giỏ hàng"
+          >
+            <ShoppingCart className="w-3.5 h-3.5 text-[#801019] shrink-0" />
+            <span className="truncate">Giỏ Hàng</span>
+          </button>
+          <Link
+            href={detailHref}
+            className="bg-[#ffd700] hover:bg-[#ffe082] text-[#070e17] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-[#ffd700]"
+            title="Xem chi tiết sản phẩm"
+          >
+            <span className="truncate">Chi Tiết</span>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
