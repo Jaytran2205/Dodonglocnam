@@ -212,7 +212,7 @@ export function ModernHeader() {
   // =========================================================================
 
   const [hoveredProductCategory, setHoveredProductCategory] = useState("do-tho-cung");
-  const [hoveredGiftCategory, setHoveredGiftCategory] = useState("qua-tang-doi-tuong");
+  const [hoveredGiftCategory, setHoveredGiftCategory] = useState("qua-tang-doi-tac");
   const [hoveredProductSubItem, setHoveredProductSubItem] = useState<{
     image: string;
     previewTitle: string;
@@ -755,27 +755,27 @@ export function ModernHeader() {
   // Sheet SẢN PHẨM: 1. Đồ thờ cúng, 2. Tượng đồng, 3. Tranh đồng, 4. Trống đồng
   const productMegaMenu = productNavigationCategories;
 
-  // Sheet QUÀ TẶNG: Quà tặng đối tượng, Quà tặng sự kiện, Quà tặng phong thủy
+  // Sheet QUÀ TẶNG: Quà tặng đối tác, Quà tặng sự kiện, Quà tặng phong thủy
   const giftMegaMenu = [
     {
-      id: "qua-tang-doi-tuong",
-      title: "QUÀ TẶNG ĐỐI TƯỢNG",
-      href: "/qua-tang/qua-tang-doi-tuong",
-      desc: "Quà biếu tặng doanh nghiệp, khách hàng, lãnh đạo & người thân",
+      id: "qua-tang-doi-tac",
+      title: "QUÀ TẶNG ĐỐI TÁC",
+      href: "/qua-tang/qua-tang-doi-tac",
+      desc: "Quà biếu tặng doanh nghiệp, đối tác, khách hàng, lãnh đạo & người thân",
       defaultDemo: {
         title: "Bộ Quà Tặng Doanh Nghiệp Mạ Vàng 24K Lộc Nam",
         desc: "Bộ quà tặng đúc đồng mạ vàng 24k mang đậm dấu ấn thương hiệu và đẳng cấp ngoại giao.",
         image: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg",
-        href: "/qua-tang/qua-tang-doi-tuong/qua-tang-doanh-nghiep",
+        href: "/qua-tang/qua-tang-doi-tac/qua-tang-doanh-nghiep",
         tag: "Quà Tặng Lộc Nam",
       },
       items: [
-        { label: "Quà tặng doanh nghiệp", href: "/qua-tang/qua-tang-doi-tuong/qua-tang-doanh-nghiep", demoTitle: "Quà Tặng Doanh Nghiệp Mạ Vàng 24K Lộc Nam", demoDesc: "Khắc logo laser và mạ vàng 24k sang trọng trao tặng đối tác chiến lược.", demoImage: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg" },
-        { label: "Quà tặng khách hàng", href: "/qua-tang/qua-tang-doi-tuong/qua-tang-khach-hang", demoTitle: "Trống Đồng Lưu Niệm Quà Tặng Khách Hàng Lộc Nam", demoDesc: "Mô hình trống đồng mạ vàng để bàn tinh xảo quà tặng tri ân khách hàng.", demoImage: "/images/locnam_real/locnam_trong_dong_luu_niem.jpg" },
-        { label: "Quà tặng sếp nữ", href: "/qua-tang/qua-tang-doi-tuong/qua-tang-sep-nu", demoTitle: "Biểu Trưng Đôi Chim Công Mạ Vàng Quà Tặng Sếp Nữ Lộc Nam", demoDesc: "Tranh hoa sen và biểu trưng đôi công dát vàng thanh lịch quý phái.", demoImage: "/images/locnam_real/locnam_qua_sep_nu.jpg" },
-        { label: "Quà tặng sếp nam", href: "/qua-tang/qua-tang-doi-tuong/qua-tang-sep-nam", demoTitle: "Quà Tặng Sếp Nam & Lãnh Đạo Cao Cấp Lộc Nam", demoDesc: "Mô hình thuyền buồm mạ vàng, tượng linh vật phong thủy uy quyền người dẫn đầu.", demoImage: "/images/locnam_real/locnam_qua_sep_nam.jpg" },
-        { label: "Quà tặng cha mẹ", href: "/qua-tang/qua-tang-doi-tuong/qua-tang-cha-me", demoTitle: "Quà Mừng Thọ Cha Mẹ Dát Vàng 24K Lộc Nam", demoDesc: "Tranh chim công mẫu đơn, tranh chữ Thọ hiếu kính cha mẹ an khang trường thọ.", demoImage: "/images/locnam_real/locnam_qua_cha_me.jpg" },
-        { label: "Quà tặng thầy cô", href: "/qua-tang/qua-tang-doi-tuong/qua-tang-thay-co", demoTitle: "Tranh Tri Ân Thầy Cô Dát Vàng 24K Lộc Nam", demoDesc: "Tranh chữ Tri Ân, tranh Khuê Văn Các mạ vàng tinh tế và sâu sắc.", demoImage: "/images/locnam_real/locnam_qua_thay_co.jpg" },
+        { label: "Quà tặng doanh nghiệp", href: "/qua-tang/qua-tang-doi-tac/qua-tang-doanh-nghiep", demoTitle: "Quà Tặng Doanh Nghiệp Mạ Vàng 24K Lộc Nam", demoDesc: "Khắc logo laser và mạ vàng 24k sang trọng trao tặng đối tác chiến lược.", demoImage: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg" },
+        { label: "Quà tặng khách hàng", href: "/qua-tang/qua-tang-doi-tac/qua-tang-khach-hang", demoTitle: "Trống Đồng Lưu Niệm Quà Tặng Khách Hàng Lộc Nam", demoDesc: "Mô hình trống đồng mạ vàng để bàn tinh xảo quà tặng tri ân khách hàng.", demoImage: "/images/locnam_real/locnam_trong_dong_luu_niem.jpg" },
+        { label: "Quà tặng sếp nữ", href: "/qua-tang/qua-tang-doi-tac/qua-tang-sep-nu", demoTitle: "Biểu Trưng Đôi Chim Công Mạ Vàng Quà Tặng Sếp Nữ Lộc Nam", demoDesc: "Tranh hoa sen và biểu trưng đôi công dát vàng thanh lịch quý phái.", demoImage: "/images/locnam_real/locnam_qua_sep_nu.jpg" },
+        { label: "Quà tặng sếp nam", href: "/qua-tang/qua-tang-doi-tac/qua-tang-sep-nam", demoTitle: "Quà Tặng Sếp Nam & Lãnh Đạo Cao Cấp Lộc Nam", demoDesc: "Mô hình thuyền buồm mạ vàng, tượng linh vật phong thủy uy quyền người dẫn đầu.", demoImage: "/images/locnam_real/locnam_qua_sep_nam.jpg" },
+        { label: "Quà tặng cha mẹ", href: "/qua-tang/qua-tang-doi-tac/qua-tang-cha-me", demoTitle: "Quà Mừng Thọ Cha Mẹ Dát Vàng 24K Lộc Nam", demoDesc: "Tranh chim công mẫu đơn, tranh chữ Thọ hiếu kính cha mẹ an khang trường thọ.", demoImage: "/images/locnam_real/locnam_qua_cha_me.jpg" },
+        { label: "Quà tặng thầy cô", href: "/qua-tang/qua-tang-doi-tac/qua-tang-thay-co", demoTitle: "Tranh Tri Ân Thầy Cô Dát Vàng 24K Lộc Nam", demoDesc: "Tranh chữ Tri Ân, tranh Khuê Văn Các mạ vàng tinh tế và sâu sắc.", demoImage: "/images/locnam_real/locnam_qua_thay_co.jpg" },
       ],
     },
     {
@@ -786,7 +786,7 @@ export function ModernHeader() {
       defaultDemo: {
         title: "Cúp Đồng Vinh Danh & Quà Tặng Sự Kiện",
         desc: "Cúp thể thao vinh danh, kỷ niệm chương đúc đồng mạ vàng chế tác độc bản.",
-        image: "/images/demo/demo_cup_vinh_danh.jpg",
+        image: "/images/collections/cat_cup_golf.jpg",
         href: "/qua-tang/qua-tang-su-kien",
         tag: "Quà Tặng Sự Kiện",
       },
@@ -797,9 +797,9 @@ export function ModernHeader() {
         { label: "Quà tặng mừng thọ", href: "/qua-tang/qua-tang-su-kien/qua-tang-mung-tho", demoTitle: "Quà Mừng Thọ Ông Bà Cha Mẹ Dát Vàng Lộc Nam", demoDesc: "Tranh chữ Thọ, khánh vàng mừng thọ chúc phúc lộc thọ toàn vẹn.", demoImage: "/images/locnam_real/locnam_qua_cha_me.jpg" },
         { label: "Quà tặng 20/11", href: "/qua-tang/qua-tang-su-kien/qua-tang-20-11", demoTitle: "Tranh Chữ Tri Ân Ngày Nhà Giáo 20/11 Lộc Nam", demoDesc: "Ghi nhớ công ơn người đưa đò, dát vàng 24k sang trọng và trang nhã.", demoImage: "/images/locnam_real/locnam_qua_thay_co.jpg" },
         { label: "Quà tặng 20/10 và 8/3", href: "/qua-tang/qua-tang-su-kien/qua-tang-20-10-va-8-3", demoTitle: "Tranh Chim Công Quà Tặng Phụ Nữ 20/10 & 8/3 Lộc Nam", demoDesc: "Vẻ đẹp quý phái, chim công hoa mẫu đơn mạ vàng tôn vinh nét đẹp phái nữ.", demoImage: "/images/belux/belux_qua_tang_phu_nu.jpg" },
-        { label: "Cúp", href: "/qua-tang/qua-tang-su-kien/cup", demoTitle: "Cúp Đồng Vinh Danh Mạ Vàng", demoDesc: "Đúc phôi đồng mạ vàng 24k trao tặng giải thi đấu và sự kiện vinh danh.", demoImage: "/images/demo/demo_cup_vinh_danh.jpg" },
-        { label: "Huy chương", href: "/qua-tang/qua-tang-su-kien/huy-chuong", demoTitle: "Huy Chương Kỷ Niệm Mạ Vàng", demoDesc: "Huy chương đúc thủ công tinh xảo trao tặng cá nhân và tập thể xuất sắc.", demoImage: "/images/demo/demo_cup_vinh_danh.jpg" },
-        { label: "Biển chức danh", href: "/qua-tang/qua-tang-su-kien/bien-chuc-danh", demoTitle: "Biển Chức Danh Đồng Mạ Vàng Để Bàn", demoDesc: "Đế gỗ hương chạm hoa văn tinh tế, mặt đồng mạ vàng 24k bề thế phòng giám đốc.", demoImage: "/images/qua-tang-su-kien-hoi-nghi-bang-dong.jpg" },
+        { label: "Cúp", href: "/qua-tang/qua-tang-su-kien/cup", demoTitle: "Cúp Đồng Vinh Danh Mạ Vàng", demoDesc: "Đúc phôi đồng mạ vàng 24k trao tặng giải thi đấu và sự kiện vinh danh.", demoImage: "/images/collections/cat_cup_golf.jpg" },
+        { label: "Huy chương", href: "/qua-tang/qua-tang-su-kien/huy-chuong", demoTitle: "Huy Chương Kỷ Niệm Mạ Vàng", demoDesc: "Huy chương đúc thủ công tinh xảo trao tặng cá nhân và tập thể xuất sắc.", demoImage: "/images/collections/cat_cup_golf.jpg" },
+        { label: "Biển chức danh", href: "/qua-tang/qua-tang-su-kien/bien-chuc-danh", demoTitle: "Biển Chức Danh Đồng Mạ Vàng Để Bàn", demoDesc: "Đế gỗ hương chạm hoa văn tinh tế, mặt đồng mạ vàng 24k bề thế phòng giám đốc.", demoImage: "/images/locnam_real/locnam_trong_dong_luu_niem.jpg" },
       ],
     },
     {

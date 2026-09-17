@@ -86,12 +86,22 @@ const nextConfig = {
     },
     {
       source: '/qua-tang/doi-tac',
-      destination: '/qua-tang/qua-tang-doi-tuong',
+      destination: '/qua-tang/qua-tang-doi-tac',
       permanent: true,
     },
     {
       source: '/qua-tang/doi-tac/:path*',
-      destination: '/qua-tang/qua-tang-doi-tuong/:path*',
+      destination: '/qua-tang/qua-tang-doi-tac/:path*',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tuong',
+      destination: '/qua-tang/qua-tang-doi-tac',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tuong/:path*',
+      destination: '/qua-tang/qua-tang-doi-tac/:path*',
       permanent: true,
     },
     {

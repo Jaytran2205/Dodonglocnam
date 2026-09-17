@@ -189,10 +189,10 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
     banner: "/images/banners/banner_danh_muc_qua_tang.jpg",
     subCategories: [
       {
-        id: "qua-tang-doi-tuong",
-        aliases: ["doi-tac"],
-        name: "Quà tặng đối tượng",
-        keyword: "quà tặng,đối tượng,doanh nghiệp,khách hàng,sếp",
+        id: "qua-tang-doi-tac",
+        aliases: ["doi-tac", "qua-tang-doi-tuong"],
+        name: "Quà tặng đối tác",
+        keyword: "quà tặng,đối tác,doanh nghiệp,khách hàng,sếp",
         image: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg",
         children: [
           { id: "qua-tang-doanh-nghiep", aliases: ["qua-doanh-nghiep"], name: "Quà tặng doanh nghiệp", keyword: "doanh nghiệp", image: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg" },
@@ -208,7 +208,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
         aliases: ["su-kien"],
         name: "Quà tặng sự kiện",
         keyword: "quà tặng sự kiện,tết,tân gia,ngày cưới,mừng thọ,cúp",
-        image: "/images/demo/demo_cup_vinh_danh.jpg",
+        image: "/images/collections/cat_cup_golf.jpg",
         children: [
           { id: "qua-tang-tet", name: "Quà tặng tết", keyword: "tết,tân niên,hoa sen,hoa lan,hoa mẫu đơn,mẫu đơn,sen vàng,sen", image: "/images/locnam_real/locnam_qua_tet.jpg" },
           { id: "qua-tang-tan-gia", aliases: ["qua-mung-tan-gia"], name: "Quà tặng tân gia", keyword: "tân gia,nhà mới,thuyền buồm,thuận buồm,kim ngân,cây kim ngân,mô hình,cây trúc,cây lúa,mẫu đơn như ý", image: "/images/locnam_real/locnam_thuyen_buom.jpg" },
@@ -216,9 +216,9 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
           { id: "qua-tang-mung-tho", aliases: ["qua-mung-tho"], name: "Quà tặng mừng thọ", keyword: "mừng thọ,chúc thọ,cây lúa,hoa sen,hoa lan,trúc quân tử", image: "/images/locnam_real/locnam_qua_cha_me.jpg" },
           { id: "qua-tang-20-11", name: "Quà tặng 20/11", keyword: "20/11,nhà giáo,tri ân,tranh tri ân,thầy cô,hoa sen,hoa lan,trúc quân tử", image: "/images/locnam_real/locnam_qua_thay_co.jpg" },
           { id: "qua-tang-20-10-va-8-3", aliases: ["qua-tang-20-10"], name: "Quà tặng 20/10 và 8/3", keyword: "20/10,8/3,phụ nữ,hoa sen,hoa lan,hoa mẫu đơn,mẫu đơn như ý,đĩa sen", image: "/images/belux/belux_qua_tang_phu_nu.jpg" },
-          { id: "cup", aliases: ["cup-vinh-danh"], name: "Cúp", keyword: "cúp,vinh danh", image: "/images/demo/demo_cup_vinh_danh.jpg" },
-          { id: "huy-chuong", name: "Huy chương", keyword: "huy chương", image: "/images/demo/demo_cup_vinh_danh.jpg" },
-          { id: "bien-chuc-danh", name: "Biển chức danh", keyword: "biển chức danh,để bàn", image: "/images/qua-tang-su-kien-hoi-nghi-bang-dong.jpg" },
+          { id: "cup", aliases: ["cup-vinh-danh"], name: "Cúp", keyword: "cúp,vinh danh", image: "/images/collections/cat_cup_golf.jpg" },
+          { id: "huy-chuong", name: "Huy chương", keyword: "huy chương", image: "/images/collections/cat_cup_golf.jpg" },
+          { id: "bien-chuc-danh", name: "Biển chức danh", keyword: "biển chức danh,để bàn", image: "/images/locnam_real/locnam_trong_dong_luu_niem.jpg" },
         ],
       },
       {
