@@ -13,8 +13,9 @@ import {
   Check,
   Filter,
   ArrowLeft,
+  Search,
 } from "lucide-react";
-import { getWatermarkedImageUrl } from "@/lib/utils";
+import { getWatermarkedImageUrl, removeVietnameseTones } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -83,6 +84,7 @@ interface LeGiaProductListingProps {
   categories: Category[];
   currentCategorySlug?: string;
   initialSub?: string;
+  initialSearch?: string;
   pageTitle?: string;
 }
 
@@ -91,6 +93,7 @@ export function LeGiaProductListing({
   categories,
   currentCategorySlug,
   initialSub,
+  initialSearch,
   pageTitle = "TẤT CẢ SẢN PHẨM",
 }: LeGiaProductListingProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>(
@@ -99,6 +102,8 @@ export function LeGiaProductListing({
   const [selectedSubItem, setSelectedSubItem] = useState<string | null>(
     initialSub || null
   );
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearch || "");
+  const [searchInput, setSearchInput] = useState<string>(initialSearch || "");
 
   const [priceFilter, setPriceFilter] = useState<string>("all");
   const [surfaceFilters, setSurfaceFilters] = useState<string[]>([]);
@@ -122,7 +127,18 @@ export function LeGiaProductListing({
         setSelectedSubItem(subFromUrl);
       }
     }
-  }, [currentCategorySlug, initialSub]);
+    if (initialSearch !== undefined) {
+      setSearchQuery(initialSearch);
+      setSearchInput(initialSearch);
+    } else if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchFromUrl = urlParams.get("search") || urlParams.get("q") || "";
+      if (searchFromUrl) {
+        setSearchQuery(searchFromUrl);
+        setSearchInput(searchFromUrl);
+      }
+    }
+  }, [currentCategorySlug, initialSub, initialSearch]);
 
   const [categoriesCatalog, setCategoriesCatalog] = useState<MainCategoryData[]>(HIERARCHICAL_CATEGORIES);
 
@@ -218,6 +234,43 @@ export function LeGiaProductListing({
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
+    // 0. Filter by search query
+    if (searchQuery && searchQuery.trim()) {
+      const rawTerm = searchQuery.trim().toLowerCase();
+      const cleanTerm = removeVietnameseTones(rawTerm);
+      const queryWords = cleanTerm.split(/\s+/).filter(Boolean);
+
+      result = result.filter((p) => {
+        const rawName = (p.name || "").toLowerCase();
+        const cleanName = removeVietnameseTones(rawName);
+
+        const rawDesc = (p.description || "").toLowerCase();
+        const cleanDesc = removeVietnameseTones(rawDesc);
+
+        const rawMat = (p.material || "").toLowerCase();
+        const cleanMat = removeVietnameseTones(rawMat);
+
+        const rawCat = (p.category?.name || "").toLowerCase();
+        const cleanCat = removeVietnameseTones(rawCat);
+
+        // Combined searchable text
+        const fullClean = `${cleanName} ${cleanCat} ${cleanMat} ${cleanDesc}`;
+        const fullRaw = `${rawName} ${rawCat} ${rawMat} ${rawDesc}`;
+
+        // 1. Direct substring match (accented or unaccented)
+        if (fullRaw.includes(rawTerm) || fullClean.includes(cleanTerm)) {
+          return true;
+        }
+
+        // 2. All search words present in the product text
+        if (queryWords.length > 0 && queryWords.every((word) => fullClean.includes(word))) {
+          return true;
+        }
+
+        return false;
+      });
+    }
+
     // 1. Filter by category
     if (selectedCategory !== "all") {
       result = result.filter((p) => p.category.slug === selectedCategory);
@@ -290,15 +343,13 @@ export function LeGiaProductListing({
             p.name.toLowerCase().includes("chóe")
         );
       } else {
-        // Fallback: match by keywords
-        const matched = result.filter((p) => {
-          const name = p.name.toLowerCase();
-          const desc = (p.description || "").toLowerCase();
-          return name.includes(q) || desc.includes(q);
+        // Fallback: match by keywords with tone normalization
+        const cleanQ = removeVietnameseTones(q);
+        result = result.filter((p) => {
+          const nameClean = removeVietnameseTones((p.name || "").toLowerCase());
+          const descClean = removeVietnameseTones((p.description || "").toLowerCase());
+          return nameClean.includes(cleanQ) || descClean.includes(cleanQ);
         });
-        if (matched.length > 0) {
-          result = matched;
-        }
       }
     }
 
@@ -335,7 +386,40 @@ export function LeGiaProductListing({
     }
 
     return result;
-  }, [products, selectedCategory, selectedSubItem, priceFilter, sortBy]);
+  }, [products, selectedCategory, selectedSubItem, searchQuery, priceFilter, sortBy]);
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setSearchInput("");
+    if (typeof window !== "undefined") {
+      const basePath =
+        selectedCategory !== "all"
+          ? `/san-pham/${selectedCategory}`
+          : "/san-pham";
+      window.history.pushState(null, "", basePath);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const term = searchInput.trim();
+    setSearchQuery(term);
+    if (typeof window !== "undefined") {
+      const basePath =
+        selectedCategory !== "all"
+          ? `/san-pham/${selectedCategory}`
+          : "/san-pham";
+      if (term) {
+        window.history.pushState(
+          null,
+          "",
+          `${basePath}?search=${encodeURIComponent(term)}`
+        );
+      } else {
+        window.history.pushState(null, "", basePath);
+      }
+    }
+  };
 
   // Determine which subcategories list to display
   const activeSubCategoriesList = useMemo(() => {
@@ -346,8 +430,8 @@ export function LeGiaProductListing({
     return categoriesCatalog[0]?.subCategories || [];
   }, [currentCategoryData, categoriesCatalog]);
 
-  // If user is in a category and has NOT selected a subcategory -> RENDER HUB GRID (Image 3)
-  const isHubView = selectedCategory !== "all" && !selectedSubItem;
+  // If user is in a category and has NOT selected a subcategory and NO search query -> RENDER HUB GRID (Image 3)
+  const isHubView = selectedCategory !== "all" && !selectedSubItem && !searchQuery.trim();
 
   return (
     <div className="w-full bg-[#070e17] text-white min-h-screen">
@@ -389,19 +473,35 @@ export function LeGiaProductListing({
             <button
               onClick={handleBackToHub}
               className={`hover:text-[#ffd700] transition-colors ${
-                !selectedSubItem ? "text-[#ffd700] font-bold" : ""
+                !selectedSubItem && !searchQuery ? "text-[#ffd700] font-bold" : ""
               }`}
             >
               {activeCategoryTitle}
             </button>
           ) : (
-            <span className="text-[#ffd700] font-bold">Tất cả sản phẩm</span>
+            <Link
+              href="/san-pham"
+              onClick={handleClearSearch}
+              className={`hover:text-[#ffd700] transition-colors ${
+                !selectedSubItem && !searchQuery ? "text-[#ffd700] font-bold" : ""
+              }`}
+            >
+              Tất cả sản phẩm
+            </Link>
           )}
           {selectedSubItem && (
             <>
               <span>/</span>
-              <span className="text-[#ffd700] font-bold">
+              <span className={`text-[#ffd700] ${!searchQuery ? "font-bold" : ""}`}>
                 {selectedSubItem}
+              </span>
+            </>
+          )}
+          {searchQuery.trim() && (
+            <>
+              <span>/</span>
+              <span className="text-[#ffd700] font-bold">
+                Tìm kiếm: &quot;{searchQuery}&quot;
               </span>
             </>
           )}
@@ -485,9 +585,18 @@ export function LeGiaProductListing({
             {/* Center Gold Subcategory Title */}
             <div className="text-center mb-6">
               <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-black text-[#ffd700] tracking-wide uppercase">
-                {selectedSubItem ? selectedSubItem.toUpperCase() : activeCategoryTitle.toUpperCase()}
+                {searchQuery.trim()
+                  ? `KẾT QUẢ TÌM KIẾM: "${searchQuery}"`
+                  : selectedSubItem
+                  ? selectedSubItem.toUpperCase()
+                  : activeCategoryTitle.toUpperCase()}
               </h1>
               <div className="w-16 h-0.5 bg-[#ffd700] mx-auto mt-2 rounded-full" />
+              {searchQuery.trim() && (
+                <p className="text-xs sm:text-sm text-[#94a3b8] max-w-xl mx-auto mt-2 leading-relaxed">
+                  Tìm thấy <span className="text-[#ffd700] font-bold">{filteredProducts.length}</span> sản phẩm phù hợp
+                </p>
+              )}
             </div>
 
             {/* Mobile Filter Button */}
@@ -602,6 +711,33 @@ export function LeGiaProductListing({
               {/* RIGHT CONTENT AREA: 4-COLUMN PRODUCTS GRID (IMAGE 4)      */}
               {/* ========================================================= */}
               <main className="lg:col-span-9 space-y-6">
+                {/* Search Active Banner */}
+                {searchQuery.trim() && (
+                  <div className="bg-[#0c1825] border border-[#ffd700]/40 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-[#ffd700]/10 text-[#ffd700] flex items-center justify-center border border-[#ffd700]/30 shrink-0">
+                        <Search className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs text-[#94a3b8]">Đang hiển thị kết quả cho từ khóa:</div>
+                        <div className="text-sm font-bold text-[#ffd700] font-serif">
+                          &quot;{searchQuery}&quot;
+                          <span className="text-xs text-[#94a3b8] font-sans font-normal ml-2">
+                            ({filteredProducts.length} sản phẩm)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleClearSearch}
+                      className="flex items-center gap-1.5 text-xs text-[#cbd5e1] hover:text-white bg-[#142335] hover:bg-[#1a2f48] border border-[#223952] px-3 py-1.5 rounded-lg transition-all"
+                    >
+                      <X className="w-3.5 h-3.5 text-[#ffd700]" />
+                      <span>Xóa tìm kiếm</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Top Status & Sort Bar */}
                 <div className="flex items-center justify-between gap-4 pb-3 border-b border-[#1c2e42]">
                   <span className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider">
@@ -639,24 +775,41 @@ export function LeGiaProductListing({
                   /* Empty state */
                   <div className="bg-[#0c1825] rounded-2xl border border-[#1e344d] p-8 sm:p-12 text-center space-y-4 shadow-md">
                     <div className="w-16 h-16 rounded-full bg-[#122234] text-[#ffd700] flex items-center justify-center mx-auto border border-[#ffd700]/30">
-                      <ShoppingBag className="w-8 h-8" />
+                      {searchQuery.trim() ? (
+                        <Search className="w-8 h-8 text-[#ffd700]" />
+                      ) : (
+                        <ShoppingBag className="w-8 h-8 text-[#ffd700]" />
+                      )}
                     </div>
                     <h3 className="font-serif text-base sm:text-lg font-bold text-[#ffd700]">
-                      Không tìm thấy sản phẩm nào phù hợp với bộ lọc.
+                      {searchQuery.trim()
+                        ? `Không tìm thấy sản phẩm nào phù hợp với từ khóa "${searchQuery}"`
+                        : "Không tìm thấy sản phẩm nào phù hợp với bộ lọc."}
                     </h3>
-                    <p className="text-xs text-[#94a3b8] max-w-md mx-auto">
-                      Vui lòng chọn mức giá khác hoặc bấm &quot;Xóa bộ lọc&quot; để xem tất cả sản phẩm đúc đồng thủ công Lộc Nam.
+                    <p className="text-xs text-[#94a3b8] max-w-md mx-auto leading-relaxed">
+                      {searchQuery.trim()
+                        ? "Quý khách vui lòng thử tìm với từ khóa khác (ví dụ: thuyền buồm, trống đồng, tranh sen, đỉnh đồng, chuông đồng...) hoặc bấm nút bên dưới để xem toàn bộ sản phẩm."
+                        : "Vui lòng chọn mức giá khác hoặc bấm 'Xóa bộ lọc' để xem tất cả sản phẩm đúc đồng thủ công Lộc Nam."}
                     </p>
-                    <button
-                      onClick={() => {
-                        setPriceFilter("all");
-                        setSurfaceFilters([]);
-                        setMaterialFilters([]);
-                      }}
-                      className="bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#0b1622] font-bold text-xs px-5 py-2.5 rounded-lg shadow-md hover:brightness-110 transition-all active:scale-95"
-                    >
-                      Xóa bộ lọc
-                    </button>
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                      <button
+                        onClick={() => {
+                          handleClearSearch();
+                          setPriceFilter("all");
+                          setSurfaceFilters([]);
+                          setMaterialFilters([]);
+                        }}
+                        className="bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#0b1622] font-bold text-xs px-5 py-2.5 rounded-lg shadow-md hover:brightness-110 transition-all active:scale-95"
+                      >
+                        {searchQuery.trim() ? "Xem tất cả sản phẩm" : "Xóa bộ lọc"}
+                      </button>
+                      <a
+                        href="tel:0836122222"
+                        className="bg-[#122234] border border-[#ffd700]/40 text-[#ffd700] font-bold text-xs px-5 py-2.5 rounded-lg hover:bg-[#1c3550] transition-all"
+                      >
+                        Hotline: 0836 122 222
+                      </a>
+                    </div>
                   </div>
                 )}
 

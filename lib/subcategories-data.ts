@@ -196,7 +196,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
         image: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg",
         children: [
           { id: "qua-tang-doanh-nghiep", aliases: ["qua-doanh-nghiep"], name: "Quà tặng doanh nghiệp", keyword: "doanh nghiệp", image: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg" },
-          { id: "qua-tang-khach-hang", aliases: ["qua-khach-hang"], name: "Quà tặng khách hàng", keyword: "khách hàng,lưu niệm", image: "/images/locnam_real/locnam_trong_dong_luu_niem.jpg" },
+          { id: "qua-tang-khach-hang", aliases: ["qua-khach-hang"], name: "Quà tặng khách hàng", keyword: "khách hàng,lưu niệm,chùa một cột,khuê văn các,tháp rùa,chợ bến thành,bàn tay phật,cây bồ đề,nhân sâm,song hạc,tùng hạc,trống đồng lưu niệm,hoa sen", image: "/images/locnam_real/locnam_trong_dong_luu_niem.jpg" },
           { id: "qua-tang-sep-nu", name: "Quà tặng sếp nữ", keyword: "sếp nữ,nữ", image: "/images/locnam_real/locnam_qua_sep_nu.jpg" },
           { id: "qua-tang-sep-nam", aliases: ["qua-doi-tac-sep"], name: "Quà tặng sếp nam", keyword: "sếp nam,sếp,lãnh đạo", image: "/images/locnam_real/locnam_qua_sep_nam.jpg" },
           { id: "qua-tang-cha-me", name: "Quà tặng cha mẹ", keyword: "cha mẹ,ông bà", image: "/images/locnam_real/locnam_qua_cha_me.jpg" },
@@ -212,7 +212,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
         children: [
           { id: "qua-tang-tet", name: "Quà tặng tết", keyword: "tết,tân niên,hoa sen,hoa lan,hoa mẫu đơn,mẫu đơn,sen vàng,sen", image: "/images/locnam_real/locnam_qua_tet.jpg" },
           { id: "qua-tang-tan-gia", aliases: ["qua-mung-tan-gia"], name: "Quà tặng tân gia", keyword: "tân gia,nhà mới,thuyền buồm,thuận buồm,kim ngân,cây kim ngân,mô hình,cây trúc,cây lúa,mẫu đơn như ý", image: "/images/locnam_real/locnam_thuyen_buom.jpg" },
-          { id: "qua-tang-ki-niem-ngay-cuoi", aliases: ["qua-ky-niem-ngay-cuoi"], name: "Quà tặng kỉ niệm ngày cưới", keyword: "ngày cưới,kỷ niệm ngày cưới,uyên ương,hoa sen,hoa lan,hoa mẫu đơn", image: "/images/locnam_real/locnam_qua_cuoi.jpg" },
+          { id: "qua-tang-ki-niem-ngay-cuoi", aliases: ["qua-ky-niem-ngay-cuoi"], name: "Quà tặng kỉ niệm ngày cưới", keyword: "ngày cưới,kỷ niệm ngày cưới,uyên ương,chim uyên ương,hoa sen,hoa lan,hoa mẫu đơn", image: "/images/locnam_real/locnam_qua_cuoi.jpg" },
           { id: "qua-tang-mung-tho", aliases: ["qua-mung-tho"], name: "Quà tặng mừng thọ", keyword: "mừng thọ,chúc thọ,cây lúa,hoa sen,hoa lan,trúc quân tử", image: "/images/locnam_real/locnam_qua_cha_me.jpg" },
           { id: "qua-tang-20-11", name: "Quà tặng 20/11", keyword: "20/11,nhà giáo,tri ân,tranh tri ân,thầy cô,hoa sen,hoa lan,trúc quân tử", image: "/images/locnam_real/locnam_qua_thay_co.jpg" },
           { id: "qua-tang-20-10-va-8-3", aliases: ["qua-tang-20-10"], name: "Quà tặng 20/10 và 8/3", keyword: "20/10,8/3,phụ nữ,hoa sen,hoa lan,hoa mẫu đơn,mẫu đơn như ý,đĩa sen", image: "/images/belux/belux_qua_tang_phu_nu.jpg" },
@@ -237,7 +237,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
           { id: "ty-huu", name: "Tỳ hưu", keyword: "tỳ hưu,chiêu tài", image: "/images/locnam_real/locnam_thiem_thu.jpg" },
           { id: "thap-van-xuong", name: "Tháp văn xương", keyword: "tháp văn xương,học hành,công danh", image: "/images/locnam_real/locnam_thap_van_xuong.jpg" },
           { id: "coc-thiem-thu", aliases: ["thiem-thu"], name: "Cóc thiềm thừ", keyword: "thiềm thừ,cóc ngậm tiền,hũ tiền,tụ bảo bồn", image: "/images/locnam_real/locnam_thiem_thu.jpg" },
-          { id: "cac-mau-phong-thuy-khac", aliases: ["qua-phong-thuy"], name: "Các mẫu phong thủy khác", keyword: "phong thủy khác,bảo bình,hồ lô,cá rồng,cây kim ngân,kim ngân,hũ tiền,tụ bảo bồn,rùa hóa rồng,long quy,song cá,song ngư,tranh cá chép,mã đáo thành công,bát mã,tranh ngựa,đĩa cá,đĩa ngựa", image: "/images/belux/belux_phong_thuy.jpg" },
+          { id: "cac-mau-phong-thuy-khac", aliases: ["qua-phong-thuy"], name: "Các mẫu phong thủy khác", keyword: "phong thủy khác,bảo bình,hồ lô,cá rồng,cây kim ngân,kim ngân,hũ tiền,tụ bảo bồn,rùa hóa rồng,long quy,song cá,song ngư,tranh cá chép,mã đáo thành công,bát mã,tranh ngựa,đĩa cá,đĩa ngựa,bàn tay phật,cây bồ đề,nhân sâm,song hạc,tùng hạc", image: "/images/belux/belux_phong_thuy.jpg" },
         ],
       },
     ],

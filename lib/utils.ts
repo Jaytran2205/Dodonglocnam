@@ -35,3 +35,13 @@ export function getWatermarkedImageUrl(url: string | null | undefined): string {
   return `${url}?v=locnam_wm3`;
 }
 
+export function removeVietnameseTones(str: string): string {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .toLowerCase()
+    .trim();
+}
+
