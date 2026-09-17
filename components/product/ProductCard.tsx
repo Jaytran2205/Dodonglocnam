@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Star, ShoppingCart } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 export interface ProductData {
   id: string;
@@ -96,10 +97,11 @@ export function ProductCard({ product }: ProductCardProps) {
             className="w-full h-full object-contain group-hover/img:scale-105 transition-all duration-300"
           />
           {product.material && (
-            <span className="absolute top-2 left-2 px-2 py-0.5 bg-[#4A1015]/90 text-[#FFFDF9] text-[9px] font-bold tracking-wide rounded shadow-sm">
+            <span className="absolute top-2 left-2 px-2 py-0.5 bg-[#4A1015]/90 text-[#FFFDF9] text-[9px] font-bold tracking-wide rounded shadow-sm z-10">
               {product.material.split("-")[0]}
             </span>
           )}
+          <ProductWatermark size="xs" position="bottom-right" />
         </Link>
 
         {/* Multi-angle switcher dots */}

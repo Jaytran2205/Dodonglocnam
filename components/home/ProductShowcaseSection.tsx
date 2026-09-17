@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Phone, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 interface ProductItem {
   id: string;
@@ -82,6 +83,7 @@ export function ProductShowcaseSection({
                     alt={prod.name}
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                   />
+                  <ProductWatermark size="xs" position="bottom-right" />
                   {prod.material && (
                     <span className="absolute top-2.5 left-2.5 px-2.5 py-1 bg-[#2A1408]/90 text-[#FFD700] text-[10px] font-bold uppercase tracking-wider rounded border border-[#D6B86C]/50 shadow backdrop-blur-sm">
                       {prod.material.split("-")[0]}

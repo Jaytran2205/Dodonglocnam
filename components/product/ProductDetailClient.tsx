@@ -29,6 +29,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { QuickOrderForm } from "./QuickOrderForm";
+import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 interface ProductData {
   id: string | number;
@@ -188,18 +189,8 @@ export function ProductDetailClient({
         {/* Left Column: Image Viewer with Watermark & Thumbnails */}
         <div className="lg:col-span-6 flex flex-col justify-between">
           <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-[#070e17] border border-[#1c2c3d] shadow-inner flex items-center justify-center group">
-            {/* Top Watermark Badge */}
-            <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-[#070e17]/85 backdrop-blur-md px-3 py-1.5 rounded-md border border-[#dfb755]/40 shadow-lg">
-              <img src="/images/logo.png" alt="Lộc Nam" className="w-5 h-5 object-contain" />
-              <div>
-                <div className="text-[10px] font-black tracking-wider text-[#ffd700] font-serif uppercase leading-none">
-                  ĐÚC ĐỒNG LỘC NAM
-                </div>
-                <div className="text-[8px] text-[#cbd5e1] font-light italic leading-tight">
-                  Giữ chữ Tín hơn giữ Vàng
-                </div>
-              </div>
-            </div>
+            {/* Watermark Branding (Badge + Subtle Center Emblem) */}
+            <ProductWatermark size="md" position="top-left" showCenterLogo={true} />
 
             {/* Main Image */}
             <img
@@ -787,6 +778,7 @@ export function ProductDetailClient({
                         decoding="async"
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       />
+                      <ProductWatermark size="xs" position="bottom-right" />
                     </Link>
 
                     <div className="space-y-1">
