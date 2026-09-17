@@ -335,16 +335,18 @@ export function CategoryProductListingView({
                             <Link
                               key={child.id}
                               href={`${basePrefix}/${sub.id}/${child.id}`}
-                              className={`text-[11px] py-0.5 transition-colors flex items-center gap-1.5 select-none ${
+                              className={`text-[11px] py-0.5 transition-colors flex items-center justify-between select-none ${
                                 isChildActive
                                   ? "text-[#ffd700] font-black"
                                   : "text-[#94a3b8] hover:text-[#ffd700] font-medium"
                               }`}
                             >
-                              <span className="text-[#64748b]">├─</span>
-                              <span className="truncate">{child.name}</span>
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span className="text-[#64748b]">├─</span>
+                                <span className="truncate">{child.name}</span>
+                              </div>
                               {isChildActive && (
-                                <span className="text-[9px] bg-[#ffd700] text-black font-black px-1 py-0.2 rounded shrink-0">
+                                <span className="text-[9px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
                                   ACTIVE
                                 </span>
                               )}
@@ -537,13 +539,18 @@ export function CategoryProductListingView({
                         <Link
                           href={`${basePrefix}/${sub.id}`}
                           onClick={() => setMobileFilterOpen(false)}
-                          className={`text-xs py-1 block ${
+                          className={`text-xs py-1 flex items-center justify-between ${
                             isSubActive
                               ? "text-[#ffd700] font-black"
                               : "text-[#cbd5e1]"
                           }`}
                         >
-                          {sub.name}
+                          <span className="truncate">{sub.name}</span>
+                          {isSubActive && (
+                            <span className="text-[10px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
+                              ACTIVE
+                            </span>
+                          )}
                         </Link>
 
                         {sub.children && isParentOfActiveDetail && (
@@ -556,13 +563,18 @@ export function CategoryProductListingView({
                                   key={child.id}
                                   href={`${basePrefix}/${sub.id}/${child.id}`}
                                   onClick={() => setMobileFilterOpen(false)}
-                                  className={`text-[11px] py-0.5 block ${
+                                  className={`text-[11px] py-0.5 flex items-center justify-between ${
                                     isChildActive
                                       ? "text-[#ffd700] font-black"
                                       : "text-[#94a3b8]"
                                   }`}
                                 >
-                                  ├─ {child.name}
+                                  <span className="truncate">├─ {child.name}</span>
+                                  {isChildActive && (
+                                    <span className="text-[9px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
+                                      ACTIVE
+                                    </span>
+                                  )}
                                 </Link>
                               );
                             })}

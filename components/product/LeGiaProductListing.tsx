@@ -519,7 +519,7 @@ export function LeGiaProductListing({
               {/* ========================================================= */}
               {/* DESKTOP DARK SIDEBAR (IMAGE 4)                            */}
               {/* ========================================================= */}
-              <aside className="hidden lg:block lg:col-span-3 bg-[#0a1420] border border-[#1e344d] rounded-2xl p-5 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto space-y-6">
+              <aside className="hidden lg:block lg:col-span-3 bg-[#0a1420] border border-[#1e344d] rounded-2xl p-5 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto space-y-6 custom-scrollbar">
                 {/* Back to Hub Button */}
                 {selectedCategory !== "all" && (
                   <button
@@ -534,7 +534,7 @@ export function LeGiaProductListing({
                 {/* 1. DANH MỤC SECTION */}
                 <div>
                   <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-1.5 border-b-2 border-[#ffd700] mb-3">
-                    DANH MỤC
+                    DANH MỤC {activeCategoryTitle ? activeCategoryTitle.toUpperCase() : "SẢN PHẨM"}
                   </h3>
                   <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
                     {activeSubCategoriesList.map((sub) => {
@@ -545,13 +545,18 @@ export function LeGiaProductListing({
                           onClick={() =>
                             handleSelectSubItem(selectedCategory, sub.name)
                           }
-                          className={`text-xs py-1 cursor-pointer transition-colors block select-none ${
+                          className={`text-xs py-1 cursor-pointer transition-colors flex items-center justify-between select-none ${
                             isActive
                               ? "text-[#ffd700] font-black"
                               : "text-[#cbd5e1] hover:text-[#ffd700] font-medium"
                           }`}
                         >
-                          {sub.name}
+                          <span className="truncate">{sub.name}</span>
+                          {isActive && (
+                            <span className="text-[10px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
+                              ACTIVE
+                            </span>
+                          )}
                         </div>
                       );
                     })}
@@ -590,61 +595,6 @@ export function LeGiaProductListing({
                   </div>
                 </div>
 
-                {/* 3. BỀ MẶT HOÀN THIỆN SECTION */}
-                <div>
-                  <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-1.5 border-b-2 border-[#ffd700] mb-3">
-                    BỀ MẶT HOÀN THIỆN
-                  </h3>
-                  <div className="space-y-2">
-                    {[
-                      "Màu mộc",
-                      "Làm màu",
-                      "2 công nghệ",
-                      "Giả cổ",
-                      "Mạ - dát vàng",
-                      "Mạ - khảm tam khí",
-                      "Mạ - khảm ngũ sắc",
-                      "Mạ - khảm bạc",
-                      "Tráng men sứ",
-                    ].map((surface) => (
-                      <label
-                        key={surface}
-                        className="flex items-center gap-2.5 text-xs text-[#cbd5e1] hover:text-[#ffd700] cursor-pointer py-0.5 select-none"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={surfaceFilters.includes(surface)}
-                          onChange={() => toggleSurfaceFilter(surface)}
-                          className="text-[#ffd700] rounded focus:ring-[#ffd700] bg-[#070e17] border-[#1e344d]"
-                        />
-                        <span>{surface}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 4. CHẤT LIỆU PHÔI SECTION */}
-                <div>
-                  <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-1.5 border-b-2 border-[#ffd700] mb-3">
-                    CHẤT LIỆU PHÔI
-                  </h3>
-                  <div className="space-y-2">
-                    {["Bạc", "Đồng vàng", "Đồng đỏ"].map((mat) => (
-                      <label
-                        key={mat}
-                        className="flex items-center gap-2.5 text-xs text-[#cbd5e1] hover:text-[#ffd700] cursor-pointer py-0.5 select-none"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={materialFilters.includes(mat)}
-                          onChange={() => toggleMaterialFilter(mat)}
-                          className="text-[#ffd700] rounded focus:ring-[#ffd700] bg-[#070e17] border-[#1e344d]"
-                        />
-                        <span>{mat}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
               </aside>
 
               {/* ========================================================= */}
@@ -806,13 +756,18 @@ export function LeGiaProductListing({
                         handleSelectSubItem(selectedCategory, sub.name);
                         setMobileFilterOpen(false);
                       }}
-                      className={`w-full text-left p-2 rounded-lg text-xs font-semibold block truncate ${
+                      className={`w-full text-left p-2 rounded-lg text-xs font-semibold flex items-center justify-between ${
                         selectedSubItem === sub.name
                           ? "bg-[#122234] text-[#ffd700] font-bold border border-[#ffd700]/50"
                           : "text-[#cbd5e1] hover:bg-[#0c1825]"
                       }`}
                     >
-                      › {sub.name}
+                      <span className="truncate">› {sub.name}</span>
+                      {selectedSubItem === sub.name && (
+                        <span className="text-[10px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
+                          ACTIVE
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>

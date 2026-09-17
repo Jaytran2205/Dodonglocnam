@@ -28,7 +28,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
   {
     name: "Đồ thờ",
     slug: "do-tho-cung",
-    banner: "/images/do-tho-dong.jpg",
+    banner: "/images/banners/banner_danh_muc_do_tho.jpg",
     subCategories: [
       { id: "bo-suu-tap-do-tho", name: "Bộ sưu tập đồ thờ đầy đủ", keyword: "bộ sưu tập,đồ thờ đầy đủ", image: "/images/do-tho-cung/bo-suu-tap-do-tho.jpg" },
       { id: "bo-tam-su-ngu-su", aliases: ["bo-ngu-su", "dinh-dong"], name: "Bộ tam sự, ngũ sự bằng đồng", keyword: "tam sự,ngũ sự,đỉnh đồng", image: "/images/do-tho-cung/bo-tam-su-ngu-su.jpg" },
@@ -58,7 +58,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
   {
     name: "Trống đồng",
     slug: "trong-dong",
-    banner: "/images/trong-dong-viet-nam.jpg",
+    banner: "/images/banners/banner_danh_muc_trong_dong.jpg",
     subCategories: [
       { id: "trong-dong-luu-niem", name: "Trống đồng lưu niệm", keyword: "lưu niệm", image: "/images/trong-dong/trong-dong-luu-niem.jpg" },
       { id: "qua-trong-dong-co-lon", name: "Quả trống đồng cỡ lớn", keyword: "cỡ lớn", image: "/images/trong-dong/qua-trong-dong-co-lon.jpg" },
