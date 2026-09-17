@@ -17,6 +17,7 @@ import {
   MessageCircle,
   User,
 } from "lucide-react";
+import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
 
 export function ModernHeader() {
   const pathname = usePathname();
@@ -47,6 +48,51 @@ export function ModernHeader() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [liveResults, setLiveResults] = useState<
+    {
+      id: string;
+      name: string;
+      slug: string;
+      price: number | null;
+      image: string;
+      categorySlug: string;
+    }[]
+  >([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [liveSearchVisible, setLiveSearchVisible] = useState(false);
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setLiveResults([]);
+      setIsSearching(false);
+      setLiveSearchVisible(false);
+      return;
+    }
+
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+
+    searchDebounceRef.current = setTimeout(() => {
+      setIsSearching(true);
+      fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.products)) {
+            setLiveResults(data.products);
+            setLiveSearchVisible(true);
+          } else {
+            setLiveResults([]);
+          }
+        })
+        .catch(() => setLiveResults([]))
+        .finally(() => setIsSearching(false));
+    }, 180);
+
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [searchQuery]);
 
   const [hotlineData, setHotlineData] = useState({
     hotline1: "0836 122 222",
@@ -842,6 +888,11 @@ export function ModernHeader() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  if (searchQuery.trim() && liveResults.length > 0) {
+                    setLiveSearchVisible(true);
+                  }
+                }}
                 placeholder="Bạn muốn tìm gì?"
                 className="w-full pl-4 sm:pl-5 pr-11 py-2.5 sm:py-3 rounded-full bg-white text-gray-900 placeholder-gray-500 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#dfb755] shadow-inner"
               />
@@ -853,6 +904,61 @@ export function ModernHeader() {
                 <Search className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Mobile Live Autocomplete Dropdown */}
+            {liveSearchVisible && searchQuery.trim() && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#0c1825] border border-[#ffd700]/50 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 max-h-[360px] overflow-y-auto custom-scrollbar">
+                {isSearching ? (
+                  <div className="p-3 text-center text-xs text-[#94a3b8] flex items-center justify-center gap-2">
+                    <span className="animate-spin text-[#ffd700]">◷</span> Đang tìm kiếm sản phẩm...
+                  </div>
+                ) : liveResults.length > 0 ? (
+                  <div className="p-2 space-y-1">
+                    <div className="px-3 py-1.5 text-[11px] font-bold text-[#ffd700] uppercase tracking-wider border-b border-[#1e344d]">
+                      Gợi ý ({liveResults.length})
+                    </div>
+                    {liveResults.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={`/san-pham/${item.categorySlug}/${item.slug}`}
+                        onClick={() => setLiveSearchVisible(false)}
+                        className="flex items-center gap-2.5 p-2 hover:bg-[#122234] rounded-xl transition-colors group"
+                      >
+                        <div className="w-11 h-11 rounded-lg bg-[#050c14] border border-[#1e344d] overflow-hidden shrink-0 flex items-center justify-center p-0.5">
+                          <img
+                            src={getWatermarkedImageUrl(item.image)}
+                            alt={item.name}
+                            className="w-full h-full object-contain group-hover:scale-110 transition-transform"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="text-xs font-bold text-white group-hover:text-[#ffd700] truncate transition-colors">
+                            {item.name}
+                          </div>
+                          <div className="text-[11px] text-[#ffd700] font-semibold mt-0.5">
+                            {formatPrice(item.price)}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLiveSearchVisible(false);
+                        router.push(`/san-pham?search=${encodeURIComponent(searchQuery.trim())}`);
+                      }}
+                      className="w-full mt-1 py-2 text-center text-xs text-[#dfb755] hover:text-white font-bold bg-[#142335] hover:bg-[#1c3550] rounded-lg transition-colors"
+                    >
+                      Xem tất cả kết quả cho &quot;{searchQuery}&quot; →
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3 text-center text-xs text-[#94a3b8]">
+                    Không tìm thấy sản phẩm phù hợp. Nhấn Enter để tìm đầy đủ.
+                  </div>
+                )}
+              </div>
+            )}
           </form>
 
           {/* Right Hamburger Menu Icon (Bigger & Clearer) */}
@@ -1348,17 +1454,23 @@ export function ModernHeader() {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (searchQuery.trim()) {
+                  setLiveSearchVisible(false);
                   router.push(`/san-pham?search=${encodeURIComponent(searchQuery.trim())}`);
                   setSearchOpen(false);
                 }
               }}
-              className="max-w-[800px] mx-auto flex items-center gap-2"
+              className="max-w-[800px] mx-auto flex items-center gap-2 relative"
             >
               <div className="relative flex-1">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => {
+                    if (searchQuery.trim() && liveResults.length > 0) {
+                      setLiveSearchVisible(true);
+                    }
+                  }}
                   placeholder="Tìm đồ thờ cúng, tượng đồng, tranh dát vàng, trống đồng..."
                   className="w-full px-3.5 py-2 bg-[#122234] border border-[#1c2c3d] rounded-md text-xs sm:text-sm text-[#f1f5f9] placeholder-[#94a3b8] focus:outline-none focus:border-[#ffd700] focus:ring-2 focus:ring-[#ffd700]/30 transition-all"
                   autoFocus
@@ -1366,7 +1478,11 @@ export function ModernHeader() {
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => setSearchQuery("")}
+                    onClick={() => {
+                      setSearchQuery("");
+                      setLiveResults([]);
+                      setLiveSearchVisible(false);
+                    }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -1379,6 +1495,68 @@ export function ModernHeader() {
               >
                 Tìm Kiếm
               </button>
+
+              {/* Desktop Live Autocomplete Dropdown */}
+              {liveSearchVisible && searchQuery.trim() && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#0c1825] border border-[#ffd700]/50 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                  {isSearching ? (
+                    <div className="p-3 text-center text-xs text-[#94a3b8] flex items-center justify-center gap-2">
+                      <span className="animate-spin text-[#ffd700]">◷</span> Đang tìm kiếm sản phẩm...
+                    </div>
+                  ) : liveResults.length > 0 ? (
+                    <div className="p-2.5 space-y-1">
+                      <div className="px-3 py-1.5 text-[11px] font-bold text-[#ffd700] uppercase tracking-wider border-b border-[#1e344d] flex justify-between items-center">
+                        <span>Gợi ý ({liveResults.length})</span>
+                        <span className="text-[10px] text-gray-400 font-normal">Nhấn Enter để xem danh sách đầy đủ</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                        {liveResults.map((item) => (
+                          <Link
+                            key={item.id}
+                            href={`/san-pham/${item.categorySlug}/${item.slug}`}
+                            onClick={() => {
+                              setLiveSearchVisible(false);
+                              setSearchOpen(false);
+                            }}
+                            className="flex items-center gap-2.5 p-2 hover:bg-[#122234] rounded-xl transition-colors group border border-transparent hover:border-[#dfb755]/30"
+                          >
+                            <div className="w-12 h-12 rounded-lg bg-[#050c14] border border-[#1e344d] overflow-hidden shrink-0 flex items-center justify-center p-0.5">
+                              <img
+                                src={getWatermarkedImageUrl(item.image)}
+                                alt={item.name}
+                                className="w-full h-full object-contain group-hover:scale-110 transition-transform"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <div className="text-xs font-bold text-white group-hover:text-[#ffd700] truncate transition-colors">
+                                {item.name}
+                              </div>
+                              <div className="text-[11px] text-[#ffd700] font-semibold mt-0.5">
+                                {formatPrice(item.price)}
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLiveSearchVisible(false);
+                          setSearchOpen(false);
+                          router.push(`/san-pham?search=${encodeURIComponent(searchQuery.trim())}`);
+                        }}
+                        className="w-full mt-2 py-2 text-center text-xs text-[#dfb755] hover:text-white font-bold bg-[#142335] hover:bg-[#1c3550] rounded-lg transition-colors"
+                      >
+                        Xem tất cả kết quả cho &quot;{searchQuery}&quot; →
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-3 text-center text-xs text-[#94a3b8]">
+                      Không tìm thấy sản phẩm phù hợp. Nhấn Enter để tìm kiếm đầy đủ.
+                    </div>
+                  )}
+                </div>
+              )}
             </form>
           </div>
         )}

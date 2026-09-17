@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Star,
   Heart,
@@ -61,7 +62,7 @@ const PRODUCT_FAQS = [
   },
   {
     q: "Tôi muốn gắn thêm tem - mác logo lời chúc trên sản phẩm có được không?",
-    a: "Hoàn toàn được. Chúng tôi hỗ trợ thiết kế và khắc laser logo doanh nghiệp, thông điệp triân, biển đồng gắn lên đế gỗ hoàn toàn miễn phí theo yêu cầu.",
+    a: "Hoàn toàn được. Chúng tôi hỗ trợ thiết kế và khắc laser logo doanh nghiệp, thông điệp tri ân, biển đồng gắn lên đế gỗ hoàn toàn miễn phí theo yêu cầu.",
   },
   {
     q: "Tôi muốn chế tác sản phẩm theo yêu cầu riêng có được không?",
@@ -98,14 +99,20 @@ export function LeGiaProductListing({
   initialSearch,
   pageTitle = "TẤT CẢ SẢN PHẨM",
 }: LeGiaProductListingProps) {
+  const searchParams = useSearchParams();
+
   const [selectedCategory, setSelectedCategory] = useState<string>(
     currentCategorySlug || "all"
   );
   const [selectedSubItem, setSelectedSubItem] = useState<string | null>(
     initialSub || null
   );
-  const [searchQuery, setSearchQuery] = useState<string>(initialSearch || "");
-  const [searchInput, setSearchInput] = useState<string>(initialSearch || "");
+  const [searchQuery, setSearchQuery] = useState<string>(
+    initialSearch || searchParams?.get("search") || searchParams?.get("q") || ""
+  );
+  const [searchInput, setSearchInput] = useState<string>(
+    initialSearch || searchParams?.get("search") || searchParams?.get("q") || ""
+  );
 
   const [priceFilter, setPriceFilter] = useState<string>("all");
   const [surfaceFilters, setSurfaceFilters] = useState<string[]>([]);
@@ -115,32 +122,27 @@ export function LeGiaProductListing({
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  // Sync when props change or read URL search params on client mount
+  // Synchronize state when URL search params change
   useEffect(() => {
     if (currentCategorySlug) {
       setSelectedCategory(currentCategorySlug);
     }
-    if (initialSub) {
-      setSelectedSubItem(initialSub);
-    } else if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const subFromUrl = urlParams.get("sub");
-      if (subFromUrl) {
-        setSelectedSubItem(subFromUrl);
-      }
+    const q = searchParams?.get("search") || searchParams?.get("q") || "";
+    setSearchQuery(q);
+    setSearchInput(q);
+    const sub = searchParams?.get("sub") || initialSub || "";
+    if (sub) {
+      setSelectedSubItem(sub);
     }
-    if (initialSearch !== undefined) {
-      setSearchQuery(initialSearch);
-      setSearchInput(initialSearch);
-    } else if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const searchFromUrl = urlParams.get("search") || urlParams.get("q") || "";
-      if (searchFromUrl) {
-        setSearchQuery(searchFromUrl);
-        setSearchInput(searchFromUrl);
-      }
-    }
-  }, [currentCategorySlug, initialSub, initialSearch]);
+  }, [searchParams, currentCategorySlug, initialSub]);
+
+  // Live real-time filter as user types
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const [categoriesCatalog, setCategoriesCatalog] = useState<MainCategoryData[]>(HIERARCHICAL_CATEGORIES);
 
