@@ -8,6 +8,9 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000,
@@ -148,6 +151,15 @@ const nextConfig = {
     },
     {
       source: '/images/:all*(svg|jpg|jpeg|png|webp|gif|ico)',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    },
+    {
+      source: '/fonts/:all*',
       headers: [
         {
           key: 'Cache-Control',

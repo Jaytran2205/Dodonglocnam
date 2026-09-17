@@ -1,4 +1,4 @@
-import React from "react";
+import React, { cache } from "react";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
@@ -22,7 +22,14 @@ interface SlugPageProps {
   };
 }
 
-export const revalidate = 60;
+export const revalidate = 3600;
+
+const getCachedProduct = cache(async (slug: string) => {
+  return prisma.product.findUnique({
+    where: { slug },
+    include: { category: true },
+  });
+});
 
 export async function generateStaticParams() {
   const mainCat = findMainCategory("qua-tang");
@@ -76,10 +83,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
     }
   }
 
-  const product = await prisma.product.findUnique({
-    where: { slug: lastSlug },
-    include: { category: true },
-  });
+  const product = await getCachedProduct(lastSlug);
 
   if (product) {
     let parsedImages: string[] = [];
@@ -183,7 +187,13 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
           },
         },
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          originalPrice: true,
+          images: true,
           category: {
             select: { name: true, slug: true },
           },
@@ -233,14 +243,7 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
   // =========================================================================
   // CASE 2: SINGLE PRODUCT DETAIL PAGE
   // =========================================================================
-  const product = await prisma.product.findUnique({
-    where: { slug: lastSlug },
-    include: {
-      category: {
-        select: { name: true, slug: true },
-      },
-    },
-  });
+  const product = await getCachedProduct(lastSlug);
 
   if (product) {
     let images: string[] = [];

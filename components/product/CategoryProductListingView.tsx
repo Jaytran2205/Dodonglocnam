@@ -428,10 +428,11 @@ export function CategoryProductListingView({
           {/* Product Grid 4 Columns */}
           {paginatedProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-              {paginatedProducts.map((p) => (
+              {paginatedProducts.map((p, idx) => (
                 <ListingProductCard
                   key={p.id}
                   product={p}
+                  priority={idx < 4}
                   isWished={wishlist.includes(p.id)}
                   mainCategorySlug={mainCategory.slug}
                   onToggleWishlist={toggleWishlist}
@@ -659,6 +660,7 @@ export function CategoryProductListingView({
 // ---------------------------------------------------------------------------
 interface ListingProductCardProps {
   product: ListingProduct;
+  priority?: boolean;
   isWished: boolean;
   mainCategorySlug: string;
   onToggleWishlist: (id: string, e: React.MouseEvent) => void;
@@ -667,6 +669,7 @@ interface ListingProductCardProps {
 
 function ListingProductCard({
   product,
+  priority = false,
   isWished,
   mainCategorySlug,
   onToggleWishlist,
@@ -715,12 +718,17 @@ function ListingProductCard({
     <div className="group bg-[#0a1524] border border-[#1e344d] rounded-xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all duration-300 flex flex-col justify-between">
       {/* Image Area */}
       <div className="relative aspect-square overflow-hidden bg-[#070e17] group/cardimg">
-        <Link href={detailHref} className="block w-full h-full">
+        <Link href={detailHref} prefetch={false} className="block w-full h-full">
           <img
             src={getWatermarkedImageUrl(currentImg)}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            // @ts-ignore
+            fetchPriority={priority ? "high" : "auto"}
+            width={400}
+            height={400}
           />
         </Link>
 
@@ -790,7 +798,7 @@ function ListingProductCard({
 
       {/* Product Info */}
       <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-grow gap-2">
-        <Link href={detailHref}>
+        <Link href={detailHref} prefetch={false}>
           <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-[#ffd700] transition-colors line-clamp-2 min-h-[38px] leading-snug">
             {product.name}
           </h3>
@@ -831,6 +839,7 @@ function ListingProductCard({
           </button>
           <Link
             href={detailHref}
+            prefetch={false}
             className="bg-[#ffd700] hover:bg-[#ffe082] text-[#070e17] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-[#ffd700]"
             title="Xem chi tiết sản phẩm"
           >

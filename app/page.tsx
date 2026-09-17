@@ -12,7 +12,7 @@ import { ModernFooter } from "@/components/common/ModernFooter";
 import { FloatingContact } from "@/components/common/FloatingContact";
 import { FaqJsonLd } from "@/components/seo/JsonLd";
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export default function HomePage() {
   const homeFaqs = [

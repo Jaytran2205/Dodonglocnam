@@ -86,6 +86,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Product Image Window */}
         <Link
           href={`/san-pham/${categorySlug}/${product.slug}`}
+          prefetch={false}
           className="block aspect-[4/3] sm:aspect-square mb-2 overflow-hidden rounded-xl bg-white border border-[#F3EDE2] p-2.5 relative flex items-center justify-center group/img"
         >
           <img
@@ -93,6 +94,8 @@ export function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             loading="lazy"
             decoding="async"
+            width={400}
+            height={400}
             className="w-full h-full object-contain group-hover/img:scale-105 transition-all duration-300"
           />
           {product.material && (
@@ -134,7 +137,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Product Info */}
         <div className="space-y-1">
-          <Link href={`/san-pham/${categorySlug}/${product.slug}`}>
+          <Link href={`/san-pham/${categorySlug}/${product.slug}`} prefetch={false}>
             <h3 className="font-serif text-[13px] sm:text-sm font-bold text-[#2A160F] group-hover:text-[#801019] transition-colors line-clamp-2 leading-snug min-h-[38px]">
               {product.name}
             </h3>

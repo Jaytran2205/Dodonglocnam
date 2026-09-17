@@ -1,4 +1,4 @@
-import React from "react";
+import React, { cache } from "react";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
@@ -24,7 +24,14 @@ interface SlugPageProps {
   };
 }
 
-export const revalidate = 60;
+export const revalidate = 3600;
+
+const getCachedProduct = cache(async (slug: string) => {
+  return prisma.product.findUnique({
+    where: { slug },
+    include: { category: true },
+  });
+});
 
 export async function generateStaticParams() {
   const paramsList: { category: string; slug: string[] }[] = [];
@@ -82,10 +89,7 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   }
 
   // 2. Check if last slug is a product in DB
-  const product = await prisma.product.findUnique({
-    where: { slug: lastSlug },
-    include: { category: true },
-  });
+  const product = await getCachedProduct(lastSlug);
 
   if (product) {
     let parsedImages: string[] = [];
@@ -202,7 +206,13 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
               category: { slug: categorySlug },
             },
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          originalPrice: true,
+          images: true,
           category: {
             select: { name: true, slug: true },
           },
@@ -271,7 +281,13 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
               category: { slug: categorySlug },
             },
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          originalPrice: true,
+          images: true,
           category: {
             select: { name: true, slug: true },
           },
@@ -320,10 +336,7 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
   // =========================================================================
   // CASE 2: LAST SLUG IS A PRODUCT DETAIL IN DATABASE
   // =========================================================================
-  const product = await prisma.product.findUnique({
-    where: { slug: lastSlug },
-    include: { category: true },
-  });
+  const product = await getCachedProduct(lastSlug);
 
   if (product) {
     const relatedProductsData = await prisma.product.findMany({

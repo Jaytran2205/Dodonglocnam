@@ -18,7 +18,7 @@ interface CategoryPageProps {
   };
 }
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   const mainCategories = DEFAULT_HIERARCHICAL_CATEGORIES.map((c) => ({
@@ -183,7 +183,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       category: { slug: categorySlug },
     },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      price: true,
+      originalPrice: true,
+      images: true,
       category: {
         select: { name: true, slug: true },
       },

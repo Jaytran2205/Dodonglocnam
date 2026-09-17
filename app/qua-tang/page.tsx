@@ -10,7 +10,7 @@ import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { CategorySubGrid } from "@/components/product/CategorySubGrid";
 import { findMainCategory } from "@/lib/subcategories-data";
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const mainCatData = findMainCategory("qua-tang");
