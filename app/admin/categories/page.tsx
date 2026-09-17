@@ -55,7 +55,7 @@ export default function AdminCategoriesPage() {
   const [newSubData, setNewSubData] = useState({
     name: "",
     keyword: "",
-    image: "/images/golden_ai/tranh_thuan_buom.jpg",
+    image: "/images/locnam_real/locnam_tranh_thuan_buom.jpg",
   });
 
   // Modal edit single subcategory
@@ -340,7 +340,7 @@ export default function AdminCategoriesPage() {
     setNewSubData({
       name: "",
       keyword: "",
-      image: "/images/golden_ai/tranh_thuan_buom.jpg",
+      image: "/images/locnam_real/locnam_tranh_thuan_buom.jpg",
     });
   };
 

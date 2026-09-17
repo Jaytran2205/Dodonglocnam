@@ -166,93 +166,421 @@ export function ModernHeader() {
   // =========================================================================
 
   const [hoveredProductCategory, setHoveredProductCategory] = useState("do-tho-cung");
-  const [hoveredGiftCategory, setHoveredGiftCategory] = useState("doi-tac");
+  const [hoveredGiftCategory, setHoveredGiftCategory] = useState("qua-tang-doi-tuong");
+  const [hoveredProductSubItem, setHoveredProductSubItem] = useState<{
+    image: string;
+    previewTitle: string;
+    previewDesc: string;
+    href: string;
+    tag?: string;
+  } | null>(null);
+  const [hoveredGiftSubItem, setHoveredGiftSubItem] = useState<{
+    image: string;
+    previewTitle: string;
+    previewDesc: string;
+    href: string;
+    tag?: string;
+  } | null>(null);
 
   const productNavigationCategories = [
     {
       id: "do-tho-cung",
       title: "ĐỒ THỜ CÚNG",
       href: "/san-pham/do-tho-cung",
-      image: "/images/golden_ai/bo_do_tho.jpg",
-      previewTitle: "Bộ Đồ Thờ Cúng Bằng Đồng Cao Cấp Lộc Nam",
+      image: "/images/do-tho-cung/bo-suu-tap-do-tho.webp",
+      previewTitle: "Bộ Sưu Tập Đồ Thờ Đầy Đủ Bằng Đồng Cao Cấp Lộc Nam",
       previewDesc: "Đỉnh đồng, tam sự, ngũ sự, bát hương, hạc thờ đúc thủ công gia truyền Ý Yên Nam Định bảo hành trọn đời.",
       subItems: [
-        { label: "BỘ TAM SỰ BẰNG ĐỒNG", href: "/san-pham/do-tho-cung/bo-tam-su-ngu-su", query: "Bộ tam sự bằng đồng" },
-        { label: "BỘ NGŨ SỰ", href: "/san-pham/do-tho-cung/bo-ngu-su", query: "Bộ ngũ sự" },
-        { label: "ĐỈNH ĐỒNG TRÊN BÀN THỜ", href: "/san-pham/do-tho-cung/dinh-dong", query: "Đỉnh đồng trên bàn thờ" },
-        { label: "HẠC THỜ", href: "/san-pham/do-tho-cung/hac-tho", query: "Hạc thờ" },
-        { label: "CHÂN NẾN", href: "/san-pham/do-tho-cung/chan-nen", query: "Chân nến" },
-        { label: "ĐÈN THỜ", href: "/san-pham/do-tho-cung/den-tho", query: "Đèn thờ" },
-        { label: "LỌ HOA ĐỒNG", href: "/san-pham/do-tho-cung/lo-hoa", query: "Lọ hoa đồng" },
-        { label: "BÁT HƯƠNG ĐỒNG", href: "/san-pham/do-tho-cung/bat-huong", query: "Bát hương đồng" },
-        { label: "ỐNG HƯƠNG", href: "/san-pham/do-tho-cung/ong-huong", query: "Ống hương" },
-        { label: "MÂM BỒNG", href: "/san-pham/do-tho-cung/mam-bong", query: "Mâm bồng" },
-        { label: "ĐÀI NƯỚC", href: "/san-pham/do-tho-cung/dai-nuoc", query: "Đài nước" },
-        { label: "ẤM NƯỚC", href: "/san-pham/do-tho-cung/am-nuoc", query: "Ấm nước" },
-        { label: "NGAI CHÉN", href: "/san-pham/do-tho-cung/ngai-chen", query: "Ngai chén" },
-        { label: "CHUÔNG THỜ CỠ NHỎ", href: "/san-pham/do-tho-cung/chuong-tho", query: "Chuông thờ cỡ nhỏ" },
-        { label: "CỬU HUYỀN THẤT TỔ", href: "/san-pham/do-tho-cung/cuu-huyen-that-to", query: "Cửu huyền thất tổ" },
-        { label: "NGAI THỜ", href: "/san-pham/do-tho-cung/ngai-tho", query: "Ngai thờ" },
-        { label: "BÀI VỊ", href: "/san-pham/do-tho-cung/bai-vi", query: "Bài vị" },
-        { label: "HOÀNH PHI CÂU ĐỐI - CỬA VÕNG", href: "/san-pham/do-tho-cung/hoanh-phi-cau-doi", query: "Hoành phi câu đối - cửa võng" },
-        { label: "ĐẠI TỰ BẰNG ĐỒNG", href: "/san-pham/do-tho-cung/dai-tu", query: "Đại tự bằng đồng" },
-        { label: "CHIÊNG - KHÁNH ĐỒNG", href: "/san-pham/do-tho-cung/chieng-khanh", query: "Chiêng - Khánh Đồng" },
-        { label: "ĐÚC ĐẠI HỒNG CHUNG", href: "/san-pham/do-tho-cung/dai-hong-chung", query: "Đúc đại hồng chung" },
-        { label: "ĐỈNH - LƯ HƯƠNG CỠ LỚN", href: "/san-pham/do-tho-cung/dinh-lu-huong", query: "Đỉnh - lư hương cỡ lớn" },
-        { label: "ĐỈNH THẤT LÂN VỜN CẦU", href: "/san-pham/do-tho-cung/dinh-that-lan", query: "Đỉnh thất lân vờn cầu" },
-        { label: "LỤC BÌNH - CHÓE ĐỒNG", href: "/san-pham/do-tho-cung/luc-binh-choe", query: "Lục bình - Chóe đồng" },
+        {
+          label: "BỘ SƯU TẬP ĐỒ THỜ ĐẦY ĐỦ",
+          href: "/san-pham/do-tho-cung/bo-suu-tap-do-tho",
+          query: "Bộ sưu tập đồ thờ đầy đủ",
+          image: "/images/do-tho-cung/bo-suu-tap-do-tho.webp",
+          previewTitle: "Bộ Sưu Tập Đồ Thờ Đầy Đủ Bằng Đồng Lộc Nam",
+          previewDesc: "Bộ sưu tập đồ thờ cúng đầy đủ bằng đồng vàng catut, đồng đỏ khảm tam khí, ngũ sắc cao cấp.",
+        },
+        {
+          label: "BỘ TAM SỰ, NGŨ SỰ BẰNG ĐỒNG",
+          href: "/san-pham/do-tho-cung/bo-tam-su-ngu-su",
+          query: "Bộ tam sự bằng đồng",
+          image: "/images/do-tho-cung/bo-tam-su-ngu-su.webp",
+          previewTitle: "Bộ Tam Sự, Ngũ Sự Bằng Đồng Cao Cấp",
+          previewDesc: "Đỉnh đồng kết hợp đôi hạc ngự long quy hoặc đôi chân nến đúc đồng thủ công tinh xảo.",
+        },
+        {
+          label: "CHÂN NẾN",
+          href: "/san-pham/do-tho-cung/chan-nen",
+          query: "Chân nến",
+          image: "/images/do-tho-cung/chan-nen.webp",
+          previewTitle: "Chân Nến Bằng Đồng Thờ Cúng Gia Tiên",
+          previewDesc: "Đôi chân nến thờ bằng đồng đúc nổi họa tiết rồng phượng, hoa sen trang nghiêm.",
+        },
+        {
+          label: "HẠC THỜ",
+          href: "/san-pham/do-tho-cung/hac-tho",
+          query: "Hạc thờ",
+          image: "/images/do-tho-cung/hac-tho.webp",
+          previewTitle: "Đôi Hạc Thờ Ngậm Hoa Sen Ngự Long Quy",
+          previewDesc: "Đôi hạc đồng chầu bàn thờ gia tiên và từ đường biểu tượng của sự thanh cao và trường thọ.",
+        },
+        {
+          label: "ĐÈN THỜ",
+          href: "/san-pham/do-tho-cung/den-tho",
+          query: "Đèn thờ",
+          image: "/images/do-tho-cung/den-tho.webp",
+          previewTitle: "Đèn Thờ Bằng Đồng Thắp Sáng Không Gian Thờ",
+          previewDesc: "Đôi đèn thờ cắm điện hoặc thắp dầu bằng đồng cao cấp đúc hoa văn tứ linh, sen tinh tế.",
+        },
+        {
+          label: "BÁT HƯƠNG ĐỒNG",
+          href: "/san-pham/do-tho-cung/bat-huong",
+          query: "Bát hương đồng",
+          image: "/images/do-tho-cung/bat-huong.webp",
+          previewTitle: "Bát Hương Đồng Đúc Rồng Chầu Mặt Nguyệt",
+          previewDesc: "Vật phẩm linh thiêng trung tâm bàn thờ, đúc nổi lưỡng long chầu nguyệt giữ trọn vượng khí.",
+        },
+        {
+          label: "LỌ HOA ĐỒNG",
+          href: "/san-pham/do-tho-cung/lo-hoa",
+          query: "Lọ hoa đồng",
+          image: "/images/do-tho-cung/lo-hoa.webp",
+          previewTitle: "Lọ Hoa Bằng Đồng Dâng Hoa Cúng Phật & Gia Tiên",
+          previewDesc: "Đôi lọ hoa đồng đúc họa tiết hoa sen, tùng hạc mang lại vẻ tôn nghiêm cho bàn thờ.",
+        },
+        {
+          label: "ỐNG HƯƠNG",
+          href: "/san-pham/do-tho-cung/ong-huong",
+          query: "Ống hương",
+          image: "/images/do-tho-cung/ong-huong.webp",
+          previewTitle: "Ống Đựng Hương Bằng Đồng Gọn Gàng Bàn Thờ",
+          previewDesc: "Ống cắm nhang bằng đồng đúc hoa văn rồng phượng giúp không gian thờ tự ngăn nắp, trang trọng.",
+        },
+        {
+          label: "MÂM BỒNG",
+          href: "/san-pham/do-tho-cung/mam-bong",
+          query: "Mâm bồng",
+          image: "/images/do-tho-cung/mam-bong.webp",
+          previewTitle: "Mâm Bồng Đồng Đựng Ngũ Quả Dâng Lễ",
+          previewDesc: "Đĩa mâm bồng đựng hoa quả chạm rồng phượng, chữ Phúc bằng đồng vàng nguyên chất.",
+        },
+        {
+          label: "ĐÀI NƯỚC",
+          href: "/san-pham/do-tho-cung/dai-nuoc",
+          query: "Đài nước",
+          image: "/images/do-tho-cung/dai-nuoc.webp",
+          previewTitle: "Bộ Đài Nước Thờ Cúng Bằng Đồng (Nước - Rượu - Muối)",
+          previewDesc: "Bộ ba đài thờ đựng nước tinh khiết, rượu và muối dâng cúng tổ tiên chu toàn lễ nghi.",
+        },
+        {
+          label: "NGAI CHÉN",
+          href: "/san-pham/do-tho-cung/ngai-chen",
+          query: "Ngai chén",
+          image: "/images/do-tho-cung/ngai-chen.webp",
+          previewTitle: "Kỷ Ngai Chén Thờ Bằng Đồng (3 Chén / 5 Chén)",
+          previewDesc: "Bộ kỷ ngai chén nước dâng hương đúc đồng nguyên khối chạm hoa văn cổ truyền.",
+        },
+        {
+          label: "ẤM NƯỚC",
+          href: "/san-pham/do-tho-cung/am-nuoc",
+          query: "Ấm nước",
+          image: "/images/do-tho-cung/am-nuoc.webp",
+          previewTitle: "Ấm Nước Thờ Bằng Đồng Đúc Tinh Xảo",
+          previewDesc: "Ấm dâng rượu dâng trà thờ cúng gia tiên và thần linh đúc đồng thủ công dày dặn.",
+        },
+        {
+          label: "CHUÔNG THỜ CỠ NHỎ",
+          href: "/san-pham/do-tho-cung/chuong-tho",
+          query: "Chuông thờ cỡ nhỏ",
+          image: "/images/do-tho-cung/chuong-tho.webp",
+          previewTitle: "Chuông Thờ Bằng Đồng Cỡ Nhỏ Tiếng Trong Vang",
+          previewDesc: "Chuông gia trì, chuông bát thờ tại gia và phòng thờ niệm Phật âm vang trầm ấm.",
+        },
+        {
+          label: "CỬU HUYỀN THẤT TỔ",
+          href: "/san-pham/do-tho-cung/cuu-huyen-that-to",
+          query: "Cửu huyền thất tổ",
+          image: "/images/do-tho-cung/cuu-huyen-that-to.webp",
+          previewTitle: "Bài Vị Cửu Huyền Thất Tổ Bằng Đồng Sơn Son Mạ Vàng",
+          previewDesc: "Tấm hoành phi bài vị Cửu Huyền Thất Tổ phụng thờ tổ tiên ngàn đời hiển vinh.",
+        },
+        {
+          label: "NGAI THỜ",
+          href: "/san-pham/do-tho-cung/ngai-tho",
+          query: "Ngai thờ",
+          image: "/images/do-tho-cung/ngai-tho.webp",
+          previewTitle: "Ngai Thờ Gia Tiên - Ỷ Thờ Bằng Đồng Đúc",
+          previewDesc: "Ngai thờ chạm rồng chầu tôn nghiêm dành cho vị tổ tôn kính nhất trong dòng họ.",
+        },
+        {
+          label: "BÀI VỊ",
+          href: "/san-pham/do-tho-cung/bai-vi",
+          query: "Bài vị",
+          image: "/images/do-tho-cung/bai-vi.webp",
+          previewTitle: "Bài Vị Thờ Cúng Bằng Đồng Chế Tác Theo Yêu Cầu",
+          previewDesc: "Bài vị đồng chữ Hán - Việt khắc tên gia tiên, tiền nhân phụng thờ trang nghiêm vĩnh cửu.",
+        },
+        {
+          label: "CUỐN THƯ CÂU ĐỐI",
+          href: "/san-pham/do-tho-cung/cuon-thu-cau-doi",
+          query: "Cuốn thư câu đối",
+          image: "/images/do-tho-cung/cuon-thu-cau-doi.webp",
+          previewTitle: "Cuốn Thư Câu Đối - Hoành Phi Cửa Võng Bằng Đồng",
+          previewDesc: "Đức Lưu Quang, Phụng Tổ Đường thúc thủ công đồng tấm dày dặn thếp vàng sang trọng.",
+        },
+        {
+          label: "ĐẠI TỰ BẰNG ĐỒNG",
+          href: "/san-pham/do-tho-cung/dai-tu",
+          query: "Đại tự bằng đồng",
+          image: "/images/do-tho-cung/dai-tu.webp",
+          previewTitle: "Đại Tự Câu Đối Khung Đồng Chữ Nổi Mạ Vàng",
+          previewDesc: "Bức đại tự vuông khắc chữ cổ truyền thếp vàng 9999 cho nhà thờ họ, từ đường tôn kính.",
+        },
+        {
+          label: "CHIÊNG - KHÁNH ĐỒNG",
+          href: "/san-pham/do-tho-cung/chieng-khanh",
+          query: "Chiêng - Khánh Đồng",
+          image: "/images/do-tho-cung/chieng-khanh.webp",
+          previewTitle: "Chiêng Đồng - Khánh Đồng Đúc Thủ Công Tiếng Ngân",
+          previewDesc: "Chiêng khánh chạm mặt trống đồng, hoa văn cổ truyền gõ âm vang rền xa.",
+        },
+        {
+          label: "ĐÚC ĐẠI HỒNG CHUNG",
+          href: "/san-pham/do-tho-cung/dai-hong-chung",
+          query: "Đúc đại hồng chung",
+          image: "/images/do-tho-cung/dai-hong-chung.webp",
+          previewTitle: "Đúc Đại Hồng Chung Nhà Chùa & Đền Miếu",
+          previewDesc: "Nhận đúc đại hồng chung từ hàng trăm kg đến hàng chục tấn trực tiếp tại chùa làng.",
+        },
+        {
+          label: "ĐỈNH - LƯ HƯƠNG CỠ LỚN",
+          href: "/san-pham/do-tho-cung/dinh-lu-huong",
+          query: "Đỉnh - lư hương cỡ lớn",
+          image: "/images/do-tho-cung/dinh-lu-huong.webp",
+          previewTitle: "Đỉnh Lư Hương Đồng Cỡ Lớn Đặt Sân Đình Chùa",
+          previewDesc: "Lư hương đỉnh tròn, đỉnh vuông cắm nhang ngoài trời đúc đồng đỏ nguyên khối bền thế kỷ.",
+        },
+        {
+          label: "ĐỈNH THẤT LÂN VỜN CẦU",
+          href: "/san-pham/do-tho-cung/dinh-that-lan",
+          query: "Đỉnh thất lân vờn cầu",
+          image: "/images/do-tho-cung/dinh-that-lan.webp",
+          previewTitle: "Đỉnh Thất Lân Vờn Cầu Khảm Tam Khí, Ngũ Sắc",
+          previewDesc: "Tuyệt tác đỉnh cầu 7 nghê vờn ngọc khảm bạc, vàng 9999 trấn trạch trừ tà đắc tài đắc lộc.",
+        },
+        {
+          label: "LỤC BÌNH - CHÓE ĐỒNG",
+          href: "/san-pham/do-tho-cung/luc-binh-choe",
+          query: "Lục bình - Chóe đồng",
+          image: "/images/do-tho-cung/luc-binh-choe.webp",
+          previewTitle: "Đôi Lục Bình & Chóe Thờ Bằng Đồng Cao Cấp",
+          previewDesc: "Lục bình cắm hoa cắm cành đào và chóe đựng tài lộc dáng phong thủy tụ lộc sinh khí.",
+        },
       ],
     },
     {
       id: "tuong-dong",
       title: "TƯỢNG ĐỒNG",
       href: "/san-pham/tuong-dong",
-      image: "/images/golden_ai/tuong_phat.jpg",
+      image: "/images/locnam_real/locnam_buddha_08_tuong-phat-a-di-da-bang-d.jpg",
       previewTitle: "Tượng Đồng Phong Thủy & Đúc Tượng Chân Dung",
       previewDesc: "Đắp mẫu đất sét truyền thần, đúc phôi đồng nguyên khối chuẩn 99%, tượng danh nhân và tượng Phật.",
       subItems: [
-        { label: "TƯỢNG CHÂN DUNG, TRUYỀN THẦN", href: "/san-pham/tuong-dong/tuong-truyen-than", query: "Tượng chân dung, truyền thần" },
-        { label: "TƯỢNG PHẬT", href: "/san-pham/tuong-dong/tuong-phat", query: "Tượng Phật" },
-        { label: "TƯỢNG DANH NHÂN", href: "/san-pham/tuong-dong/tuong-danh-nhan", query: "Tượng danh nhân" },
-        { label: "TƯỢNG THẦN - THÁNH", href: "/san-pham/tuong-dong/tuong-than-thanh", query: "Tượng thần - thánh" },
-        { label: "TƯỢNG VUA", href: "/san-pham/tuong-dong/tuong-vua", query: "Tượng vua" },
-        { label: "TƯỢNG LINH VẬT 12 CON GIÁP", href: "/san-pham/tuong-dong/tuong-12-con-giap", query: "Tượng Linh vật 12 con giáp" },
+        {
+          label: "TƯỢNG CHÂN DUNG, TRUYỀN THẦN",
+          href: "/san-pham/tuong-dong/tuong-truyen-than",
+          query: "Tượng chân dung, truyền thần",
+          image: "/images/locnam_real/locnam_bac_giap.jpg",
+          previewTitle: "Đúc Tượng Chân Dung Bằng Đồng Truyền Thần",
+          previewDesc: "Đắp mẫu đất sét chuẩn xác giống người thật trên 95%, đúc đồng đỏ nguyên khối bền vững muôn đời.",
+        },
+        {
+          label: "TƯỢNG PHẬT",
+          href: "/san-pham/tuong-dong/tuong-phat",
+          query: "Tượng Phật",
+          image: "/images/locnam_real/locnam_buddha_08_tuong-phat-a-di-da-bang-d.jpg",
+          previewTitle: "Tượng Phật Thích Ca, Quan Âm, A Di Đà Bằng Đồng",
+          previewDesc: "Đúc tượng Phật cho chùa chiền và phòng thờ tư gia diện mạo từ bi, uy nghiêm.",
+        },
+        {
+          label: "TƯỢNG DANH NHÂN",
+          href: "/san-pham/tuong-dong/tuong-danh-nhan",
+          query: "Tượng danh nhân",
+          image: "/images/locnam_real/locnam_bac_ho.jpg",
+          previewTitle: "Tượng Bác Hồ, Trần Hưng Đạo, Võ Nguyên Giáp",
+          previewDesc: "Tượng đồng danh nhân lịch sử dân tộc mạ vàng, đúc thủ công tinh xảo.",
+        },
+        {
+          label: "TƯỢNG THẦN - THÁNH",
+          href: "/san-pham/tuong-dong/tuong-than-thanh",
+          query: "Tượng thần - thánh",
+          image: "/images/locnam_real/locnam_quan_cong.jpg",
+          previewTitle: "Tượng Quan Thánh Đế Quân, Thánh Gióng Bằng Đồng",
+          previewDesc: "Tượng thần linh trấn trạch, xua tan hung khí, hộ trì gia chủ bình an thịnh vượng.",
+        },
+        {
+          label: "TƯỢNG VUA",
+          href: "/san-pham/tuong-dong/tuong-vua",
+          query: "Tượng vua",
+          image: "/images/locnam_real/locnam_tuong_vua.jpg",
+          previewTitle: "Tượng Vua Hùng, Vua Quang Trung Bằng Đồng",
+          previewDesc: "Tượng các bậc hoàng đế anh minh dựng nước và giữ nước đúc đồng nguyên chất.",
+        },
+        {
+          label: "TƯỢNG LINH VẬT 12 CON GIÁP",
+          href: "/san-pham/tuong-dong/tuong-12-con-giap",
+          query: "Tượng Linh vật 12 con giáp",
+          image: "/images/products/wp-content_uploads_2025_11_tuong-ngua-phong-thuy-ma-vang-de-go-sang-trong.jpg",
+          previewTitle: "Tượng 12 Con Giáp Bằng Đồng Mạ Vàng 24K",
+          previewDesc: "Tượng linh vật theo tuổi bản mệnh, linh vật phong thủy chiêu tài hút lộc.",
+        },
       ],
     },
     {
       id: "tranh-dong",
       title: "TRANH ĐỒNG",
       href: "/san-pham/tranh-dong",
-      image: "/images/golden_ai/tranh_thuan_buom.jpg",
+      image: "/images/locnam_real/locnam_tranh_thuan_buom.jpg",
       previewTitle: "Tranh Đồng Mỹ Nghệ & Dát Vàng 24K",
       previewDesc: "Tranh Thuận Buồm Xuôi Gió, Bát Mã, Vinh Quy Bái Tổ, Tranh Đồng Quê chạm thủ công tinh xảo.",
       subItems: [
-        { label: "TRANH BÁT MÃ", href: "/san-pham/tranh-dong/tranh-bat-ma", query: "Tranh bát mã" },
-        { label: "TRANH THUẬN BUỒM XUÔI GIÓ", href: "/san-pham/tranh-dong/tranh-thuan-buom", query: "Tranh thuận buồm xuôi gió" },
-        { label: "TRANH VINH QUY BÁI TỔ", href: "/san-pham/tranh-dong/tranh-vinh-quy", query: "Tranh vinh quy bái tổ" },
-        { label: "TRANH ĐỒNG QUÊ", href: "/san-pham/tranh-dong/tranh-dong-que", query: "Tranh đồng quê" },
-        { label: "TRANH TỨ QUÝ", href: "/san-pham/tranh-dong/tranh-tu-quy", query: "Tranh tứ quý" },
-        { label: "TRANH CÁ CHÉP", href: "/san-pham/tranh-dong/tranh-ca-chep", query: "Tranh cá chép" },
-        { label: "TRANH BÁCH HẠC QUẦN TÙNG", href: "/san-pham/tranh-dong/tranh-bach-hac", query: "Tranh bách hạc quần tùng" },
-        { label: "TRANH CHÙA MỘT CỘT & KHUÊ VĂN CÁC", href: "/san-pham/tranh-dong/tranh-chua-mot-cot", query: "Tranh chùa một cột" },
-        { label: "TRANH CHỮ BẰNG ĐỒNG", href: "/san-pham/tranh-dong/tranh-chu", query: "Tranh chữ bằng đồng" },
-        { label: "TRANH DANH NHÂN BẰNG ĐỒNG", href: "/san-pham/tranh-dong/tranh-danh-nhan", query: "Tranh danh nhân (Bác Hồ, Bác Giáp)" },
-        { label: "TRANH PHẬT BẰNG ĐỒNG", href: "/san-pham/tranh-dong/tranh-phat", query: "Tranh Phật bằng đồng" },
-        { label: "TRANH MẶT TRỐNG ĐỒNG", href: "/san-pham/tranh-dong/tranh-mat-trong", query: "Tranh mặt trống đồng" },
+        {
+          label: "TRANH BÁT MÃ",
+          href: "/san-pham/tranh-dong/tranh-bat-ma",
+          query: "Tranh bát mã",
+          image: "/images/locnam_real/locnam_tranh_bat_ma.jpg",
+          previewTitle: "Tranh Đồng Bát Mã Truy Phong Mạ Vàng 24K",
+          previewDesc: "Bức tranh tám chú tuấn mã phi nước đại mang ý nghĩa thành công thần tốc và thịnh vượng.",
+        },
+        {
+          label: "TRANH THUẬN BUỒM XUÔI GIÓ",
+          href: "/san-pham/tranh-dong/tranh-thuan-buom",
+          query: "Tranh thuận buồm xuôi gió",
+          image: "/images/locnam_real/locnam_tranh_thuan_buom.jpg",
+          previewTitle: "Tranh Thuận Buồm Xuôi Gió Bằng Đồng Mạ Vàng",
+          previewDesc: "Biểu tượng của sự hanh thông tài lộc, kích hoạt vận may cho gia chủ kinh doanh.",
+        },
+        {
+          label: "TRANH VINH QUY BÁI TỔ",
+          href: "/san-pham/tranh-dong/tranh-vinh-quy",
+          query: "Tranh vinh quy bái tổ",
+          image: "/images/locnam_real/locnam_tranh_vinh_quy.jpg",
+          previewTitle: "Tranh Đồng Vinh Quy Bái Tổ Chạm Tay Tinh Tế",
+          previewDesc: "Tái hiện cảnh tân khoa đỗ đạt rạng danh dòng họ, hiếu kính tổ tiên nơi quê nhà.",
+        },
+        {
+          label: "TRANH ĐỒNG QUÊ",
+          href: "/san-pham/tranh-dong/tranh-dong-que",
+          query: "Tranh đồng quê",
+          image: "/images/locnam_real/locnam_tranh_dong_que.jpg",
+          previewTitle: "Tranh Đồng Cảnh Làng Quê Việt Nam Thanh Bình",
+          previewDesc: "Cây đa giếng nước sân đình, mùa gặt quê hương chạm nổi tinh xảo trên phôi đồng tấm dày.",
+        },
+        {
+          label: "TRANH TỨ QUÝ",
+          href: "/san-pham/tranh-dong/tranh-tu-quy",
+          query: "Tranh tứ quý",
+          image: "/images/locnam_real/locnam_tranh_tu_quy.jpg",
+          previewTitle: "Bộ Tranh Tứ Quý Tùng Cúc Trúc Mai Bằng Đồng",
+          previewDesc: "Bốn mùa sinh sôi nảy nở, tài lộc sum vầy dát vàng 24k đẳng cấp nghệ nhân.",
+        },
+        {
+          label: "TRANH CÁ CHÉP",
+          href: "/san-pham/tranh-dong/tranh-ca-chep",
+          query: "Tranh cá chép",
+          image: "/images/locnam_real/locnam_tranh_ca_chep.jpg",
+          previewTitle: "Tranh Cửu Ngư Quần Hội Bằng Đồng Khảm Tam Khí",
+          previewDesc: "Chín chú cá chép bơi lội trong hồ sen biểu trưng cho sự trường cửu và tài lộc dư dả.",
+        },
+        {
+          label: "TRANH BÁCH HẠC QUẦN TÙNG",
+          href: "/san-pham/tranh-dong/tranh-bach-hac",
+          query: "Tranh bách hạc quần tùng",
+          image: "/images/belux/belux_tranh_bach_hac.jpg",
+          previewTitle: "Tranh Đồng Bách Hạc Quần Tùng - Bách Niên Giai Lão",
+          previewDesc: "Cây tùng cổ thụ che chở bầy chim hạc, ngụ ý trường thọ an khang cho gia đạo.",
+        },
+        {
+          label: "TRANH CHÙA MỘT CỘT & KHUÊ VĂN CÁC",
+          href: "/san-pham/tranh-dong/tranh-chua-mot-cot",
+          query: "Tranh chùa một cột",
+          image: "/images/demo/demo_tranh_chua_mot_cot.jpg",
+          previewTitle: "Tranh Biểu Trưng Văn Hóa Hà Nội Bằng Đồng",
+          previewDesc: "Quà tặng lưu niệm mang dấu ấn văn hiến ngàn năm Thăng Long mạ vàng sang trọng.",
+        },
+        {
+          label: "TRANH CHỮ BẰNG ĐỒNG",
+          href: "/san-pham/tranh-dong/tranh-chu",
+          query: "Tranh chữ bằng đồng",
+          image: "/images/locnam_real/locnam_tranh_chu.jpg",
+          previewTitle: "Tranh Chữ Phúc - Lộc - Thọ - Tâm - Nhẫn Bằng Đồng",
+          previewDesc: "Nét chữ thư pháp uốn lượn thếp vàng, bức tranh ý nghĩa lưu truyền đạo lý sống.",
+        },
+        {
+          label: "TRANH DANH NHÂN BẰNG ĐỒNG",
+          href: "/san-pham/tranh-dong/tranh-danh-nhan",
+          query: "Tranh danh nhân (Bác Hồ, Bác Giáp)",
+          image: "/images/locnam_real/locnam_tranh_bac_ho.jpg",
+          previewTitle: "Tranh Đồng Chân Dung Bác Hồ & Đại Tướng Võ Nguyên Giáp",
+          previewDesc: "Chân dung các bậc vĩ nhân chạm khắc truyền thần đúc đồng vàng cao cấp.",
+        },
+        {
+          label: "TRANH PHẬT BẰNG ĐỒNG",
+          href: "/san-pham/tranh-dong/tranh-phat",
+          query: "Tranh Phật bằng đồng",
+          image: "/images/locnam_real/locnam_a_di_da.jpg",
+          previewTitle: "Tranh Phật Bà Quan Âm & Phật A Di Đà Bằng Đồng",
+          previewDesc: "Hình ảnh đức Phật từ bi cứu khổ cứu nạn ban phúc lành cho muôn nơi.",
+        },
+        {
+          label: "TRANH MẶT TRỐNG ĐỒNG",
+          href: "/san-pham/tranh-dong/tranh-mat-trong",
+          query: "Tranh mặt trống đồng",
+          image: "/images/trong-dong/mat-trong-dong.webp",
+          previewTitle: "Tranh Khung Gỗ Mặt Trống Đồng Mạ Vàng Cao Cấp",
+          previewDesc: "Tranh mặt trống đồng Đông Sơn lồng khung kính sang trọng cho sảnh lớn và phòng họp.",
+        },
       ],
     },
     {
       id: "trong-dong",
       title: "TRỐNG ĐỒNG",
       href: "/san-pham/trong-dong",
-      image: "/images/golden_ai/qua_trong_dong.jpg",
+      image: "/images/trong-dong/qua-trong-dong-co-lon.webp",
       previewTitle: "Trống Đồng Đông Sơn Đúc Thủ Công Lộc Nam",
       previewDesc: "Bảo vật văn hóa quốc gia, quả trống đồng cỡ lớn và mặt trống phong thủy đúc thủ công Ý Yên Nam Định.",
       subItems: [
-        { label: "QUẢ TRỐNG ĐỒNG CỠ LỚN", href: "/san-pham/trong-dong/qua-trong-dong-co-lon", query: "Quà trống đồng cỡ lớn" },
-        { label: "TRỐNG LƯU NIỆM", href: "/san-pham/trong-dong/trong-dong-luu-niem", query: "Trống đồng lưu niệm" },
-        { label: "MẶT TRỐNG ĐỒNG", href: "/san-pham/trong-dong/mat-trong-dong", query: "Mặt trống đồng" },
-        { label: "TRANH MẶT TRỐNG", href: "/san-pham/trong-dong/tranh-mat-trong", query: "Tranh mặt trống đồng" },
+        {
+          label: "QUẢ TRỐNG ĐỒNG CỠ LỚN",
+          href: "/san-pham/trong-dong/qua-trong-dong-co-lon",
+          query: "Quả trống đồng cỡ lớn",
+          image: "/images/trong-dong/qua-trong-dong-co-lon.webp",
+          previewTitle: "Quả Trống Đồng Cỡ Lớn Đúc Thủ Công Đồng Đỏ",
+          previewDesc: "Trống đồng Ngọc Lũ, Đông Sơn đúc thủ công đường kính từ 50cm đến 2 mét bề thế uy nghiêm.",
+        },
+        {
+          label: "TRỐNG ĐỒNG LƯU NIỆM",
+          href: "/san-pham/trong-dong/trong-dong-luu-niem",
+          query: "Trống đồng lưu niệm",
+          image: "/images/trong-dong/trong-dong-luu-niem.webp",
+          previewTitle: "Mô Hình Trống Đồng Lưu Niệm Để Bàn Mạ Vàng",
+          previewDesc: "Quà tặng văn hóa lưu niệm ngoại giao cao cấp, mạ vàng 24k gắn đế gỗ sang trọng.",
+        },
+        {
+          label: "MẶT TRỐNG ĐỒNG",
+          href: "/san-pham/trong-dong/mat-trong-dong",
+          query: "Mặt trống đồng",
+          image: "/images/trong-dong/mat-trong-dong.webp",
+          previewTitle: "Mặt Trống Đồng Treo Tường Phong Thủy Bản Chuẩn",
+          previewDesc: "Mặt trống chạm khắc tinh xảo bản đồ Việt Nam, họa tiết Đông Sơn mang vượng khí cát tường.",
+        },
+        {
+          label: "TRANH MẶT TRỐNG",
+          href: "/san-pham/trong-dong/tranh-mat-trong",
+          query: "Tranh mặt trống đồng",
+          image: "/images/trong-dong/mat-trong-dong.webp",
+          previewTitle: "Tranh Khung Mặt Trống Đồng Dát Vàng 24K",
+          previewDesc: "Tranh mặt trống đóng khung gỗ hương cao cấp gắn đèn led tôn vinh không gian phòng khách, phòng họp.",
+        },
       ],
     },
     {
@@ -263,25 +591,79 @@ export function ModernHeader() {
       previewTitle: "Cúp Golf & Kỷ Niệm Chương Bằng Đồng Mạ Vàng",
       previewDesc: "Cúp giải thi đấu golf, kỷ niệm chương đúc thủ công mạ vàng 24k đẳng cấp vương giả.",
       subItems: [
-        { label: "CÚP GOLF MẠ VÀNG 24K", query: "Cúp vinh danh bằng đồng" },
-        { label: "CÚP GOLF THỦ CÔNG ĐỘC BẢN", query: "Cúp vinh danh bằng đồng" },
-        { label: "KỶ NIỆM CHƯƠNG GOLF", query: "Huy chương bằng đồng" },
-        { label: "BIỂU TRƯNG GOLF ĐỂ BÀN", query: "Biển chức danh để bàn" },
+        {
+          label: "CÚP GOLF MẠ VÀNG 24K",
+          query: "Cúp vinh danh bằng đồng",
+          image: "/images/cup-golf-le-gia.jpg",
+          previewTitle: "Cúp Golf Đúc Đồng Mạ Vàng 24K",
+          previewDesc: "Chế tác độc bản theo từng giải đấu golf, tinh hoa mạ vàng 24k đẳng cấp quý tộc.",
+        },
+        {
+          label: "CÚP GOLF THỦ CÔNG ĐỘC BẢN",
+          query: "Cúp vinh danh bằng đồng",
+          image: "/images/cup-golf-le-gia.jpg",
+          previewTitle: "Cúp Golf Thủ Công Độc Bản Theo Yêu Cầu",
+          previewDesc: "Thiết kế đúc đồng nguyên khối khắc tên giải đấu và tên vận động viên xuất sắc.",
+        },
+        {
+          label: "KỶ NIỆM CHƯƠNG GOLF",
+          query: "Huy chương bằng đồng",
+          image: "/images/demo/demo_cup_vinh_danh.jpg",
+          previewTitle: "Kỷ Niệm Chương Giải Golf Danh Giá",
+          previewDesc: "Biểu trưng golf kết hợp pha lê và đồng mạ vàng sang trọng.",
+        },
+        {
+          label: "BIỂU TRƯNG GOLF ĐỂ BÀN",
+          query: "Biển chức danh để bàn",
+          image: "/images/qua-tang-su-kien-hoi-nghi-bang-dong.jpg",
+          previewTitle: "Biểu Trưng Golf Để Bàn Làm Việc",
+          previewDesc: "Vật phẩm lưu niệm mạ vàng để bàn làm việc lãnh đạo, doanh nhân yêu thể thao.",
+        },
       ],
     },
     {
       id: "vat-pham-my-nghe",
       title: "VẬT PHẨM MỸ NGHỆ KHÁC",
       href: "/san-pham/qua-tang-dong",
-      image: "/images/golden_ai/thuyen_buom.jpg",
+      image: "/images/locnam_real/locnam_thuyen_buom.jpg",
       previewTitle: "Vật Phẩm Mỹ Nghệ & Quà Tặng Phong Thủy",
       previewDesc: "Thuyền buồm phong thủy mạ vàng, cóc thiềm thừ, tỳ hưu hút tài lộc và tháp văn xương.",
       subItems: [
-        { label: "MÔ HÌNH THUYỀN BUỒM MẠ VÀNG", query: "Quà tặng doanh nghiệp" },
-        { label: "CÓC THIỀM THỪ NGẬM TIỀN", query: "Cóc thiềm thừ bằng đồng" },
-        { label: "TỲ HƯU CHIÊU TÀI HÚT LỘC", query: "Tỳ hưu bằng đồng" },
-        { label: "THÁP VĂN XƯƠNG CÔNG DANH", query: "Tháp văn xương bằng đồng" },
-        { label: "ĐỒNG HỒ ĐỒNG NGHỆ THUẬT", query: "Các mẫu phong thủy khác" },
+        {
+          label: "MÔ HÌNH THUYỀN BUỒM MẠ VÀNG",
+          query: "Quà tặng doanh nghiệp",
+          image: "/images/locnam_real/locnam_thuyen_buom.jpg",
+          previewTitle: "Mô Hình Thuyền Buồm Phong Thủy Mạ Vàng 24K",
+          previewDesc: "Biểu tượng Thuận Buồm Xuôi Gió vươn khơi đại ngàn chiêu tài đón lộc.",
+        },
+        {
+          label: "CÓC THIỀM THỪ NGẬM TIỀN",
+          query: "Cóc thiềm thừ bằng đồng",
+          image: "/images/locnam_real/locnam_thiem_thu.jpg",
+          previewTitle: "Cóc Thiềm Thừ Ba Chân Ngậm Tiền Mạ Vàng",
+          previewDesc: "Linh vật giữ của cải, nhả tiền vàng vào nhà mang lại sung túc dồi dào.",
+        },
+        {
+          label: "TỲ HƯU CHIÊU TÀI HÚT LỘC",
+          query: "Tỳ hưu bằng đồng",
+          image: "/images/locnam_real/locnam_thiem_thu.jpg",
+          previewTitle: "Cặp Tỳ Hưu Bằng Đồng Chiêu Tài Hút Vượng Khí",
+          previewDesc: "Linh thú số 1 về phong thủy tài chính, không có hậu môn chỉ ăn vàng bạc.",
+        },
+        {
+          label: "THÁP VĂN XƯƠNG CÔNG DANH",
+          query: "Tháp văn xương bằng đồng",
+          image: "/images/locnam_real/locnam_thap_van_xuong.jpg",
+          previewTitle: "Tháp Văn Xương 9 Tầng Bằng Đồng Đúc",
+          previewDesc: "Vật phẩm phù trợ học hành thi cử, phát triển con đường quan lộ sự nghiệp.",
+        },
+        {
+          label: "ĐỒNG HỒ ĐỒNG NGHỆ THUẬT",
+          query: "Các mẫu phong thủy khác",
+          image: "/images/belux/belux_phong_thuy.jpg",
+          previewTitle: "Đồng Hồ Quả Lắc Bằng Đồng Nghệ Thuật",
+          previewDesc: "Đồng hồ cơ đúc đồng mang vẻ đẹp tân cổ điển đẳng cấp châu Âu quý phái.",
+        },
       ],
     },
     {
@@ -292,10 +674,34 @@ export function ModernHeader() {
       previewTitle: "Thiết Kế & Thi Công Không Gian Từ Đường Dòng Họ",
       previewDesc: "Tư vấn bài trí không gian thờ tự từ đường, nhà thờ họ, đúc chuông đồng đại hồng chung, cuốn thư câu đối.",
       subItems: [
-        { label: "THIẾT KẾ NỘI THẤT PHÒNG THỜ GIA TIÊN", query: "Cuốn thư câu đối" },
-        { label: "THI CÔNG TỪ ĐƯỜNG DÒNG HỌ", query: "Đại tự bằng đồng" },
-        { label: "ĐÚC CHUÔNG ĐẠI HỒNG CHUNG NHÀ CHÙA", query: "Đúc đại hồng chung" },
-        { label: "PHỤC DỰNG ĐỒ THỜ ĐÌNH CHÙA MIẾU MẠO", query: "Đỉnh - Lư hương cỡ lớn" },
+        {
+          label: "THIẾT KẾ NỘI THẤT PHÒNG THỜ GIA TIÊN",
+          query: "Cuốn thư câu đối",
+          image: "/images/do-tho-cung/cuon-thu-cau-doi.webp",
+          previewTitle: "Thiết Kế Nội Thất Phòng Thờ Gia Tiên Chuẩn Phong Thủy",
+          previewDesc: "Tư vấn kích thước Lỗ Ban, bài trí bộ ngũ sự, cuốn thư câu đối hài hòa tôn nghiêm.",
+        },
+        {
+          label: "THI CÔNG TỪ ĐƯỜNG DÒNG HỌ",
+          query: "Đại tự bằng đồng",
+          image: "/images/do-tho-cung/dai-tu.webp",
+          previewTitle: "Thi Công Không Gian Nhà Thờ Họ, Từ Đường",
+          previewDesc: "Chế tác trọn bộ đại tự, hoành phi câu đối đồng đỏ mạ vàng cho từ đường dòng tộc.",
+        },
+        {
+          label: "ĐÚC CHUÔNG ĐẠI HỒNG CHUNG NHÀ CHÙA",
+          query: "Đúc đại hồng chung",
+          image: "/images/do-tho-cung/dai-hong-chung.webp",
+          previewTitle: "Đúc Chuông Đồng Đại Hồng Chung Cho Đình Chùa",
+          previewDesc: "Nấu rót đồng trực tiếp tại công trình, thử tiếng ngân vang rền đạt chuẩn tâm linh.",
+        },
+        {
+          label: "PHỤC DỰNG ĐỒ THỜ ĐÌNH CHÙA MIẾU MẠO",
+          query: "Đỉnh - Lư hương cỡ lớn",
+          image: "/images/do-tho-cung/dinh-lu-huong.webp",
+          previewTitle: "Phục Dựng & Chế Tác Đồ Thờ Di Tích Lịch Sử",
+          previewDesc: "Đúc đỉnh hương, chuông khánh, bài vị và tượng thờ cho các di tích quốc gia.",
+        },
       ],
     },
   ];
@@ -363,7 +769,7 @@ export function ModernHeader() {
         tag: "Phong Thủy Lộc Nam",
       },
       items: [
-        { label: "Linh vật 12 con giáp", href: "/qua-tang/qua-tang-phong-thuy/linh-vat-12-con-giap", demoTitle: "Tượng Ngựa Túi Tiền Tài Lộc Mạ Vàng Lộc Nam", demoDesc: "Tượng linh vật theo tuổi bản mệnh mạ vàng 24k bảo hộ bình an, thu hút vượng khí.", demoImage: "/images/golden_ai/tuong_12_con_giap.jpg" },
+        { label: "Linh vật 12 con giáp", href: "/qua-tang/qua-tang-phong-thuy/linh-vat-12-con-giap", demoTitle: "Tượng Ngựa Túi Tiền Tài Lộc Mạ Vàng Lộc Nam", demoDesc: "Tượng linh vật theo tuổi bản mệnh mạ vàng 24k bảo hộ bình an, thu hút vượng khí.", demoImage: "/images/products/wp-content_uploads_2025_11_tuong-ngua-phong-thuy-ma-vang-de-go-sang-trong.jpg" },
         { label: "Tỳ hưu", href: "/qua-tang/qua-tang-phong-thuy/ty-huu", demoTitle: "Cóc Ngậm Tiền Mạ Vàng 24K Lộc Nam", demoDesc: "Linh vật chiêu tài số 1 của làng nghề Lộc Nam mạ vàng điện phân 24k.", demoImage: "/images/locnam_real/locnam_thiem_thu.jpg" },
         { label: "Tháp văn xương", href: "/qua-tang/qua-tang-phong-thuy/thap-van-xuong", demoTitle: "Tháp Văn Xương Bằng Đồng 9 Tầng", demoDesc: "Phù trợ thi cử đỗ đạt, học hành tiến tới và thăng tiến công danh sự nghiệp.", demoImage: "/images/locnam_real/locnam_thap_van_xuong.jpg" },
         { label: "Cóc thiềm thừ", href: "/qua-tang/qua-tang-phong-thuy/coc-thiem-thu", demoTitle: "Cóc Thiềm Thừ Ngậm Tiền Mạ Vàng 24K Lộc Nam", demoDesc: "Ảnh thật chế tác tại xưởng Lộc Nam, ngậm đồng tiền vàng mang của cải dồi dào.", demoImage: "/images/locnam_real/locnam_thiem_thu.jpg" },
@@ -537,7 +943,10 @@ export function ModernHeader() {
                                 key={cat.id}
                                 href={cat.href}
                                 prefetch={true}
-                                onMouseEnter={() => setHoveredProductCategory(cat.id)}
+                                onMouseEnter={() => {
+                                  setHoveredProductCategory(cat.id);
+                                  setHoveredProductSubItem(null);
+                                }}
                                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                                   isSelected
                                     ? "bg-[#122234] text-[#ffd700] border-l-4 border-[#ffd700] shadow-sm"
@@ -558,7 +967,10 @@ export function ModernHeader() {
                         </div>
 
                         {/* Cột 2: Danh mục con (Middle Column - 5 cols, hiển thị đầy đủ chữ không bị cắt) */}
-                        <div className="col-span-5 p-4 xl:p-5 bg-[#070e17] border-r border-[#1c2e42] flex flex-col justify-start">
+                        <div
+                          className="col-span-5 p-4 xl:p-5 bg-[#070e17] border-r border-[#1c2e42] flex flex-col justify-start"
+                          onMouseLeave={() => setHoveredProductSubItem(null)}
+                        >
                           <div className="border-b border-[#1c2e42] pb-2 mb-3 flex items-center justify-between">
                             <span className="text-xs font-extrabold uppercase tracking-wider text-[#ffd700]">
                               {activeGroup.title}
@@ -579,55 +991,82 @@ export function ModernHeader() {
                                 : "space-y-1.5"
                             }`}
                           >
-                            {activeGroup.subItems.map((sub, i) => (
-                              <Link
-                                key={i}
-                                prefetch={true}
-                                href={(sub as any).href || `${activeGroup.href}${
+                            {activeGroup.subItems.map((sub, i) => {
+                              const subTargetHref =
+                                (sub as any).href ||
+                                `${activeGroup.href}${
                                   activeGroup.href.includes("?") ? "&" : "?"
-                                }sub=${encodeURIComponent(sub.query)}`}
-                                className="text-[11px] xl:text-xs font-bold text-[#e2e8f0] hover:text-[#ffd700] hover:translate-x-0.5 transition-all py-1.5 border-b border-[#1c2e42]/35 block uppercase tracking-wide leading-snug break-words"
-                              >
-                                {sub.label}
-                              </Link>
-                            ))}
+                                }sub=${encodeURIComponent(sub.query)}`;
+
+                              return (
+                                <Link
+                                  key={i}
+                                  prefetch={true}
+                                  href={subTargetHref}
+                                  onMouseEnter={() => {
+                                    setHoveredProductSubItem({
+                                      image: (sub as any).image || activeGroup.image,
+                                      previewTitle: (sub as any).previewTitle || sub.label,
+                                      previewDesc: (sub as any).previewDesc || activeGroup.previewDesc,
+                                      href: subTargetHref,
+                                      tag: sub.label,
+                                    });
+                                  }}
+                                  className="text-[11px] xl:text-xs font-bold text-[#e2e8f0] hover:text-[#ffd700] hover:translate-x-0.5 transition-all py-1.5 border-b border-[#1c2e42]/35 block uppercase tracking-wide leading-snug break-words"
+                                >
+                                  {sub.label}
+                                </Link>
+                              );
+                            })}
                           </div>
                         </div>
 
                         {/* Cột 3: Ảnh minh họa lớn & nút hành động (Right Column - 4 cols) */}
-                        <div className="col-span-4 p-4 xl:p-5 bg-[#0a1524] flex flex-col justify-between">
-                          <div>
-                            <div className="aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-[#050c14] border border-[#1c2e42] relative shadow-md">
-                              <img
-                                key={activeGroup.image}
-                                src={activeGroup.image}
-                                alt={activeGroup.title}
-                                className="w-full h-full object-cover animate-fadeIn transition-transform duration-500 hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                              <div className="absolute bottom-2.5 left-3 right-3">
-                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#dfb755] text-black uppercase tracking-wider">
-                                  {activeGroup.title}
-                                </span>
+                        {(() => {
+                          const currentPreview = hoveredProductSubItem || {
+                            image: activeGroup.image,
+                            previewTitle: activeGroup.previewTitle,
+                            previewDesc: activeGroup.previewDesc,
+                            href: activeGroup.href,
+                            tag: activeGroup.title,
+                          };
+
+                          return (
+                            <div className="col-span-4 p-4 xl:p-5 bg-[#0a1524] flex flex-col justify-between">
+                              <div>
+                                <div className="aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-[#050c14] border border-[#1c2e42] relative shadow-md">
+                                  <img
+                                    key={currentPreview.image}
+                                    src={currentPreview.image}
+                                    alt={currentPreview.previewTitle}
+                                    className="w-full h-full object-cover animate-fadeIn transition-transform duration-500 hover:scale-105"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                                  <div className="absolute bottom-2.5 left-3 right-3">
+                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#dfb755] text-black uppercase tracking-wider">
+                                      {currentPreview.tag || activeGroup.title}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <h4 className="font-serif text-sm font-bold text-[#ffd700] leading-snug line-clamp-2">
+                                  {currentPreview.previewTitle}
+                                </h4>
+                                <p className="text-[11px] text-[#94a3b8] mt-1 leading-relaxed line-clamp-2">
+                                  {currentPreview.previewDesc}
+                                </p>
                               </div>
+
+                              <Link
+                                href={currentPreview.href}
+                                prefetch={true}
+                                className="mt-3.5 text-center text-xs font-black uppercase text-[#0b1622] bg-gradient-to-r from-[#dfb755] via-[#f5db8b] to-[#b8860b] hover:brightness-110 py-2.5 px-4 rounded-xl transition-all shadow-[0_2px_15px_rgba(223,183,85,0.4)] active:scale-95 block w-full"
+                              >
+                                {hoveredProductSubItem ? "Xem chi tiết sản phẩm ›" : "Xem tất cả sản phẩm"}
+                              </Link>
                             </div>
-
-                            <h4 className="font-serif text-sm font-bold text-[#ffd700] leading-snug">
-                              {activeGroup.previewTitle}
-                            </h4>
-                            <p className="text-[11px] text-[#94a3b8] mt-1 leading-relaxed line-clamp-2">
-                              {activeGroup.previewDesc}
-                            </p>
-                          </div>
-
-                          <Link
-                            href={activeGroup.href}
-                            prefetch={true}
-                            className="mt-3.5 text-center text-xs font-black uppercase text-[#0b1622] bg-gradient-to-r from-[#dfb755] via-[#f5db8b] to-[#b8860b] hover:brightness-110 py-2.5 px-4 rounded-xl transition-all shadow-[0_2px_15px_rgba(223,183,85,0.4)] active:scale-95 block w-full"
-                          >
-                            Xem tất cả sản phẩm
-                          </Link>
-                        </div>
+                          );
+                        })()}
                       </div>
                     );
                   })()}
@@ -670,7 +1109,10 @@ export function ModernHeader() {
                                 key={group.id}
                                 href={group.href}
                                 prefetch={true}
-                                onMouseEnter={() => setHoveredGiftCategory(group.id)}
+                                onMouseEnter={() => {
+                                  setHoveredGiftCategory(group.id);
+                                  setHoveredGiftSubItem(null);
+                                }}
                                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                                   isSelected
                                     ? "bg-[#122234] text-[#ffd700] border-l-4 border-[#ffd700] shadow-sm"
@@ -691,7 +1133,10 @@ export function ModernHeader() {
                         </div>
 
                         {/* Cột 2: Danh sách mục con theo nhóm (Middle Column - 5 cols, hiển thị đầy đủ chữ không bị cắt) */}
-                        <div className="col-span-5 p-4 xl:p-5 bg-[#070e17] border-r border-[#1c2e42] flex flex-col justify-start">
+                        <div
+                          className="col-span-5 p-4 xl:p-5 bg-[#070e17] border-r border-[#1c2e42] flex flex-col justify-start"
+                          onMouseLeave={() => setHoveredGiftSubItem(null)}
+                        >
                           <div className="border-b border-[#1c2e42] pb-2 mb-3 flex items-center justify-between">
                             <span className="text-xs font-extrabold uppercase tracking-wider text-[#ffd700]">
                               {activeGift.title}
@@ -717,6 +1162,15 @@ export function ModernHeader() {
                                 key={i}
                                 href={item.href}
                                 prefetch={true}
+                                onMouseEnter={() => {
+                                  setHoveredGiftSubItem({
+                                    image: (item as any).demoImage || activeGift.defaultDemo.image,
+                                    previewTitle: (item as any).demoTitle || item.label,
+                                    previewDesc: (item as any).demoDesc || activeGift.defaultDemo.desc,
+                                    href: item.href,
+                                    tag: item.label,
+                                  });
+                                }}
                                 className="text-[11px] xl:text-xs font-bold text-[#e2e8f0] hover:text-[#ffd700] hover:translate-x-0.5 transition-all py-1.5 border-b border-[#1c2e42]/35 block uppercase tracking-wide leading-snug break-words"
                               >
                                 {item.label}
@@ -726,39 +1180,51 @@ export function ModernHeader() {
                         </div>
 
                         {/* Cột 3: Ảnh minh họa lớn & nút hành động (Right Column - 4 cols) */}
-                        <div className="col-span-4 p-4 xl:p-5 bg-[#0a1524] flex flex-col justify-between">
-                          <div>
-                            <div className="aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-[#050c14] border border-[#1c2e42] relative shadow-md">
-                              <img
-                                key={activeGift.defaultDemo.image}
-                                src={activeGift.defaultDemo.image}
-                                alt={activeGift.title}
-                                className="w-full h-full object-cover animate-fadeIn transition-transform duration-500 hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                              <div className="absolute bottom-2.5 left-3 right-3">
-                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#dfb755] text-black uppercase tracking-wider">
-                                  {activeGift.title}
-                                </span>
+                        {(() => {
+                          const currentGiftPreview = hoveredGiftSubItem || {
+                            image: activeGift.defaultDemo.image,
+                            previewTitle: activeGift.defaultDemo.title,
+                            previewDesc: activeGift.defaultDemo.desc,
+                            href: activeGift.href,
+                            tag: activeGift.title,
+                          };
+
+                          return (
+                            <div className="col-span-4 p-4 xl:p-5 bg-[#0a1524] flex flex-col justify-between">
+                              <div>
+                                <div className="aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-[#050c14] border border-[#1c2e42] relative shadow-md">
+                                  <img
+                                    key={currentGiftPreview.image}
+                                    src={currentGiftPreview.image}
+                                    alt={currentGiftPreview.previewTitle}
+                                    className="w-full h-full object-cover animate-fadeIn transition-transform duration-500 hover:scale-105"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                                  <div className="absolute bottom-2.5 left-3 right-3">
+                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#dfb755] text-black uppercase tracking-wider">
+                                      {currentGiftPreview.tag || activeGift.title}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <h4 className="font-serif text-sm font-bold text-[#ffd700] leading-snug line-clamp-2">
+                                  {currentGiftPreview.previewTitle}
+                                </h4>
+                                <p className="text-[11px] text-[#94a3b8] mt-1 leading-relaxed line-clamp-2">
+                                  {currentGiftPreview.previewDesc}
+                                </p>
                               </div>
+
+                              <Link
+                                href={currentGiftPreview.href}
+                                prefetch={true}
+                                className="mt-3.5 text-center text-xs font-black uppercase text-[#0b1622] bg-gradient-to-r from-[#dfb755] via-[#f5db8b] to-[#b8860b] hover:brightness-110 py-2.5 px-4 rounded-xl transition-all shadow-[0_2px_15px_rgba(223,183,85,0.4)] active:scale-95 block w-full"
+                              >
+                                {hoveredGiftSubItem ? "Xem chi tiết quà tặng ›" : "Xem tất cả quà tặng"}
+                              </Link>
                             </div>
-
-                            <h4 className="font-serif text-sm font-bold text-[#ffd700] leading-snug">
-                              {activeGift.defaultDemo.title}
-                            </h4>
-                            <p className="text-[11px] text-[#94a3b8] mt-1 leading-relaxed line-clamp-2">
-                              {activeGift.defaultDemo.desc}
-                            </p>
-                          </div>
-
-                          <Link
-                            href="/qua-tang"
-                            prefetch={true}
-                            className="mt-3.5 text-center text-xs font-black uppercase text-[#0b1622] bg-gradient-to-r from-[#dfb755] via-[#f5db8b] to-[#b8860b] hover:brightness-110 py-2.5 px-4 rounded-xl transition-all shadow-[0_2px_15px_rgba(223,183,85,0.4)] active:scale-95 block w-full"
-                          >
-                            Xem tất cả quà tặng
-                          </Link>
-                        </div>
+                          );
+                        })()}
                       </div>
                     );
                   })()}
