@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { TopBar } from "./TopBar";
 import { Search, Phone, Menu, X, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
 import { ConsultationModal } from "@/components/home/ConsultationModal";
@@ -17,6 +17,7 @@ export function Header({
   email = "dodonglocnam1102@gmail.com",
 }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,7 +92,7 @@ export function Header({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/san-pham?search=${encodeURIComponent(searchQuery.trim())}`;
+      router.push(`/san-pham?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 

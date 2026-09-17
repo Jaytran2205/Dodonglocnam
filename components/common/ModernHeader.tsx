@@ -832,7 +832,7 @@ export function ModernHeader() {
             onSubmit={(e) => {
               e.preventDefault();
               if (searchQuery.trim()) {
-                window.location.href = `/san-pham?search=${encodeURIComponent(searchQuery.trim())}`;
+                router.push(`/san-pham?search=${encodeURIComponent(searchQuery.trim())}`);
               }
             }}
             className="flex-1 relative"
@@ -1348,7 +1348,8 @@ export function ModernHeader() {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (searchQuery.trim()) {
-                  window.location.href = `/san-pham?search=${encodeURIComponent(searchQuery.trim())}`;
+                  router.push(`/san-pham?search=${encodeURIComponent(searchQuery.trim())}`);
+                  setSearchOpen(false);
                 }
               }}
               className="max-w-[800px] mx-auto flex items-center gap-2"

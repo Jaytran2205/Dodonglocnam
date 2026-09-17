@@ -22,11 +22,13 @@ interface Product {
   name: string;
   slug: string;
   price: number | null;
+  originalPrice?: number | null;
   priceText?: string | null;
   images: string;
   material?: string | null;
   dimensions?: string | null;
   description?: string | null;
+  createdAt?: Date | string | null;
   category: {
     name: string;
     slug: string;
@@ -234,41 +236,80 @@ export function LeGiaProductListing({
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // 0. Filter by search query
+    // 0. Precision Search Filter & Relevance Ranking
     if (searchQuery && searchQuery.trim()) {
-      const rawTerm = searchQuery.trim().toLowerCase();
-      const cleanTerm = removeVietnameseTones(rawTerm);
-      const queryWords = cleanTerm.split(/\s+/).filter(Boolean);
+      const rawQ = searchQuery.trim().toLowerCase();
+      const cleanQ = removeVietnameseTones(rawQ);
+      const qTokens = cleanQ.split(/\s+/).filter(Boolean);
 
-      result = result.filter((p) => {
-        const rawName = (p.name || "").toLowerCase();
-        const cleanName = removeVietnameseTones(rawName);
+      if (qTokens.length > 0) {
+        const scored: { product: Product; score: number }[] = [];
 
-        const rawDesc = (p.description || "").toLowerCase();
-        const cleanDesc = removeVietnameseTones(rawDesc);
+        for (const p of result) {
+          const rawN = (p.name || "").toLowerCase();
+          const cleanN = removeVietnameseTones(rawN);
+          const nWords = cleanN.split(/[\s,./()_+-]+/).filter(Boolean);
 
-        const rawMat = (p.material || "").toLowerCase();
-        const cleanMat = removeVietnameseTones(rawMat);
+          const rawCat = (p.category?.name || "").toLowerCase();
+          const cleanCat = removeVietnameseTones(rawCat);
+          const catWords = cleanCat.split(/[\s,./()_+-]+/).filter(Boolean);
 
-        const rawCat = (p.category?.name || "").toLowerCase();
-        const cleanCat = removeVietnameseTones(rawCat);
+          const rawMat = (p.material || "").toLowerCase();
+          const cleanMat = removeVietnameseTones(rawMat);
 
-        // Combined searchable text
-        const fullClean = `${cleanName} ${cleanCat} ${cleanMat} ${cleanDesc}`;
-        const fullRaw = `${rawName} ${rawCat} ${rawMat} ${rawDesc}`;
+          let score = 0;
 
-        // 1. Direct substring match (accented or unaccented)
-        if (fullRaw.includes(rawTerm) || fullClean.includes(cleanTerm)) {
-          return true;
+          // 1. Exact or Phrase Match in Name (Highest Priority)
+          if (rawN.includes(rawQ)) {
+            score = 1000;
+          } else if (cleanN.includes(cleanQ)) {
+            score = 900;
+          }
+          // 2. All search tokens match whole words in Name
+          else if (qTokens.every((t) => nWords.includes(t))) {
+            score = 800;
+          }
+          // 3. Multi-word search across Name + Category (at least one token in Name)
+          else if (qTokens.length > 1) {
+            const allWords = [...nWords, ...catWords];
+            if (
+              qTokens.every((t) => allWords.includes(t)) &&
+              qTokens.some((t) => nWords.includes(t))
+            ) {
+              score = 700;
+            } else if (
+              qTokens.every((t) => nWords.some((w) => w.startsWith(t)))
+            ) {
+              score = 600;
+            }
+          }
+          // 4. Single token match in Name (whole word or word prefix)
+          else if (
+            qTokens.length === 1 &&
+            (nWords.includes(qTokens[0]) || nWords.some((w) => w.startsWith(qTokens[0])))
+          ) {
+            score = 500;
+          }
+          // 5. Category or Material match
+          else if (cleanCat.includes(cleanQ) || cleanMat.includes(cleanQ)) {
+            score = 100;
+          }
+
+          if (score > 0) {
+            scored.push({ product: p, score });
+          }
         }
 
-        // 2. All search words present in the product text
-        if (queryWords.length > 0 && queryWords.every((word) => fullClean.includes(word))) {
-          return true;
-        }
+        // Sort by relevance score desc, then newest
+        scored.sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          const timeA = a.product.createdAt ? new Date(a.product.createdAt).getTime() : 0;
+          const timeB = b.product.createdAt ? new Date(b.product.createdAt).getTime() : 0;
+          return timeB - timeA;
+        });
 
-        return false;
-      });
+        result = scored.map((s) => s.product);
+      }
     }
 
     // 1. Filter by category
@@ -739,23 +780,66 @@ export function LeGiaProductListing({
                 )}
 
                 {/* Top Status & Sort Bar */}
-                <div className="flex items-center justify-between gap-4 pb-3 border-b border-[#1c2e42]">
-                  <span className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider">
-                    {filteredProducts.length} SẢN PHẨM
-                  </span>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-3 border-b border-[#1c2e42]">
+                  <div className="flex items-center gap-3">
+                    <span className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider">
+                      {filteredProducts.length} SẢN PHẨM
+                    </span>
+                    {searchQuery.trim() && (
+                      <span className="text-[11px] text-[#94a3b8] bg-[#122234] px-2 py-0.5 rounded border border-[#ffd700]/20 hidden md:inline-block">
+                        Từ khóa: &quot;{searchQuery}&quot;
+                      </span>
+                    )}
+                  </div>
 
-                  <div className="hidden lg:flex items-center gap-2">
-                    <span className="text-xs text-[#94a3b8]">Sắp xếp:</span>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-[#0c1825] border border-[#1e344d] text-white text-xs px-3 py-1.5 rounded-lg focus:outline-none focus:border-[#ffd700]"
-                    >
-                      <option value="newest">Mới nhất</option>
-                      <option value="price-asc">Giá: Thấp đến Cao</option>
-                      <option value="price-desc">Giá: Cao đến Thấp</option>
-                      <option value="name-asc">Tên A-Z</option>
-                    </select>
+                  <div className="flex items-center justify-between sm:justify-end gap-3">
+                    {/* Inline instant search input */}
+                    <form onSubmit={handleSearchSubmit} className="relative flex-1 sm:w-64 sm:flex-initial">
+                      <input
+                        type="text"
+                        value={searchInput}
+                        onChange={(e) => {
+                          setSearchInput(e.target.value);
+                          if (!e.target.value.trim()) {
+                            handleClearSearch();
+                          }
+                        }}
+                        placeholder="Tìm sản phẩm..."
+                        className="w-full pl-3 pr-8 py-1.5 bg-[#0c1825] border border-[#1e344d] focus:border-[#ffd700] rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none transition-colors"
+                      />
+                      {searchInput ? (
+                        <button
+                          type="button"
+                          onClick={handleClearSearch}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                          title="Xóa tìm kiếm"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          type="submit"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-[#ffd700]"
+                          title="Tìm kiếm"
+                        >
+                          <Search className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </form>
+
+                    <div className="flex items-center gap-1.5 text-xs text-[#94a3b8] shrink-0">
+                      <span className="hidden xl:inline">Sắp xếp:</span>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="bg-[#0c1825] border border-[#1e344d] text-white text-xs px-2.5 sm:px-3 py-1.5 rounded-lg focus:outline-none focus:border-[#ffd700]"
+                      >
+                        <option value="newest">{searchQuery ? "Độ liên quan cao nhất" : "Mới nhất"}</option>
+                        <option value="price-asc">Giá: Thấp đến Cao</option>
+                        <option value="price-desc">Giá: Cao đến Thấp</option>
+                        <option value="name-asc">Tên A-Z</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
