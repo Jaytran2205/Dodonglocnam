@@ -46,7 +46,7 @@ export function CategorySubGrid({
           <img
             src={banner}
             alt={title}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-cover object-center transform-gpu [image-rendering:-webkit-optimize-contrast]"
             loading="eager"
             fetchPriority="high"
           />
