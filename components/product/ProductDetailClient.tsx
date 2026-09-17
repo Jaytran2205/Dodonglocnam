@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
+  ChevronLeft,
   Home,
   Phone,
   MessageCircle,
@@ -206,6 +207,47 @@ export function ProductDetailClient({
               alt={product.name}
               className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
             />
+
+            {/* Previous Button */}
+            {images.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/85 text-white/90 hover:text-[#ffd700] border border-[#dfb755]/40 hover:border-[#ffd700] flex items-center justify-center backdrop-blur-md transition-all duration-200 shadow-xl active:scale-95 group-hover:scale-105"
+                aria-label="Xem ảnh trước"
+                title="Ảnh trước"
+              >
+                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            )}
+
+            {/* Next Button */}
+            {images.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedImageIndex((prev) => (prev + 1) % images.length);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/85 text-white/90 hover:text-[#ffd700] border border-[#dfb755]/40 hover:border-[#ffd700] flex items-center justify-center backdrop-blur-md transition-all duration-200 shadow-xl active:scale-95 group-hover:scale-105"
+                aria-label="Xem ảnh tiếp theo"
+                title="Ảnh tiếp theo"
+              >
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            )}
+
+            {/* Image Counter Badge (Top-Right) */}
+            {images.length > 1 && (
+              <div className="absolute top-3 right-3 z-20 px-2.5 py-1 bg-black/75 backdrop-blur-md rounded-full border border-[#dfb755]/30 text-[11px] font-bold text-[#ffd700] shadow-md">
+                {selectedImageIndex + 1} / {images.length}
+              </div>
+            )}
 
             {/* Bottom Sub-Banner Label */}
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-r from-[#1c3328]/95 via-[#234233]/90 to-[#1c3328]/95 border-t border-[#3b6d54]/50 py-2 px-4 text-center">
