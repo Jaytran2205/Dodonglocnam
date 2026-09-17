@@ -14,7 +14,6 @@ import {
   Filter,
   ArrowLeft,
 } from "lucide-react";
-import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 interface Product {
   id: string;
@@ -907,9 +906,6 @@ function ListingProductCard({
               }`}
             />
           </button>
-
-          {/* Watermark Badge */}
-          <ProductWatermark size="xs" position="bottom-right" />
         </div>
 
         {/* Multi-angle switcher dots */}

@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Heart, ShoppingBag } from "lucide-react";
-import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 export function LocNamFavorites() {
   const [wishlist, setWishlist] = useState<number[]>([]);
@@ -100,7 +99,6 @@ export function LocNamFavorites() {
                       loading="lazy"
                       decoding="async"
                     />
-                    <ProductWatermark size="xs" position="bottom-right" />
                   </Link>
 
                   {/* Product Title */}

@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { ChevronRight, ArrowLeft } from "lucide-react";
-import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 export interface GridCardItem {
   id: string;
@@ -152,7 +151,6 @@ export function CategorySubGrid({
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0a1524]/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <ProductWatermark size="xs" position="bottom-right" />
             </div>
 
             {/* Card Content & Action Button */}

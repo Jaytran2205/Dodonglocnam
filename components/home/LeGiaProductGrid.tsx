@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Phone } from "lucide-react";
-import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 interface Product {
   id: string;
@@ -101,7 +100,6 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
                       alt={product.name}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                     />
-                    <ProductWatermark size="xs" position="bottom-right" />
                     {product.material && (
                       <span className="absolute top-2 left-2 px-2 py-0.5 bg-[#4A0E17] text-[#F3E9D2] text-[9px] font-bold uppercase rounded shadow border border-[#D4AF37]">
                         {product.material}

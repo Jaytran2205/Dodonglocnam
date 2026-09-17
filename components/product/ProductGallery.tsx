@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { ZoomIn, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 interface ProductGalleryProps {
   images: string[];
@@ -34,9 +33,6 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             alt={productName}
             className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
           />
-
-          {/* Watermark Branding */}
-          <ProductWatermark size="sm" position="top-left" showCenterLogo={true} />
 
           {/* Zoom trigger button */}
           <button
@@ -86,9 +82,6 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               alt={productName}
               className="max-w-full max-h-[80vh] object-contain rounded-lg"
             />
-
-            {/* Lightbox Watermark Branding */}
-            <ProductWatermark size="lg" position="bottom-right" showCenterLogo={true} />
 
             {displayImages.length > 1 && (
               <>

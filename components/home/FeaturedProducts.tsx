@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Phone, ArrowRight } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
-import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 interface ProductItem {
   id: string;
@@ -104,7 +103,6 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
                     decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <ProductWatermark size="xs" position="bottom-right" />
                   {prod.material && (
                     <span className="absolute top-2 left-2 px-2 py-0.5 bg-[#3A2418]/90 text-white text-[10px] font-semibold tracking-wide rounded-sm max-w-[85%] truncate">
                       {prod.material.split("-")[0]}

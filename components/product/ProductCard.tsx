@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Star, ShoppingCart } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
-import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 export interface ProductData {
   id: string;
@@ -101,7 +100,6 @@ export function ProductCard({ product }: ProductCardProps) {
               {product.material.split("-")[0]}
             </span>
           )}
-          <ProductWatermark size="xs" position="bottom-right" />
         </Link>
 
         {/* Multi-angle switcher dots */}

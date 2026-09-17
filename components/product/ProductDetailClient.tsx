@@ -29,7 +29,6 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { QuickOrderForm } from "./QuickOrderForm";
-import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 interface ProductData {
   id: string | number;
@@ -189,9 +188,6 @@ export function ProductDetailClient({
         {/* Left Column: Image Viewer with Watermark & Thumbnails */}
         <div className="lg:col-span-6 flex flex-col justify-between">
           <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-[#070e17] border border-[#1c2c3d] shadow-inner flex items-center justify-center group">
-            {/* Watermark Branding (Badge + Subtle Center Emblem) */}
-            <ProductWatermark size="md" position="top-left" showCenterLogo={true} />
-
             {/* Main Image */}
             <img
               src={currentImage}
@@ -778,7 +774,6 @@ export function ProductDetailClient({
                         decoding="async"
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       />
-                      <ProductWatermark size="xs" position="bottom-right" />
                     </Link>
 
                     <div className="space-y-1">

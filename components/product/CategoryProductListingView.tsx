@@ -20,7 +20,6 @@ import {
   DetailCategoryItem,
 } from "@/lib/subcategories-data";
 import { formatPrice } from "@/lib/utils";
-import { ProductWatermark } from "@/components/common/ProductWatermark";
 
 export interface ListingProduct {
   id: string;
@@ -724,9 +723,6 @@ function ListingProductCard({
             loading="lazy"
           />
         </Link>
-
-        {/* Brand Watermark Badge */}
-        <ProductWatermark size="xs" position="top-right" />
 
         {/* Navigation Dots if multiple images */}
         {hasMultiple && (
