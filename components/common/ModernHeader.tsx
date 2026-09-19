@@ -147,13 +147,10 @@ export function ModernHeader() {
       .catch((err) => console.error("Error fetching header settings:", err));
   }, []);
 
-  // Close mobile menu and scroll to top on route change
+  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
     setSearchOpen(false);
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    }
   }, [pathname]);
 
   // Lock body scroll when mobile menu is open

@@ -125,6 +125,10 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
     redirect(`/qua-tang/${slugs.join("/")}`);
   }
 
+  if (slugs.includes("bo-12-con-giap") || slugs.includes("cac-linh-vat-khac")) {
+    redirect("/qua-tang/qua-tang-phong-thuy");
+  }
+
   const firstSlug = slugs[0];
   const secondSlug = slugs[1];
   const lastSlug = slugs[slugs.length - 1];
@@ -196,7 +200,8 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
     // -------------------------------------------------------------------------
     if (slugs.length === 2 && detailCategory) {
       const isCrossCategory =
-        subCategory.id === "tuong-12-con-giap" ||
+        categorySlug === "qua-tang" ||
+        categorySlug === "qua-tang-dong" ||
         subCategory.id === "linh-vat-12-con-giap" ||
         subCategory.id === "trong-dong-qua-tang";
 
@@ -271,7 +276,8 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
     // -------------------------------------------------------------------------
     if (slugs.length === 1 && (!subCategory.children || subCategory.children.length === 0)) {
       const isCrossCategory =
-        subCategory.id === "tuong-12-con-giap" ||
+        categorySlug === "qua-tang" ||
+        categorySlug === "qua-tang-dong" ||
         subCategory.id === "linh-vat-12-con-giap" ||
         subCategory.id === "trong-dong-qua-tang";
 

@@ -135,7 +135,6 @@ export function CategoryProductListingView({
     const isCrossCategory =
       mainCategory.slug === "qua-tang" ||
       mainCategory.slug === "qua-tang-dong" ||
-      activeSubCategory?.id === "tuong-12-con-giap" ||
       activeSubCategory?.id === "linh-vat-12-con-giap" ||
       activeSubCategory?.id === "trong-dong-qua-tang";
 
@@ -143,15 +142,31 @@ export function CategoryProductListingView({
       ? [...products]
       : products.filter((p) => p.category.slug === mainCategory.slug);
 
-    // If keywords exist, filter by them
+    // If keywords exist, filter strictly by them
     if (activeKeywords.length > 0) {
-      const kwMatched = result.filter((p) => {
+      result = result.filter((p) => {
         const pName = p.name.toLowerCase();
-        return activeKeywords.some((kw) => pName.includes(kw));
+
+        // Special exclusion: if viewing Tiger (hổ), exclude rắn / rắn hổ mang
+        const isTigerView =
+          activeDetailCategory?.id === "tuong-ho" ||
+          activeKeywords.includes("hổ");
+        if (isTigerView && (pName.includes("rắn") || pName.includes("hổ mang"))) {
+          return false;
+        }
+
+        return activeKeywords.some((kw) => {
+          const cleanKw = kw.trim();
+          if (!cleanKw) return false;
+          // Multi-word phrase: direct substring
+          if (cleanKw.includes(" ")) {
+            return pName.includes(cleanKw);
+          }
+          // Single word: use word boundary regex to avoid matching substrings like "ngọ" in "ngọc" or "heo" in "theo"
+          const regex = new RegExp(`(^|[\\s,./()_\\-+:"'])${cleanKw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`, "i");
+          return regex.test(pName);
+        });
       });
-      if (kwMatched.length > 0) {
-        result = kwMatched;
-      }
     }
 
     // 2. Price filter
@@ -301,6 +316,7 @@ export function CategoryProductListingView({
           {parentBackHref && (
             <Link
               href={parentBackHref}
+              scroll={false}
               className="flex items-center gap-2 text-xs text-[#dfb755] hover:text-white font-semibold pb-3 border-b border-[#1e344d] w-full transition-colors group"
             >
               <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
@@ -326,6 +342,7 @@ export function CategoryProductListingView({
                     {/* Subcategory Parent Link */}
                     <Link
                       href={subHref}
+                      scroll={false}
                       className={`text-xs py-1.5 px-2.5 rounded-lg transition-all flex items-center justify-between group select-none ${
                         isSubActive
                           ? "bg-gradient-to-r from-[#ffd700]/15 to-[#ffd700]/5 text-[#ffd700] font-bold border-l-2 border-[#ffd700]"
@@ -349,6 +366,7 @@ export function CategoryProductListingView({
                             <Link
                               key={child.id}
                               href={`${basePrefix}/${sub.id}/${child.id}`}
+                              scroll={false}
                               className={`text-[11px] py-1 px-2 rounded-md transition-all flex items-center justify-between group select-none ${
                                 isChildActive
                                   ? "bg-[#ffd700]/15 text-[#ffd700] font-bold"
@@ -572,6 +590,7 @@ export function CategoryProductListingView({
                       <div key={sub.id} className="space-y-0.5">
                         <Link
                           href={`${basePrefix}/${sub.id}`}
+                          scroll={false}
                           onClick={() => setMobileFilterOpen(false)}
                           className={`text-xs py-1.5 px-2 rounded-lg flex items-center justify-between transition-colors ${
                             isSubActive
@@ -596,6 +615,7 @@ export function CategoryProductListingView({
                                 <Link
                                   key={child.id}
                                   href={`${basePrefix}/${sub.id}/${child.id}`}
+                                  scroll={false}
                                   onClick={() => setMobileFilterOpen(false)}
                                   className={`text-[11px] py-1 px-2 rounded-md flex items-center justify-between transition-colors ${
                                     isChildActive

@@ -131,9 +131,7 @@ export function LeGiaProductListing({
     setSearchQuery(q);
     setSearchInput(q);
     const sub = searchParams?.get("sub") || initialSub || "";
-    if (sub) {
-      setSelectedSubItem(sub);
-    }
+    setSelectedSubItem(sub || null);
   }, [searchParams, currentCategorySlug, initialSub]);
 
   // Live real-time filter as user types
@@ -199,7 +197,6 @@ export function LeGiaProductListing({
         "",
         `${basePath}?sub=${encodeURIComponent(subName)}`
       );
-      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
     }
   };
 
@@ -211,7 +208,6 @@ export function LeGiaProductListing({
           ? `/san-pham/${selectedCategory}`
           : "/san-pham";
       window.history.pushState(null, "", basePath);
-      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
     }
   };
 
@@ -319,11 +315,13 @@ export function LeGiaProductListing({
       result = result.filter((p) => p.category.slug === selectedCategory);
     }
 
-    // 2. Filter by subcategory
-    if (selectedSubItem) {
+    // 2. Filter by subcategory (only if not searching with global search text)
+    if (selectedSubItem && !searchQuery.trim()) {
       const q = selectedSubItem.toLowerCase().trim();
 
-      if (q.includes("lọ hoa")) {
+      if (q.includes("thất lân")) {
+        result = result.filter((p) => p.name.toLowerCase().includes("thất lân"));
+      } else if (q.includes("lọ hoa")) {
         result = result.filter(
           (p) =>
             p.name.toLowerCase().includes("lọ hoa") ||
@@ -332,12 +330,19 @@ export function LeGiaProductListing({
       } else if (q.includes("tam sự") || q.includes("ngũ sự")) {
         result = result.filter(
           (p) =>
-            p.name.toLowerCase().includes("tam sự") ||
+            (p.name.toLowerCase().includes("tam sự") ||
             p.name.toLowerCase().includes("ngũ sự") ||
-            p.name.toLowerCase().includes("đỉnh")
+            p.name.toLowerCase().includes("đỉnh")) &&
+            !p.name.toLowerCase().includes("thất lân") &&
+            !p.name.toLowerCase().includes("đỉnh cao")
         );
       } else if (q.includes("đỉnh")) {
-        result = result.filter((p) => p.name.toLowerCase().includes("đỉnh"));
+        result = result.filter(
+          (p) =>
+            p.name.toLowerCase().includes("đỉnh") &&
+            !p.name.toLowerCase().includes("đỉnh cao") &&
+            !p.name.toLowerCase().includes("thất lân")
+        );
       } else if (q.includes("hạc")) {
         result = result.filter((p) => p.name.toLowerCase().includes("hạc"));
       } else if (q.includes("chân nến")) {
@@ -377,8 +382,6 @@ export function LeGiaProductListing({
             p.name.toLowerCase().includes("chiêng") ||
             p.name.toLowerCase().includes("khánh")
         );
-      } else if (q.includes("thất lân")) {
-        result = result.filter((p) => p.name.toLowerCase().includes("thất lân"));
       } else if (q.includes("lục bình") || q.includes("chóe")) {
         result = result.filter(
           (p) =>
