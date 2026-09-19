@@ -778,7 +778,7 @@ export function ModernHeader() {
       items: [
         { label: "Thuyền buồm phong thủy", href: "/qua-tang/qua-tang-doanh-nghiep/thuyen-buom-phong-thuy", demoTitle: "Mô Hình Thuyền Buồm Mạ Vàng 24K", demoDesc: "Biểu tượng Thuận Buồm Xuôi Gió chiêu tài đón lộc, hanh thông sự nghiệp.", demoImage: "/images/locnam_real/locnam_thuyen_buom.jpg" },
         { label: "Cây kim ngân tài lộc", href: "/qua-tang/qua-tang-doanh-nghiep/cay-kim-ngan-phat-tai", demoTitle: "Cây Kim Ngân Mạ Vàng 24K", demoDesc: "Cây kim ngân phong thủy chiêu tài hút vượng khí để bàn làm việc.", demoImage: "/images/belux/belux_qua_tang_sep.jpg" },
-        { label: "Tranh chữ mạ vàng 24K", href: "/qua-tang/qua-tang-doanh-nghiep/tranh-chu-dong-dat-vang", demoTitle: "Tranh Chữ Phúc Tâm An Dát Vàng 24K", demoDesc: "Tranh chữ thư pháp bằng đồng dát vàng nền đen sang trọng.", demoImage: "/images/tranh-dong/tranh-chu.webp" },
+        { label: "Tranh chữ mạ vàng 24K", href: "/qua-tang/qua-tang-doanh-nghiep/tranh-chu-dong-dat-vang", demoTitle: "Tranh Chữ Phúc Tâm An Dát Vàng 24K", demoDesc: "Tranh chữ thư pháp bằng đồng dát vàng nền đen sang trọng.", demoImage: "/images/products/qua-tang-doanh-nghiep/tranh-chu-phuc-nen-den_chinh.jpg" },
         { label: "Quà biếu đối tác & Doanh nghiệp VIP", href: "/qua-tang/qua-tang-doanh-nghiep/qua-tang-doanh-nghiep-vip", demoTitle: "Quà Tặng Đối Tác Chiến Lược Lộc Nam", demoDesc: "Tùng la hán, đôi hươu, đại bàng mạ vàng 24k đẳng cấp vương giả.", demoImage: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg" },
       ],
     },
@@ -797,7 +797,7 @@ export function ModernHeader() {
       items: [
         { label: "Hoa sen bằng đồng mạ vàng", href: "/qua-tang/qua-tang-su-kien/hoa-sen-ma-vang", demoTitle: "Chậu Hoa Sen Mạ Vàng 24K", demoDesc: "Hoa sen đúc đồng thủ công mạ vàng thanh cao và trang nhã.", demoImage: "/images/locnam_real/locnam_qua_tet.jpg" },
         { label: "Hoa lan phú quý mạ vàng", href: "/qua-tang/qua-tang-su-kien/hoa-lan-phu-quy", demoTitle: "Chậu Hoa Lan Phú Quý Mạ Vàng", demoDesc: "Hoa lan hồ điệp nở rộ tượng trưng cho sự phú quý, thịnh vượng.", demoImage: "/images/belux/belux_qua_tang_phu_nu.jpg" },
-        { label: "Hoa mẫu đơn tài lộc", href: "/qua-tang/qua-tang-su-kien/hoa-mau-don-quy-phai", demoTitle: "Tượng Hoa Mẫu Đơn Dát Vàng 24K", demoDesc: "Nữ hoàng của các loài hoa mang vẻ đẹp quyền quý, viên mãn.", demoImage: "/images/belux/belux_qua_cuoi.jpg" },
+        { label: "Hoa mẫu đơn tài lộc", href: "/qua-tang/qua-tang-su-kien/hoa-mau-don-quy-phai", demoTitle: "Tượng Hoa Mẫu Đơn Dát Vàng 24K", demoDesc: "Nữ hoàng của các loài hoa mang vẻ đẹp quyền quý, viên mãn.", demoImage: "/images/products/qua-tang-su-kien/hoa-mau-don_chinh.jpg" },
         { label: "Tranh tri ân & Quà sự kiện", href: "/qua-tang/qua-tang-su-kien/tranh-tri-an-su-kien", demoTitle: "Tranh Tri Ân Thầy Cô, Đối Tác Dát Vàng", demoDesc: "Quà tặng tri ân ngày nhà giáo 20/11, mừng thọ và sự kiện vinh danh.", demoImage: "/images/locnam_real/locnam_qua_thay_co.jpg" },
       ],
     },

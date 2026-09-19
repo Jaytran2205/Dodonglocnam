@@ -133,13 +133,13 @@ export function CategoryProductListingView({
   // 1. Filter products
   const filteredProducts = useMemo(() => {
     const isCrossCategory =
-      mainCategory.slug === "qua-tang" ||
-      mainCategory.slug === "qua-tang-dong" ||
       activeSubCategory?.id === "linh-vat-12-con-giap" ||
       activeSubCategory?.id === "trong-dong-qua-tang";
 
     let result = isCrossCategory
       ? [...products]
+      : (mainCategory.slug === "qua-tang" || mainCategory.slug === "qua-tang-dong")
+      ? products.filter((p) => p.category.slug === "qua-tang" || p.category.slug === "qua-tang-dong")
       : products.filter((p) => p.category.slug === mainCategory.slug);
 
     // Gift folders isolation: ensure products from folder A never leak into folder B
@@ -189,6 +189,16 @@ export function CategoryProductListingView({
     } else if (activeKeywords.length > 0) {
       result = result.filter((p) => {
         const pName = p.name.toLowerCase();
+
+        // Special exclusion: Tranh chữ must only be paintings/plaques, never statues
+        if (activeDetailCategory?.id === "tranh-chu-dong-dat-vang" && (pName.includes("tượng") || !pName.includes("tranh"))) {
+          return false;
+        }
+
+        // Special exclusion: Tranh & Đĩa phong thủy must only be paintings/plates, never statues
+        if (activeDetailCategory?.id === "tranh-dia-phong-thuy-cat-tuong" && pName.includes("tượng")) {
+          return false;
+        }
 
         // Special exclusion: if viewing Tiger (hổ), exclude rắn / rắn hổ mang
         const isTigerView =

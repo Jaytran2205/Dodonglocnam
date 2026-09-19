@@ -212,8 +212,8 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
             id: "tranh-chu-dong-dat-vang",
             aliases: ["tranh-chu"],
             name: "Tranh chữ đồng mạ vàng",
-            keyword: "tranh chữ,chữ phúc,chữ tâm,chữ an,chữ thọ",
-            image: "/images/tranh-dong/tranh-chu.webp",
+            keyword: "tranh chữ,tranh chữ phúc,tranh chữ tâm,tranh chữ an,tranh chữ thọ",
+            image: "/images/products/qua-tang-doanh-nghiep/tranh-chu-phuc-nen-den_chinh.jpg",
           },
           {
             id: "qua-tang-doanh-nghiep-vip",
@@ -250,7 +250,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
             aliases: ["hoa-mau-don", "qua-tang-ki-niem-ngay-cuoi"],
             name: "Hoa mẫu đơn tài lộc",
             keyword: "hoa mẫu đơn,mẫu đơn",
-            image: "/images/belux/belux_qua_cuoi.jpg",
+            image: "/images/products/qua-tang-su-kien/hoa-mau-don_chinh.jpg",
           },
           {
             id: "tranh-tri-an-su-kien",
@@ -270,9 +270,9 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
         children: [
           {
             id: "linh-vat-phong-thuy-chieu-tai",
-            aliases: ["linh-vat-12-con-giap", "ty-huu", "coc-thiem-thu"],
+            aliases: ["ty-huu", "coc-thiem-thu"],
             name: "Linh vật phong thủy chiêu tài",
-            keyword: "cá rồng,ngựa thần tài,rùa hóa rồng,long quy,rồng,song cá,song ngư,tỳ hưu,thiềm thừ,cóc,linh vật,12 con giáp",
+            keyword: "cá rồng,ngựa thần tài,rùa hóa rồng,long quy,rồng,song cá,song ngư,tỳ hưu,thiềm thừ,cóc",
             image: "/images/locnam_real/locnam_thiem_thu.jpg",
           },
           {
@@ -286,7 +286,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
             id: "tranh-dia-phong-thuy-cat-tuong",
             aliases: ["cac-mau-phong-thuy-khac"],
             name: "Tranh & Đĩa phong thủy cát tường",
-            keyword: "tranh cá chép,mã đáo thành công,bát mã,tranh ngựa,đĩa cá,đĩa ngựa",
+            keyword: "tranh cá chép,tranh mã đáo,tranh bát mã,tranh ngựa,đĩa song cá,đĩa đồng,đĩa cá,đĩa ngựa,đĩa mã đáo",
             image: "/images/belux/belux_phong_thuy.jpg",
           },
         ],

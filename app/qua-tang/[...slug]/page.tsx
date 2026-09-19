@@ -158,7 +158,7 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
       const allProducts = await prisma.product.findMany({
         where: {
           category: {
-            slug: { in: ["qua-tang", "qua-tang-dong", "tuong-dong", "trong-dong"] },
+            slug: { in: ["qua-tang", "qua-tang-dong"] },
           },
         },
         orderBy: { createdAt: "desc" },
