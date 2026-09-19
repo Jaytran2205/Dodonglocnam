@@ -86,7 +86,7 @@ export function CategorySubGrid({
               className="inline-flex items-center gap-1.5 text-xs text-[#dfb755] hover:text-white font-bold transition-colors py-1.5 px-3 rounded-lg bg-[#0d1b2a] border border-[#1e344d] hover:border-[#dfb755] active:scale-95"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>‹ {parentBackText || "Trở về danh mục cấp trên"}</span>
+              <span>{parentBackText || "Trở về danh mục cấp trên"}</span>
             </Link>
           </div>
         )}

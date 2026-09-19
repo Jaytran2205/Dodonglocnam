@@ -677,19 +677,19 @@ export function LeGiaProductListing({
                 {selectedCategory !== "all" && (
                   <button
                     onClick={handleBackToHub}
-                    className="flex items-center gap-1.5 text-xs text-[#dfb755] hover:text-white font-bold pb-3 border-b border-[#1e344d] w-full transition-colors"
+                    className="flex items-center gap-2 text-xs text-[#dfb755] hover:text-white font-semibold pb-3 border-b border-[#1e344d] w-full transition-colors group"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>‹ Trở về danh mục {activeCategoryTitle}</span>
+                    <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+                    <span className="truncate">Trở về danh mục {activeCategoryTitle}</span>
                   </button>
                 )}
 
                 {/* 1. DANH MỤC SECTION */}
                 <div>
-                  <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-1.5 border-b-2 border-[#ffd700] mb-3">
+                  <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-2 border-b border-[#ffd700]/30 mb-3">
                     DANH MỤC {activeCategoryTitle ? activeCategoryTitle.toUpperCase() : "SẢN PHẨM"}
                   </h3>
-                  <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
+                  <div className="space-y-1 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
                     {activeSubCategoriesList.map((sub) => {
                       const isActive = selectedSubItem === sub.name;
                       return (
@@ -698,17 +698,15 @@ export function LeGiaProductListing({
                           onClick={() =>
                             handleSelectSubItem(selectedCategory, sub.name)
                           }
-                          className={`text-xs py-1 cursor-pointer transition-colors flex items-center justify-between select-none ${
+                          className={`text-xs py-1.5 px-2.5 rounded-lg cursor-pointer transition-all flex items-center justify-between group select-none ${
                             isActive
-                              ? "text-[#ffd700] font-black"
-                              : "text-[#cbd5e1] hover:text-[#ffd700] font-medium"
+                              ? "bg-gradient-to-r from-[#ffd700]/15 to-[#ffd700]/5 text-[#ffd700] font-bold border-l-2 border-[#ffd700]"
+                              : "text-[#cbd5e1] hover:text-[#ffd700] hover:bg-white/[0.04] font-medium"
                           }`}
                         >
                           <span className="truncate">{sub.name}</span>
                           {isActive && (
-                            <span className="text-[10px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
-                              ACTIVE
-                            </span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#ffd700] shadow-[0_0_6px_#ffd700] shrink-0 ml-1.5" />
                           )}
                         </div>
                       );
@@ -718,10 +716,10 @@ export function LeGiaProductListing({
 
                 {/* 2. KHOẢNG GIÁ SECTION */}
                 <div>
-                  <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-1.5 border-b-2 border-[#ffd700] mb-3">
+                  <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-2 border-b border-[#ffd700]/30 mb-3">
                     KHOẢNG GIÁ
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {[
                       { id: "all", label: "Tất cả mức giá" },
                       { id: "under-1m", label: "Dưới 1 triệu" },
@@ -730,21 +728,39 @@ export function LeGiaProductListing({
                       { id: "5m-10m", label: "Từ 5 triệu - 10 triệu" },
                       { id: "10m-20m", label: "Từ 10 triệu - 20 triệu" },
                       { id: "above-20m", label: "Trên 20 triệu" },
-                    ].map((range) => (
-                      <label
-                        key={range.id}
-                        className="flex items-center gap-2.5 text-xs text-[#cbd5e1] hover:text-[#ffd700] cursor-pointer py-0.5 select-none"
-                      >
-                        <input
-                          type="radio"
-                          name="priceFilter"
-                          checked={priceFilter === range.id}
-                          onChange={() => setPriceFilter(range.id)}
-                          className="text-[#ffd700] focus:ring-[#ffd700] bg-[#070e17] border-[#1e344d]"
-                        />
-                        <span>{range.label}</span>
-                      </label>
-                    ))}
+                    ].map((range) => {
+                      const isSelected = priceFilter === range.id;
+                      return (
+                        <label
+                          key={range.id}
+                          className={`flex items-center gap-2.5 text-xs cursor-pointer py-1.5 px-2 rounded-lg transition-all select-none ${
+                            isSelected
+                              ? "bg-[#ffd700]/10 text-[#ffd700] font-bold"
+                              : "text-[#cbd5e1] hover:text-[#ffd700] hover:bg-white/[0.03] font-medium"
+                          }`}
+                        >
+                          <div
+                            className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                              isSelected
+                                ? "border-[#ffd700] bg-[#ffd700]/20"
+                                : "border-[#334155] bg-[#070e17]"
+                            }`}
+                          >
+                            {isSelected && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#ffd700] shadow-[0_0_4px_#ffd700]" />
+                            )}
+                          </div>
+                          <input
+                            type="radio"
+                            name="priceFilter"
+                            checked={isSelected}
+                            onChange={() => setPriceFilter(range.id)}
+                            className="sr-only"
+                          />
+                          <span className="truncate">{range.label}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -989,27 +1005,28 @@ export function LeGiaProductListing({
                   Danh Mục Con
                 </h4>
                 <div className="space-y-1">
-                  {activeSubCategoriesList.map((sub) => (
-                    <button
-                      key={sub.id}
-                      onClick={() => {
-                        handleSelectSubItem(selectedCategory, sub.name);
-                        setMobileFilterOpen(false);
-                      }}
-                      className={`w-full text-left p-2 rounded-lg text-xs font-semibold flex items-center justify-between ${
-                        selectedSubItem === sub.name
-                          ? "bg-[#122234] text-[#ffd700] font-bold border border-[#ffd700]/50"
-                          : "text-[#cbd5e1] hover:bg-[#0c1825]"
-                      }`}
-                    >
-                      <span className="truncate">› {sub.name}</span>
-                      {selectedSubItem === sub.name && (
-                        <span className="text-[10px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
-                          ACTIVE
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                  {activeSubCategoriesList.map((sub) => {
+                    const isActive = selectedSubItem === sub.name;
+                    return (
+                      <button
+                        key={sub.id}
+                        onClick={() => {
+                          handleSelectSubItem(selectedCategory, sub.name);
+                          setMobileFilterOpen(false);
+                        }}
+                        className={`w-full text-left p-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
+                          isActive
+                            ? "bg-[#ffd700]/15 text-[#ffd700] font-bold border-l-2 border-[#ffd700]"
+                            : "text-[#cbd5e1] hover:bg-[#0c1825]"
+                        }`}
+                      >
+                        <span className="truncate">{sub.name}</span>
+                        {isActive && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#ffd700] shadow-[0_0_6px_#ffd700] shrink-0 ml-1.5" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

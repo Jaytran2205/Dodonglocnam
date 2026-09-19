@@ -287,20 +287,20 @@ export function CategoryProductListingView({
           {parentBackHref && (
             <Link
               href={parentBackHref}
-              className="flex items-center gap-1.5 text-xs text-[#dfb755] hover:text-white font-bold pb-3 border-b border-[#1e344d] w-full transition-colors"
+              className="flex items-center gap-2 text-xs text-[#dfb755] hover:text-white font-semibold pb-3 border-b border-[#1e344d] w-full transition-colors group"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>‹ {parentBackText || `Trở về danh mục ${mainCategory.name}`}</span>
+              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+              <span className="truncate">{parentBackText || `Trở về danh mục ${mainCategory.name}`}</span>
             </Link>
           )}
 
           {/* Section 1: CÂY THƯ MỤC DANH MỤC */}
           <div>
-            <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-1.5 border-b-2 border-[#ffd700] mb-3">
+            <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-2 border-b border-[#ffd700]/30 mb-3">
               DANH MỤC {mainCategory.name.toUpperCase()}
             </h3>
 
-            <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-1 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
               {mainCategory.subCategories.map((sub) => {
                 const isSubActive =
                   activeSubCategory?.id === sub.id && !activeDetailCategory;
@@ -308,48 +308,49 @@ export function CategoryProductListingView({
                 const subHref = `${basePrefix}/${sub.id}`;
 
                 return (
-                  <div key={sub.id} className="space-y-1">
+                  <div key={sub.id} className="space-y-0.5">
                     {/* Subcategory Parent Link */}
                     <Link
                       href={subHref}
-                      className={`text-xs py-1 transition-colors flex items-center justify-between select-none ${
+                      className={`text-xs py-1.5 px-2.5 rounded-lg transition-all flex items-center justify-between group select-none ${
                         isSubActive
-                          ? "text-[#ffd700] font-black"
-                          : "text-[#cbd5e1] hover:text-[#ffd700] font-medium"
+                          ? "bg-gradient-to-r from-[#ffd700]/15 to-[#ffd700]/5 text-[#ffd700] font-bold border-l-2 border-[#ffd700]"
+                          : isParentOfActiveDetail
+                          ? "text-[#ffd700] font-semibold bg-white/[0.03]"
+                          : "text-[#cbd5e1] hover:text-[#ffd700] hover:bg-white/[0.04] font-medium"
                       }`}
                     >
                       <span className="truncate">{sub.name}</span>
                       {isSubActive && (
-                        <span className="text-[10px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0">
-                          ACTIVE
-                        </span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#ffd700] shadow-[0_0_6px_#ffd700] shrink-0 ml-1.5" />
                       )}
                     </Link>
 
-                    {/* Children List (Indent 20px, branch ├─) if this sub is expanded */}
+                    {/* Children List */}
                     {sub.children && sub.children.length > 0 && isParentOfActiveDetail && (
-                      <div className="pl-5 space-y-1 border-l border-[#1e344d] ml-1.5 my-1">
+                      <div className="pl-3 space-y-0.5 border-l-2 border-[#ffd700]/20 ml-3 my-1">
                         {sub.children.map((child) => {
                           const isChildActive = activeDetailCategory?.id === child.id;
                           return (
                             <Link
                               key={child.id}
                               href={`${basePrefix}/${sub.id}/${child.id}`}
-                              className={`text-[11px] py-0.5 transition-colors flex items-center justify-between select-none ${
+                              className={`text-[11px] py-1 px-2 rounded-md transition-all flex items-center justify-between group select-none ${
                                 isChildActive
-                                  ? "text-[#ffd700] font-black"
-                                  : "text-[#94a3b8] hover:text-[#ffd700] font-medium"
+                                  ? "bg-[#ffd700]/15 text-[#ffd700] font-bold"
+                                  : "text-[#94a3b8] hover:text-[#ffd700] hover:bg-white/[0.03] font-medium"
                               }`}
                             >
-                              <div className="flex items-center gap-1.5 truncate">
-                                <span className="text-[#64748b]">├─</span>
+                              <div className="flex items-center gap-2 truncate">
+                                <span
+                                  className={`w-1 h-1 rounded-full shrink-0 transition-colors ${
+                                    isChildActive
+                                      ? "bg-[#ffd700] shadow-[0_0_4px_#ffd700]"
+                                      : "bg-[#64748b] group-hover:bg-[#ffd700]"
+                                  }`}
+                                />
                                 <span className="truncate">{child.name}</span>
                               </div>
-                              {isChildActive && (
-                                <span className="text-[9px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
-                                  ACTIVE
-                                </span>
-                              )}
                             </Link>
                           );
                         })}
@@ -361,12 +362,12 @@ export function CategoryProductListingView({
             </div>
           </div>
 
-          {/* Section 2: BỘ LỌC KHOẢNG GIÁ (7 Mức chuẩn) */}
+          {/* Section 2: BỘ LỌC KHOẢNG GIÁ */}
           <div>
-            <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-1.5 border-b-2 border-[#ffd700] mb-3">
+            <h3 className="font-serif text-xs sm:text-sm font-extrabold text-[#ffd700] uppercase tracking-wider pb-2 border-b border-[#ffd700]/30 mb-3">
               KHOẢNG GIÁ
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {[
                 { id: "all", label: "Tất cả mức giá" },
                 { id: "under-1m", label: "Dưới 1 triệu" },
@@ -375,21 +376,39 @@ export function CategoryProductListingView({
                 { id: "5m-10m", label: "Từ 5 triệu - 10 triệu" },
                 { id: "10m-20m", label: "Từ 10 triệu - 20 triệu" },
                 { id: "above-20m", label: "Trên 20 triệu" },
-              ].map((range) => (
-                <label
-                  key={range.id}
-                  className="flex items-center gap-2.5 text-xs text-[#cbd5e1] hover:text-[#ffd700] cursor-pointer py-0.5 select-none"
-                >
-                  <input
-                    type="radio"
-                    name="priceFilter"
-                    checked={priceFilter === range.id}
-                    onChange={() => setPriceFilter(range.id)}
-                    className="text-[#ffd700] focus:ring-[#ffd700] bg-[#070e17] border-[#1e344d]"
-                  />
-                  <span>{range.label}</span>
-                </label>
-              ))}
+              ].map((range) => {
+                const isSelected = priceFilter === range.id;
+                return (
+                  <label
+                    key={range.id}
+                    className={`flex items-center gap-2.5 text-xs cursor-pointer py-1.5 px-2 rounded-lg transition-all select-none ${
+                      isSelected
+                        ? "bg-[#ffd700]/10 text-[#ffd700] font-bold"
+                        : "text-[#cbd5e1] hover:text-[#ffd700] hover:bg-white/[0.03] font-medium"
+                    }`}
+                  >
+                    <div
+                      className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                        isSelected
+                          ? "border-[#ffd700] bg-[#ffd700]/20"
+                          : "border-[#334155] bg-[#070e17]"
+                      }`}
+                    >
+                      {isSelected && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#ffd700] shadow-[0_0_4px_#ffd700]" />
+                      )}
+                    </div>
+                    <input
+                      type="radio"
+                      name="priceFilter"
+                      checked={isSelected}
+                      onChange={() => setPriceFilter(range.id)}
+                      className="sr-only"
+                    />
+                    <span className="truncate">{range.label}</span>
+                  </label>
+                );
+              })}
             </div>
           </div>
         </aside>
@@ -526,36 +545,36 @@ export function CategoryProductListingView({
 
               {/* Mobile Category Tree */}
               <div>
-                <h4 className="text-xs font-extrabold text-[#ffd700] uppercase mb-2">
+                <h4 className="text-xs font-extrabold text-[#ffd700] uppercase mb-2.5 tracking-wider pb-1.5 border-b border-[#ffd700]/30">
                   DANH MỤC {mainCategory.name}
                 </h4>
-                <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                <div className="space-y-1 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
                   {mainCategory.subCategories.map((sub) => {
                     const isSubActive =
                       activeSubCategory?.id === sub.id && !activeDetailCategory;
                     const isParentOfActiveDetail = activeSubCategory?.id === sub.id;
 
                     return (
-                      <div key={sub.id} className="space-y-1">
+                      <div key={sub.id} className="space-y-0.5">
                         <Link
                           href={`${basePrefix}/${sub.id}`}
                           onClick={() => setMobileFilterOpen(false)}
-                          className={`text-xs py-1 flex items-center justify-between ${
+                          className={`text-xs py-1.5 px-2 rounded-lg flex items-center justify-between transition-colors ${
                             isSubActive
-                              ? "text-[#ffd700] font-black"
-                              : "text-[#cbd5e1]"
+                              ? "bg-gradient-to-r from-[#ffd700]/15 to-[#ffd700]/5 text-[#ffd700] font-bold border-l-2 border-[#ffd700]"
+                              : isParentOfActiveDetail
+                              ? "text-[#ffd700] font-semibold bg-white/[0.03]"
+                              : "text-[#cbd5e1] hover:text-[#ffd700]"
                           }`}
                         >
                           <span className="truncate">{sub.name}</span>
                           {isSubActive && (
-                            <span className="text-[10px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
-                              ACTIVE
-                            </span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#ffd700] shadow-[0_0_6px_#ffd700] shrink-0 ml-1.5" />
                           )}
                         </Link>
 
                         {sub.children && isParentOfActiveDetail && (
-                          <div className="pl-4 space-y-1 border-l border-[#1e344d]">
+                          <div className="pl-3 space-y-0.5 border-l-2 border-[#ffd700]/20 ml-3 my-1">
                             {sub.children.map((child) => {
                               const isChildActive =
                                 activeDetailCategory?.id === child.id;
@@ -564,18 +583,22 @@ export function CategoryProductListingView({
                                   key={child.id}
                                   href={`${basePrefix}/${sub.id}/${child.id}`}
                                   onClick={() => setMobileFilterOpen(false)}
-                                  className={`text-[11px] py-0.5 flex items-center justify-between ${
+                                  className={`text-[11px] py-1 px-2 rounded-md flex items-center justify-between transition-colors ${
                                     isChildActive
-                                      ? "text-[#ffd700] font-black"
-                                      : "text-[#94a3b8]"
+                                      ? "bg-[#ffd700]/15 text-[#ffd700] font-bold"
+                                      : "text-[#94a3b8] hover:text-[#ffd700]"
                                   }`}
                                 >
-                                  <span className="truncate">├─ {child.name}</span>
-                                  {isChildActive && (
-                                    <span className="text-[9px] bg-[#ffd700] text-black font-black px-1.5 py-0.2 rounded shrink-0 ml-1">
-                                      ACTIVE
-                                    </span>
-                                  )}
+                                  <div className="flex items-center gap-2 truncate">
+                                    <span
+                                      className={`w-1 h-1 rounded-full shrink-0 ${
+                                        isChildActive
+                                          ? "bg-[#ffd700] shadow-[0_0_4px_#ffd700]"
+                                          : "bg-[#64748b]"
+                                      }`}
+                                    />
+                                    <span className="truncate">{child.name}</span>
+                                  </div>
                                 </Link>
                               );
                             })}
@@ -589,10 +612,10 @@ export function CategoryProductListingView({
 
               {/* Mobile Price Filter */}
               <div>
-                <h4 className="text-xs font-extrabold text-[#ffd700] uppercase mb-2">
+                <h4 className="text-xs font-extrabold text-[#ffd700] uppercase mb-2.5 tracking-wider pb-1.5 border-b border-[#ffd700]/30">
                   KHOẢNG GIÁ
                 </h4>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {[
                     { id: "all", label: "Tất cả mức giá" },
                     { id: "under-1m", label: "Dưới 1 triệu" },
@@ -601,21 +624,42 @@ export function CategoryProductListingView({
                     { id: "5m-10m", label: "Từ 5 triệu - 10 triệu" },
                     { id: "10m-20m", label: "Từ 10 triệu - 20 triệu" },
                     { id: "above-20m", label: "Trên 20 triệu" },
-                  ].map((range) => (
-                    <label
-                      key={range.id}
-                      className="flex items-center gap-2 text-xs text-[#cbd5e1] py-0.5"
-                    >
-                      <input
-                        type="radio"
-                        name="mobilePriceFilter"
-                        checked={priceFilter === range.id}
-                        onChange={() => setPriceFilter(range.id)}
-                        className="text-[#ffd700] focus:ring-[#ffd700] bg-[#070e17] border-[#1e344d]"
-                      />
-                      <span>{range.label}</span>
-                    </label>
-                  ))}
+                  ].map((range) => {
+                    const isSelected = priceFilter === range.id;
+                    return (
+                      <label
+                        key={range.id}
+                        className={`flex items-center gap-2.5 text-xs cursor-pointer py-1.5 px-2 rounded-lg transition-all ${
+                          isSelected
+                            ? "bg-[#ffd700]/10 text-[#ffd700] font-bold"
+                            : "text-[#cbd5e1]"
+                        }`}
+                      >
+                        <div
+                          className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                            isSelected
+                              ? "border-[#ffd700] bg-[#ffd700]/20"
+                              : "border-[#334155] bg-[#070e17]"
+                          }`}
+                        >
+                          {isSelected && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#ffd700]" />
+                          )}
+                        </div>
+                        <input
+                          type="radio"
+                          name="mobilePriceFilter"
+                          checked={isSelected}
+                          onChange={() => {
+                            setPriceFilter(range.id);
+                            setMobileFilterOpen(false);
+                          }}
+                          className="sr-only"
+                        />
+                        <span>{range.label}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             </div>
