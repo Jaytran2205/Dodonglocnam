@@ -27,6 +27,8 @@ interface CategorySubGridProps {
   breadcrumbs: BreadcrumbItem[];
   parentBackHref?: string;
   parentBackText?: string;
+  viewAllHref?: string;
+  viewAllText?: string;
 }
 
 export function CategorySubGrid({
@@ -38,6 +40,8 @@ export function CategorySubGrid({
   breadcrumbs,
   parentBackHref,
   parentBackText,
+  viewAllHref,
+  viewAllText,
 }: CategorySubGridProps) {
   return (
     <div className="w-full">
@@ -106,6 +110,17 @@ export function CategorySubGrid({
             <p className="max-w-3xl mx-auto text-xs sm:text-sm text-[#cbd5e1] mt-2 leading-relaxed">
               {description}
             </p>
+          )}
+          {viewAllHref && (
+            <div className="mt-4 flex justify-center">
+              <Link
+                href={viewAllHref}
+                scroll={false}
+                className="inline-flex items-center gap-2 bg-[#ffd700]/10 hover:bg-[#ffd700] text-[#ffd700] hover:text-black border border-[#ffd700]/40 font-bold text-xs uppercase px-5 py-2 rounded-full transition-all duration-300 shadow-sm active:scale-95"
+              >
+                <span>{viewAllText || "Xem toàn bộ sản phẩm danh mục này ›"}</span>
+              </Link>
+            </div>
           )}
         </div>
 

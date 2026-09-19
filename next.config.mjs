@@ -86,22 +86,52 @@ const nextConfig = {
     },
     {
       source: '/qua-tang/doi-tac',
-      destination: '/qua-tang/qua-tang-doi-tac',
+      destination: '/qua-tang/qua-tang-doanh-nghiep',
       permanent: true,
     },
     {
       source: '/qua-tang/doi-tac/:path*',
-      destination: '/qua-tang/qua-tang-doi-tac/:path*',
+      destination: '/qua-tang/qua-tang-doanh-nghiep/:path*',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tac',
+      destination: '/qua-tang/qua-tang-doanh-nghiep',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tac/:path*',
+      destination: '/qua-tang/qua-tang-doanh-nghiep/:path*',
       permanent: true,
     },
     {
       source: '/qua-tang/qua-tang-doi-tuong',
-      destination: '/qua-tang/qua-tang-doi-tac',
+      destination: '/qua-tang/qua-tang-doanh-nghiep',
       permanent: true,
     },
     {
       source: '/qua-tang/qua-tang-doi-tuong/:path*',
-      destination: '/qua-tang/qua-tang-doi-tac/:path*',
+      destination: '/qua-tang/qua-tang-doanh-nghiep/:path*',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-ky-niem',
+      destination: '/qua-tang/qua-tang-luu-niem',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-ky-niem/:path*',
+      destination: '/qua-tang/qua-tang-luu-niem/:path*',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/luu-niem',
+      destination: '/qua-tang/qua-tang-luu-niem',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/luu-niem/:path*',
+      destination: '/qua-tang/qua-tang-luu-niem/:path*',
       permanent: true,
     },
     {

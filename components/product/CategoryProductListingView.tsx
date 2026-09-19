@@ -142,8 +142,44 @@ export function CategoryProductListingView({
       ? [...products]
       : products.filter((p) => p.category.slug === mainCategory.slug);
 
-    // If keywords exist, filter strictly by them
-    if (activeKeywords.length > 0) {
+    // Gift folders isolation: ensure products from folder A never leak into folder B
+    const giftFolderKeys = [
+      "qua-tang-doanh-nghiep",
+      "qua-tang-su-kien",
+      "qua-tang-phong-thuy",
+      "qua-tang-luu-niem",
+    ];
+
+    if (activeSubCategory && giftFolderKeys.includes(activeSubCategory.id)) {
+      const currentFolder = activeSubCategory.id;
+      // Exclude products that explicitly belong to another gift folder
+      result = result.filter((p) => {
+        const otherFolders = giftFolderKeys.filter((f) => f !== currentFolder);
+        const belongsToOther = otherFolders.some((f) => p.images && p.images.includes(f));
+        return !belongsToOther;
+      });
+    }
+
+    // If viewing a subcategory with direct folder match, include its products
+    if (activeSubCategory && giftFolderKeys.includes(activeSubCategory.id) && !activeDetailCategory) {
+      result = result.filter((p) => {
+        if (p.images && p.images.includes(activeSubCategory.id)) {
+          return true;
+        }
+        // Fallback to keyword matching for older legacy products in DB
+        const pName = p.name.toLowerCase();
+        return activeKeywords.some((kw) => {
+          const cleanKw = kw.trim();
+          if (!cleanKw) return false;
+          if (cleanKw.includes(" ")) return pName.includes(cleanKw);
+          const regex = new RegExp(
+            `(^|[\\s,./()_\\-+:"'])${cleanKw.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`,
+            "i"
+          );
+          return regex.test(pName);
+        });
+      });
+    } else if (activeKeywords.length > 0) {
       result = result.filter((p) => {
         const pName = p.name.toLowerCase();
 

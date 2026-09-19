@@ -39,9 +39,11 @@ export async function generateStaticParams() {
   DEFAULT_HIERARCHICAL_CATEGORIES.forEach((cat) => {
     cat.subCategories.forEach((sub) => {
       paramsList.push({ category: cat.slug, slug: [sub.id] });
+      paramsList.push({ category: cat.slug, slug: [sub.id, "tat-ca"] });
       if (sub.aliases) {
         sub.aliases.forEach((a) => {
           paramsList.push({ category: cat.slug, slug: [a] });
+          paramsList.push({ category: cat.slug, slug: [a, "tat-ca"] });
         });
       }
       if (sub.children) {
@@ -68,6 +70,16 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
 
   // 1. Check if it's a detail category or subcategory FIRST
   const mainCat = findMainCategory(categorySlug);
+  if (secondSlug === "tat-ca" || secondSlug === "all") {
+    const sub = findSubCategory(categorySlug, firstSlug);
+    if (sub) {
+      return {
+        title: `Tất Cả Sản Phẩm ${sub.name} Bằng Đồng Cao Cấp | Đồ Đồng Lộc Nam`,
+        description: `Xem toàn bộ sản phẩm ${sub.name} đúc thủ công tinh xảo tại Đồ Đồng Lộc Nam.`,
+      };
+    }
+  }
+
   if (secondSlug) {
     const detail = findDetailCategory(categorySlug, firstSlug, secondSlug);
     if (detail) {
@@ -184,6 +196,8 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
               breadcrumbs={breadcrumbs}
               parentBackHref={`/san-pham/${categorySlug}`}
               parentBackText={`Trở về danh mục ${mainCat.name}`}
+              viewAllHref={`/san-pham/${categorySlug}/${subCategory.id}/tat-ca`}
+              viewAllText={`Xem toàn bộ sản phẩm ${subCategory.name} ›`}
             />
           </main>
 
@@ -195,10 +209,10 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
     }
 
     // -------------------------------------------------------------------------
-    // SUB-CASE 1B: SLUG HAS 2 ITEMS AND MATCHES DETAIL CATEGORY -> LEVEL 5 LISTING
+    // SUB-CASE 1B: SLUG HAS 2 ITEMS AND MATCHES DETAIL CATEGORY OR "tat-ca" -> LEVEL 5 LISTING
     // (e.g. /san-pham/tuong-dong/tuong-danh-nhan/tuong-gia-cat-luong -> Product Listing)
     // -------------------------------------------------------------------------
-    if (slugs.length === 2 && detailCategory) {
+    if (slugs.length === 2 && (detailCategory || secondSlug === "tat-ca" || secondSlug === "all")) {
       const isCrossCategory =
         categorySlug === "qua-tang" ||
         categorySlug === "qua-tang-dong" ||
@@ -234,7 +248,7 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         { name: "Sản phẩm", url: "/san-pham" },
         { name: mainCat.name, url: `/san-pham/${categorySlug}` },
         { name: subCategory.name, url: `/san-pham/${categorySlug}/${subCategory.id}` },
-        { name: detailCategory.name },
+        { name: detailCategory ? detailCategory.name : "Tất cả sản phẩm" },
       ];
 
       return (
@@ -245,7 +259,9 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
               { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
               { name: mainCat.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
               { name: subCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
-              { name: detailCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}/${detailCategory.id}` },
+              ...(detailCategory
+                ? [{ name: detailCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}/${detailCategory.id}` }]
+                : []),
             ]}
           />
 

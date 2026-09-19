@@ -9,7 +9,7 @@ export function GiftBannersLeGia() {
       subtitle: "Khắc logo thương hiệu – Chiết khấu xưởng cao",
       desc: "Trống đồng mini, đĩa đồng lưu niệm, biểu trưng vinh danh sự kiện công ty.",
       image: "/images/qua-tang-cong-ty-doanh-nghiep.jpg",
-      href: "/san-pham/qua-tang-dong",
+      href: "/qua-tang/qua-tang-doanh-nghiep",
       icon: Briefcase,
     },
     {
@@ -17,7 +17,7 @@ export function GiftBannersLeGia() {
       subtitle: "Mạ vàng 24K sang trọng – Hộp gỗ nhung cao cấp",
       desc: "Tượng phong thủy tụ tài, tranh Mã Đáo Thành Công, Thuận Buồm Xuôi Gió dát vàng.",
       image: "/images/qua-tang-sep-doi-tac.jpg",
-      href: "/san-pham/qua-tang-dong",
+      href: "/qua-tang/qua-tang-phong-thuy",
       icon: Award,
     },
     {
@@ -25,7 +25,7 @@ export function GiftBannersLeGia() {
       subtitle: "Đậm đà bản sắc Việt – Thiết kế theo yêu cầu",
       desc: "Biểu tượng Khuê Văn Các, Chùa Một Cột, cúp mỹ nghệ đúc đồng nguyên khối.",
       image: "/images/qua-tang-su-kien-hoi-nghi-bang-dong.jpg",
-      href: "/san-pham/qua-tang-dong",
+      href: "/qua-tang/qua-tang-su-kien",
       icon: Gift,
     },
   ];
