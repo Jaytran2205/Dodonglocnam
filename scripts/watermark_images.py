@@ -22,7 +22,7 @@ def apply_watermark(image_path, output_path=None):
         logo_sz = int(badge_h * 0.72)
 
         font_size_title = int(badge_h * 0.28)
-        font_size_phone = int(badge_h * 0.20)
+        font_size_phone = int(badge_h * 0.19)
         try:
             font_title = ImageFont.truetype('C:/Windows/Fonts/timesbd.ttf', font_size_title)
             font_phone = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', font_size_phone)
@@ -43,9 +43,9 @@ def apply_watermark(image_path, output_path=None):
 
         max_text_w = max(title_w, phone_w)
 
-        pad_left = int(badge_h * 0.16)
-        gap_logo_text = int(badge_h * 0.14)
-        pad_right = int(badge_h * 0.25)
+        pad_left = int(badge_h * 0.20)
+        gap_logo_text = int(badge_h * 0.16)
+        pad_right = int(badge_h * 0.45)
 
         badge_w = pad_left + logo_sz + gap_logo_text + max_text_w + pad_right
         gap_lines = int(badge_h * 0.08)
@@ -60,8 +60,8 @@ def apply_watermark(image_path, output_path=None):
         draw.rounded_rectangle(
             [bx1, by1, bx2, by2],
             radius=int(badge_h * 0.18),
-            fill=(6, 14, 24, 225),
-            outline=(223, 183, 85, 200),
+            fill=(6, 14, 24, 235),
+            outline=(223, 183, 85, 220),
             width=int(max(1, min(W, H) * 0.002))
         )
 

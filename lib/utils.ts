@@ -32,7 +32,7 @@ export function getWatermarkedImageUrl(url: string | null | undefined): string {
   if (!url) return "/images/logo.png";
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
   if (url.includes("?")) return url;
-  return `${url}?v=locnam_wm4`;
+  return `${url}?v=locnam_wm5`;
 }
 
 export function removeVietnameseTones(str: string): string {

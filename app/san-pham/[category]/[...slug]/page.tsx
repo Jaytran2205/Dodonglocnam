@@ -79,27 +79,6 @@ export async function generateStaticParams() {
     });
   });
 
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        category: {
-          slug: { notIn: ["qua-tang", "qua-tang-dong"] },
-        },
-      },
-      select: {
-        slug: true,
-        category: { select: { slug: true } },
-      },
-    });
-    products.forEach((p) => {
-      if (p.category?.slug) {
-        paramsList.push({ category: p.category.slug, slug: [p.slug] });
-      }
-    });
-  } catch (error) {
-    console.error("Error generating static params for san-pham products:", error);
-  }
-
   return paramsList;
 }
 

@@ -82,22 +82,6 @@ export async function generateStaticParams() {
     }
   });
 
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        category: {
-          slug: { in: ["qua-tang", "qua-tang-dong"] },
-        },
-      },
-      select: { slug: true },
-    });
-    products.forEach((p) => {
-      paramsList.push({ slug: [p.slug] });
-    });
-  } catch (error) {
-    console.error("Error generating static params for qua-tang products:", error);
-  }
-
   return paramsList;
 }
 
