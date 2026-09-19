@@ -192,7 +192,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
         aliases: ["qua-tang-doi-tac", "qua-tang-doi-tuong", "doi-tac", "qua-doanh-nghiep"],
         name: "Quà tặng doanh nghiệp",
         keyword: "thuyền buồm,thuận buồm,thuyền,kim ngân,cây kim ngân,tùng la hán,cây tùng,chữ an,chữ phúc,chữ thọ,chữ tâm,đôi hươu,đại bàng,đĩa thuyền,nhất mã,song ngựa,hũ lúa,mô hình rồng,doanh nghiệp,đối tác,khách hàng,sếp",
-        image: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg",
+        image: "/images/collections/grid_qua_tang_doanh_nghiep.png",
         children: [
           {
             id: "thuyen-buom-phong-thuy",
@@ -296,7 +296,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
         aliases: ["qua-tang-ky-niem", "qua-luu-niem", "luu-niem", "qua-tang-luu-niem-ki-niem"],
         name: "Quà tặng lưu niệm, kỉ niệm",
         keyword: "chùa một cột,chợ bến thành,khuê văn các,tháp rùa,trống đồng,tùng hạc,song hạc,chim công,uyên ương,khổng tước,bàn tay phật,cây bồ đề,nhân sâm,mô hình voi,chặn giấy pha lê,lưu niệm,kỷ niệm",
-        image: "/images/locnam_real/locnam_trong_dong_luu_niem.jpg",
+        image: "/images/collections/grid_qua_tang_luu_niem.png",
         children: [
           {
             id: "bieu-trung-van-hoa-viet-nam",
