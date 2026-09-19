@@ -1,7 +1,8 @@
 import { LocNamPartners } from "@/components/home/LocNamPartners";
-import React from "react";
+import React, { cache, Suspense } from "react";
 import prisma from "@/lib/prisma";
 import { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { ModernHeader } from "@/components/common/ModernHeader";
 import { ModernFooter } from "@/components/common/ModernFooter";
 import { LeGiaProductListing } from "@/components/product/LeGiaProductListing";
@@ -9,9 +10,55 @@ import { FloatingContact } from "@/components/common/FloatingContact";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { CategorySeoContent } from "@/components/product/CategorySeoContent";
 
-import { Suspense } from "react";
-
 export const revalidate = 60;
+
+const getCachedAllProducts = cache(
+  unstable_cache(
+    async () => {
+      try {
+        return await prisma.product.findMany({
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            price: true,
+            originalPrice: true,
+            images: true,
+            material: true,
+            dimensions: true,
+            createdAt: true,
+            category: {
+              select: { name: true, slug: true },
+            },
+          },
+        });
+      } catch (e) {
+        console.error("Error fetching all products:", e);
+        return [];
+      }
+    },
+    ["all-products-list"],
+    { revalidate: 3600, tags: ["products"] }
+  )
+);
+
+const getCachedCategories = cache(
+  unstable_cache(
+    async () => {
+      try {
+        return await prisma.category.findMany({
+          orderBy: { order: "asc" },
+        });
+      } catch (e) {
+        console.error("Error fetching categories:", e);
+        return [];
+      }
+    },
+    ["all-categories-list"],
+    { revalidate: 3600, tags: ["categories"] }
+  )
+);
 
 export const metadata: Metadata = {
   title: "Tất Cả Sản Phẩm Đồ Đồng Cao Cấp Ý Yên Nam Định | Đồ Đồng Lộc Nam",
@@ -57,27 +104,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AllProductsPage() {
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      price: true,
-      originalPrice: true,
-      images: true,
-      material: true,
-      dimensions: true,
-      createdAt: true,
-      category: {
-        select: { name: true, slug: true },
-      },
-    },
-  });
-
-  const categories = await prisma.category.findMany({
-    orderBy: { order: "asc" },
-  });
+  const [products, categories] = await Promise.all([
+    getCachedAllProducts(),
+    getCachedCategories(),
+  ]);
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
