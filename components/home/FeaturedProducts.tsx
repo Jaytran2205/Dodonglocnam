@@ -85,6 +85,16 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
           const displayImage = parsedImages[0] || "/images/do-tho-cung.jpg";
           const categorySlug = prod.category?.slug || "do-tho-cung";
 
+          const isGift =
+            categorySlug === "qua-tang" ||
+            categorySlug === "qua-tang-dong" ||
+            prod.category?.slug === "qua-tang" ||
+            prod.category?.slug === "qua-tang-dong";
+
+          const productHref = isGift
+            ? `/qua-tang/${prod.slug}`
+            : `/san-pham/${categorySlug}/${prod.slug}`;
+
           return (
             <div
               key={prod.id}
@@ -93,7 +103,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
               <div>
                 {/* Image Frame */}
                 <Link
-                  href={`/san-pham/${categorySlug}/${prod.slug}`}
+                  href={productHref}
                   className="block aspect-square mb-3 overflow-hidden rounded-sm bg-[#FAF6ED] relative border border-[#E5DAC3]/60"
                 >
                   <img
@@ -112,7 +122,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
 
                 {/* Info */}
                 <div className="space-y-1">
-                  <Link href={`/san-pham/${categorySlug}/${prod.slug}`}>
+                  <Link href={productHref}>
                     <h3 className="font-serif text-sm sm:text-base font-bold text-[#3A2418] group-hover:text-[#7B1E2B] transition-colors line-clamp-2 leading-snug">
                       {prod.name}
                     </h3>
@@ -141,7 +151,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
               {/* Bottom Action Bar */}
               <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#E5DAC3]/50 mt-auto">
                 <Link
-                  href={`/san-pham/${categorySlug}/${prod.slug}`}
+                  href={productHref}
                   className="inline-flex items-center justify-center py-2 px-1 bg-[#7B1E2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#611722] transition-colors rounded-sm shadow-sm"
                 >
                   Xem Chi Tiết

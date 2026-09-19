@@ -80,13 +80,22 @@ export function ProductCard({ product }: ProductCardProps) {
     }
   };
 
+  const isGift =
+    categorySlug === "qua-tang" ||
+    categorySlug === "qua-tang-dong" ||
+    product.category?.slug === "qua-tang" ||
+    product.category?.slug === "qua-tang-dong";
+
+  const productHref = isGift
+    ? `/qua-tang/${product.slug}`
+    : `/san-pham/${categorySlug || product.category?.slug || "tuong-dong"}/${product.slug}`;
+
   return (
     <div className="group bg-[#FFFDF9] border border-[#EBDCC3] hover:border-[#801019]/60 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between h-full shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300">
       <div>
         {/* Product Image Window */}
         <Link
-          href={`/san-pham/${categorySlug}/${product.slug}`}
-          prefetch={false}
+          href={productHref}
           className="block aspect-[4/3] sm:aspect-square mb-2 overflow-hidden rounded-xl bg-white border border-[#F3EDE2] p-2.5 relative flex items-center justify-center group/img"
         >
           <img
@@ -137,7 +146,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Product Info */}
         <div className="space-y-1">
-          <Link href={`/san-pham/${categorySlug}/${product.slug}`} prefetch={false}>
+          <Link href={productHref}>
             <h3 className="font-serif text-[13px] sm:text-sm font-bold text-[#2A160F] group-hover:text-[#801019] transition-colors line-clamp-2 leading-snug min-h-[38px]">
               {product.name}
             </h3>
@@ -180,7 +189,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <span className="truncate">Giỏ Hàng</span>
         </button>
         <Link
-          href={`/san-pham/${categorySlug}/${product.slug}`}
+          href={productHref}
           className="bg-[#ffd700] hover:bg-[#ffe082] text-[#070e17] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-[#ffd700]"
           title="Xem chi tiết sản phẩm"
         >

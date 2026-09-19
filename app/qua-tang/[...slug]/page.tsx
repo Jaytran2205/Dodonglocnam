@@ -1,7 +1,8 @@
-import React, { cache } from "react";
+import React from "react";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { ModernHeader } from "@/components/common/ModernHeader";
 import { ModernFooter } from "@/components/common/ModernFooter";
 import { FloatingContact } from "@/components/common/FloatingContact";
@@ -24,12 +25,35 @@ interface SlugPageProps {
 
 export const revalidate = 3600;
 
-const getCachedProduct = cache(async (slug: string) => {
-  return prisma.product.findUnique({
-    where: { slug },
-    include: { category: true },
-  });
-});
+const getCachedProduct = unstable_cache(
+  async (slug: string) => {
+    return prisma.product.findUnique({
+      where: { slug },
+      include: { category: true },
+    });
+  },
+  ["qua-tang-product-detail"],
+  { revalidate: 3600, tags: ["products"] }
+);
+
+const getCachedRelatedProducts = unstable_cache(
+  async (categoryId: string, currentProductId: string) => {
+    return prisma.product.findMany({
+      where: {
+        categoryId,
+        id: { not: currentProductId },
+      },
+      take: 4,
+      include: {
+        category: {
+          select: { name: true, slug: true },
+        },
+      },
+    });
+  },
+  ["qua-tang-related-products"],
+  { revalidate: 3600, tags: ["products"] }
+);
 
 export async function generateStaticParams() {
   const mainCat = findMainCategory("qua-tang");
@@ -57,6 +81,22 @@ export async function generateStaticParams() {
       });
     }
   });
+
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        category: {
+          slug: { in: ["qua-tang", "qua-tang-dong"] },
+        },
+      },
+      select: { slug: true },
+    });
+    products.forEach((p) => {
+      paramsList.push({ slug: [p.slug] });
+    });
+  } catch (error) {
+    console.error("Error generating static params for qua-tang products:", error);
+  }
 
   return paramsList;
 }
@@ -232,18 +272,7 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
     if (images.length === 0) {
       images = ["/images/hero_golden_ship.jpg"];
     }
-    const relatedProductsData = await prisma.product.findMany({
-      where: {
-        categoryId: product.categoryId,
-        id: { not: product.id },
-      },
-      take: 4,
-      include: {
-        category: {
-          select: { name: true, slug: true },
-        },
-      },
-    });
+    const relatedProductsData = await getCachedRelatedProducts(product.categoryId, product.id);
 
     const relatedProducts = relatedProductsData.map((rel) => {
       let relImages: string[] = [];

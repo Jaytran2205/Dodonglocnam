@@ -1,7 +1,8 @@
-import React, { cache } from "react";
+import React from "react";
 import prisma from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { ModernHeader } from "@/components/common/ModernHeader";
 import { ModernFooter } from "@/components/common/ModernFooter";
 import { FloatingContact } from "@/components/common/FloatingContact";
@@ -26,12 +27,31 @@ interface SlugPageProps {
 
 export const revalidate = 3600;
 
-const getCachedProduct = cache(async (slug: string) => {
-  return prisma.product.findUnique({
-    where: { slug },
-    include: { category: true },
-  });
-});
+const getCachedProduct = unstable_cache(
+  async (slug: string) => {
+    return prisma.product.findUnique({
+      where: { slug },
+      include: { category: true },
+    });
+  },
+  ["san-pham-product-detail"],
+  { revalidate: 3600, tags: ["products"] }
+);
+
+const getCachedRelatedProducts = unstable_cache(
+  async (categoryId: string, currentProductId: string) => {
+    return prisma.product.findMany({
+      where: {
+        categoryId,
+        id: { not: currentProductId },
+      },
+      take: 4,
+      include: { category: true },
+    });
+  },
+  ["san-pham-related-products"],
+  { revalidate: 3600, tags: ["products"] }
+);
 
 export async function generateStaticParams() {
   const paramsList: { category: string; slug: string[] }[] = [];
@@ -58,6 +78,27 @@ export async function generateStaticParams() {
       }
     });
   });
+
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        category: {
+          slug: { notIn: ["qua-tang", "qua-tang-dong"] },
+        },
+      },
+      select: {
+        slug: true,
+        category: { select: { slug: true } },
+      },
+    });
+    products.forEach((p) => {
+      if (p.category?.slug) {
+        paramsList.push({ category: p.category.slug, slug: [p.slug] });
+      }
+    });
+  } catch (error) {
+    console.error("Error generating static params for san-pham products:", error);
+  }
 
   return paramsList;
 }
@@ -366,14 +407,7 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
   const product = await getCachedProduct(lastSlug);
 
   if (product) {
-    const relatedProductsData = await prisma.product.findMany({
-      where: {
-        categoryId: product.categoryId,
-        id: { not: product.id },
-      },
-      take: 4,
-      include: { category: true },
-    });
+    const relatedProductsData = await getCachedRelatedProducts(product.categoryId, product.id);
 
     let parsedImages: string[] = [];
     try {

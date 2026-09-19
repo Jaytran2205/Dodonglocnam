@@ -86,6 +86,14 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
             }
             const thumb = imgList[0] || "/images/artisan-foundry.jpg";
 
+            const isGift =
+              product.category?.slug === "qua-tang" ||
+              product.category?.slug === "qua-tang-dong";
+
+            const productHref = isGift
+              ? `/qua-tang/${product.slug}`
+              : `/san-pham/${product.category?.slug || "tuong-dong"}/${product.slug}`;
+
             return (
               <div
                 key={product.id}
@@ -93,7 +101,7 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
               >
                 <div>
                   <Link
-                    href={`/san-pham/${product.category.slug}/${product.slug}`}
+                    href={productHref}
                     className="block aspect-square overflow-hidden bg-[#FAF6EB] relative p-3 border-b border-[#E8DCC4]"
                   >
                     <img
@@ -114,7 +122,7 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
                     </span>
 
                     <h3 className="font-bold text-xs sm:text-[13px] text-[#1a1a1a] group-hover:text-[#D4AF37] line-clamp-2 leading-snug transition-colors">
-                      <Link href={`/san-pham/${product.category.slug}/${product.slug}`}>
+                      <Link href={productHref}>
                         {product.name}
                       </Link>
                     </h3>
@@ -136,7 +144,7 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
                 <div className="p-3 pt-0 border-t border-[#E8DCC4] mt-auto">
                   <div className="grid grid-cols-2 gap-1.5 pt-2">
                     <Link
-                      href={`/san-pham/${product.category.slug}/${product.slug}`}
+                      href={productHref}
                       className="py-1.5 text-center text-[11px] font-bold text-[#F3E9D2] bg-[#4A0E17] hover:bg-[#631420] rounded transition-colors"
                     >
                       Chi Tiết

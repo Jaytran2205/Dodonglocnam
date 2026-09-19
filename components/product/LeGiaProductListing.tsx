@@ -1135,13 +1135,21 @@ function ListingProductCard({
     ? imageList[activeAngleIndex % imageList.length]
     : imageList[0];
 
+  const isGift =
+    product.category?.slug === "qua-tang" ||
+    product.category?.slug === "qua-tang-dong";
+
+  const productHref = isGift
+    ? `/qua-tang/${product.slug}`
+    : `/san-pham/${product.category?.slug || "tuong-dong"}/${product.slug}`;
+
   return (
     <div className="group bg-[#0c1825] rounded-xl border border-[#1e344d] hover:border-[#ffd700] p-3 flex flex-col justify-between shadow-md hover:shadow-[0_8px_25px_rgba(255,215,0,0.2)] hover:-translate-y-1 transition-all duration-300">
       <div>
         {/* Product Image Window */}
         <div className="relative aspect-square overflow-hidden bg-[#050c14] rounded-lg border border-[#1c2e42] p-2 flex items-center justify-center group/img">
           <Link
-            href={`/san-pham/${product.category.slug}/${product.slug}`}
+            href={productHref}
             className="w-full h-full flex items-center justify-center"
           >
             <img
@@ -1198,7 +1206,7 @@ function ListingProductCard({
         {/* Product Info */}
         <div className="pt-1.5 pb-1 space-y-1">
           <Link
-            href={`/san-pham/${product.category.slug}/${product.slug}`}
+            href={productHref}
             className="block"
           >
             <h4 className="font-serif text-xs font-bold text-[#e2e8f0] group-hover:text-[#ffd700] line-clamp-2 transition-colors leading-snug min-h-[32px]">

@@ -829,10 +829,15 @@ function ListingProductCard({
     ? imageList[activeImageIndex % imageList.length]
     : imageList[0];
 
-  const detailHref =
-    mainCategorySlug === "qua-tang"
-      ? `/qua-tang/${product.slug}`
-      : `/san-pham/${product.category.slug}/${product.slug}`;
+  const isGift =
+    product.category?.slug === "qua-tang" ||
+    product.category?.slug === "qua-tang-dong" ||
+    mainCategorySlug === "qua-tang" ||
+    mainCategorySlug === "qua-tang-dong";
+
+  const detailHref = isGift
+    ? `/qua-tang/${product.slug}`
+    : `/san-pham/${product.category?.slug || mainCategorySlug}/${product.slug}`;
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -850,7 +855,7 @@ function ListingProductCard({
     <div className="group bg-[#0a1524] border border-[#1e344d] rounded-xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all duration-300 flex flex-col justify-between">
       {/* Image Area */}
       <div className="relative aspect-square overflow-hidden bg-[#070e17] group/cardimg">
-        <Link href={detailHref} prefetch={false} className="block w-full h-full">
+        <Link href={detailHref} className="block w-full h-full">
           <img
             src={getWatermarkedImageUrl(currentImg)}
             alt={product.name}
@@ -930,7 +935,7 @@ function ListingProductCard({
 
       {/* Product Info */}
       <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-grow gap-2">
-        <Link href={detailHref} prefetch={false}>
+        <Link href={detailHref}>
           <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-[#ffd700] transition-colors line-clamp-2 min-h-[38px] leading-snug">
             {product.name}
           </h3>
@@ -971,7 +976,6 @@ function ListingProductCard({
           </button>
           <Link
             href={detailHref}
-            prefetch={false}
             className="bg-[#ffd700] hover:bg-[#ffe082] text-[#070e17] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-[#ffd700]"
             title="Xem chi tiết sản phẩm"
           >

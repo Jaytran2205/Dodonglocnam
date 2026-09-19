@@ -66,6 +66,16 @@ export function ProductShowcaseSection({
           }
           const displayImage = parsedImages[0] || "/placeholder.jpg";
 
+          const isGift =
+            categorySlug === "qua-tang" ||
+            categorySlug === "qua-tang-dong" ||
+            (prod as any).category?.slug === "qua-tang" ||
+            (prod as any).category?.slug === "qua-tang-dong";
+
+          const productHref = isGift
+            ? `/qua-tang/${prod.slug}`
+            : `/san-pham/${(prod as any).category?.slug || categorySlug}/${prod.slug}`;
+
           return (
             <div
               key={prod.id}
@@ -74,7 +84,7 @@ export function ProductShowcaseSection({
               <div>
                 {/* Product Image Frame */}
                 <Link
-                  href={`/san-pham/${prod.slug}`}
+                  href={productHref}
                   className="block relative aspect-square bg-[#F6EDE0]/60 overflow-hidden"
                 >
                   <img
@@ -91,7 +101,7 @@ export function ProductShowcaseSection({
 
                 {/* Info Container */}
                 <div className="p-4 space-y-2">
-                  <Link href={`/san-pham/${prod.slug}`}>
+                  <Link href={productHref}>
                     <h3 className="font-serif font-bold text-sm sm:text-[15px] text-[#1a1a1a] group-hover:text-[#D4AF37] line-clamp-2 leading-snug transition-colors">
                       {prod.name}
                     </h3>
@@ -120,7 +130,7 @@ export function ProductShowcaseSection({
               {/* Action Button Bar */}
               <div className="p-4 pt-0 grid grid-cols-2 gap-2">
                 <Link
-                  href={`/san-pham/${prod.slug}`}
+                  href={productHref}
                   className="py-2 px-2 bg-[#2A1408] hover:bg-[#3D1F0D] text-white text-center text-[11px] font-bold uppercase rounded transition-colors"
                 >
                   Chi Tiết
