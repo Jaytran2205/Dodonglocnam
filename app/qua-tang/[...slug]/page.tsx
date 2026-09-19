@@ -40,10 +40,12 @@ export async function generateStaticParams() {
   mainCat.subCategories.forEach((sub) => {
     paramsList.push({ slug: [sub.id] });
     paramsList.push({ slug: [sub.id, "tat-ca"] });
+    paramsList.push({ slug: [sub.id, sub.id] });
     if (sub.aliases) {
       sub.aliases.forEach((a) => {
         paramsList.push({ slug: [a] });
         paramsList.push({ slug: [a, "tat-ca"] });
+        paramsList.push({ slug: [a, sub.id] });
       });
     }
     if (sub.children) {
@@ -134,69 +136,25 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
 
   const mainCat = findMainCategory("qua-tang");
   const subCategory = firstSlug ? findSubCategory("qua-tang", firstSlug) : undefined;
-  const detailCategory = (firstSlug && secondSlug) ? findDetailCategory("qua-tang", firstSlug, secondSlug) : undefined;
+  const isSecondSlugSubAlias =
+    Boolean(secondSlug &&
+    subCategory &&
+    (secondSlug === "tat-ca" ||
+      secondSlug === "all" ||
+      secondSlug === firstSlug ||
+      secondSlug === subCategory.id ||
+      (subCategory.aliases && subCategory.aliases.includes(secondSlug))));
+
+  const detailCategory =
+    firstSlug && secondSlug && !isSecondSlugSubAlias
+      ? findDetailCategory("qua-tang", firstSlug, secondSlug)
+      : undefined;
 
   // =========================================================================
-  // CASE 1: CATEGORY HIERARCHY NAVIGATION
+  // CASE 1: CATEGORY HIERARCHY NAVIGATION (LEVEL 3 SUB & LEVEL 4 DETAIL LISTING)
   // =========================================================================
   if (mainCat && subCategory) {
-    // -------------------------------------------------------------------------
-    // SUB-CASE 1A: SLUG HAS 1 ITEM AND IT HAS CHILDREN -> LEVEL 3 GRID CARDS
-    // (e.g. /qua-tang/qua-tang-doi-tuong -> 6 cards, /qua-tang/qua-tang-su-kien -> 9 cards)
-    // -------------------------------------------------------------------------
-    if (slugs.length === 1 && subCategory.children && subCategory.children.length > 0) {
-      const gridItems = subCategory.children.map((child) => ({
-        id: child.id,
-        name: child.name,
-        image: child.image,
-        href: `/qua-tang/${subCategory.id}/${child.id}`,
-      }));
-
-      const breadcrumbs = [
-        { name: "Trang chủ", url: "/" },
-        { name: "Quà tặng", url: "/qua-tang" },
-        { name: subCategory.name },
-      ];
-
-      return (
-        <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
-          <BreadcrumbJsonLd
-            items={[
-              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-              { name: "Quà Tặng", url: "https://www.quatanglocnam.com/qua-tang" },
-              { name: subCategory.name, url: `https://www.quatanglocnam.com/qua-tang/${subCategory.id}` },
-            ]}
-          />
-
-          <ModernHeader />
-
-          <main className="flex-grow">
-            <CategorySubGrid
-              title={subCategory.name}
-              subtitle={`${gridItems.length} DANH MỤC CHI TIẾT`}
-              description={`Tuyển tập các mẫu ${subCategory.name.toLowerCase()} đúc thủ công tinh xảo, mạ vàng 24k sang trọng tại xưởng Đồ Đồng Lộc Nam.`}
-              banner={mainCat?.banner || "/images/banners/banner_danh_muc_qua_tang.jpg"}
-              items={gridItems}
-              breadcrumbs={breadcrumbs}
-              parentBackHref="/qua-tang"
-              parentBackText="Trở về danh mục Quà tặng"
-              viewAllHref={`/qua-tang/${subCategory.id}/tat-ca`}
-              viewAllText={`Xem toàn bộ sản phẩm ${subCategory.name} ›`}
-            />
-          </main>
-
-          <LocNamPartners />
-          <ModernFooter />
-          <FloatingContact hotline="0836 122 222" hotline2="0846 699 997" zalo="0846699997" />
-        </div>
-      );
-    }
-
-    // -------------------------------------------------------------------------
-    // SUB-CASE 1B: SLUG HAS 2 ITEMS AND MATCHES DETAIL CATEGORY OR "tat-ca" -> PRODUCT LISTING
-    // (e.g. /qua-tang/qua-tang-doanh-nghiep/thuyen-buom-phong-thuy OR /qua-tang/qua-tang-doanh-nghiep/tat-ca)
-    // -------------------------------------------------------------------------
-    if (slugs.length === 2 && (detailCategory || secondSlug === "tat-ca" || secondSlug === "all")) {
+    if (slugs.length === 1 || (slugs.length === 2 && (detailCategory || isSecondSlugSubAlias))) {
       const allProducts = await prisma.product.findMany({
         where: {
           category: {
@@ -221,7 +179,7 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
         { name: "Trang chủ", url: "/" },
         { name: "Quà tặng", url: "/qua-tang" },
         { name: subCategory.name, url: `/qua-tang/${subCategory.id}` },
-        { name: detailCategory ? detailCategory.name : "Tất cả sản phẩm" },
+        ...(detailCategory ? [{ name: detailCategory.name }] : []),
       ];
 
       return (
@@ -244,66 +202,6 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
               mainCategory={mainCat}
               activeSubCategory={subCategory}
               activeDetailCategory={detailCategory}
-              products={allProducts}
-              breadcrumbs={breadcrumbs}
-              parentBackHref={`/qua-tang/${subCategory.id}`}
-              parentBackText={`Trở về danh mục ${subCategory.name}`}
-            />
-          </main>
-
-          <LocNamPartners />
-          <ModernFooter />
-          <FloatingContact hotline="0836 122 222" hotline2="0846 699 997" zalo="0846699997" />
-        </div>
-      );
-    }
-
-    // -------------------------------------------------------------------------
-    // SUB-CASE 1C: SLUG HAS 1 ITEM WITH NO CHILDREN -> PRODUCT LISTING
-    // -------------------------------------------------------------------------
-    if (slugs.length === 1 && (!subCategory.children || subCategory.children.length === 0)) {
-      const allProducts = await prisma.product.findMany({
-        where: {
-          category: {
-            slug: { in: ["qua-tang", "qua-tang-dong", "tuong-dong", "trong-dong"] },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          price: true,
-          originalPrice: true,
-          images: true,
-          category: {
-            select: { name: true, slug: true },
-          },
-        },
-      });
-
-      const breadcrumbs = [
-        { name: "Trang chủ", url: "/" },
-        { name: "Quà tặng", url: "/qua-tang" },
-        { name: subCategory.name },
-      ];
-
-      return (
-        <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
-          <BreadcrumbJsonLd
-            items={[
-              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-              { name: "Quà Tặng", url: "https://www.quatanglocnam.com/qua-tang" },
-              { name: subCategory.name, url: `https://www.quatanglocnam.com/qua-tang/${subCategory.id}` },
-            ]}
-          />
-
-          <ModernHeader />
-
-          <main className="flex-grow">
-            <CategoryProductListingView
-              mainCategory={mainCat}
-              activeSubCategory={subCategory}
               products={allProducts}
               breadcrumbs={breadcrumbs}
               parentBackHref="/qua-tang"

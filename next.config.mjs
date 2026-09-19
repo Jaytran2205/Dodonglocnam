@@ -85,6 +85,46 @@ const nextConfig = {
       permanent: true,
     },
     {
+      source: '/qua-tang/qua-tang-doi-tac/qua-tang-doanh-nghiep',
+      destination: '/qua-tang/qua-tang-doanh-nghiep',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tuong/qua-tang-doanh-nghiep',
+      destination: '/qua-tang/qua-tang-doanh-nghiep',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doanh-nghiep/qua-tang-doanh-nghiep',
+      destination: '/qua-tang/qua-tang-doanh-nghiep',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tac/qua-tang-khach-hang',
+      destination: '/qua-tang/qua-tang-doanh-nghiep/qua-tang-doanh-nghiep-vip',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tac/qua-tang-sep-nam',
+      destination: '/qua-tang/qua-tang-doanh-nghiep/qua-tang-doanh-nghiep-vip',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tac/qua-tang-sep-nu',
+      destination: '/qua-tang/qua-tang-doanh-nghiep/qua-tang-doanh-nghiep-vip',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tac/qua-tang-cha-me',
+      destination: '/qua-tang/qua-tang-doanh-nghiep/qua-tang-doanh-nghiep-vip',
+      permanent: true,
+    },
+    {
+      source: '/qua-tang/qua-tang-doi-tac/qua-tang-thay-co',
+      destination: '/qua-tang/qua-tang-doanh-nghiep/qua-tang-doanh-nghiep-vip',
+      permanent: true,
+    },
+    {
       source: '/qua-tang/doi-tac',
       destination: '/qua-tang/qua-tang-doanh-nghiep',
       permanent: true,

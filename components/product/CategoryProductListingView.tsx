@@ -79,7 +79,7 @@ export function CategoryProductListingView({
   }, [activeDetailCategory, activeSubCategory]);
 
   const activeTitle = useMemo(() => {
-    if (activeDetailCategory) return activeDetailCategory.name;
+    if (activeDetailCategory && activeDetailCategory.id !== activeSubCategory?.id) return activeDetailCategory.name;
     if (activeSubCategory) return activeSubCategory.name;
     return mainCategory.name;
   }, [activeDetailCategory, activeSubCategory, mainCategory]);
@@ -160,8 +160,15 @@ export function CategoryProductListingView({
       });
     }
 
-    // If viewing a subcategory with direct folder match, include its products
-    if (activeSubCategory && giftFolderKeys.includes(activeSubCategory.id) && !activeDetailCategory) {
+    // Check if viewing whole gift subcategory (all products in this folder)
+    const isGiftCategory = activeSubCategory && giftFolderKeys.includes(activeSubCategory.id);
+    const isViewingEntireGiftFolder =
+      isGiftCategory &&
+      (!activeDetailCategory ||
+        activeDetailCategory.id === activeSubCategory?.id ||
+        giftFolderKeys.includes(activeDetailCategory.id));
+
+    if (isViewingEntireGiftFolder && activeSubCategory) {
       result = result.filter((p) => {
         if (p.images && p.images.includes(activeSubCategory.id)) {
           return true;
