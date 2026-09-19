@@ -229,9 +229,23 @@ export function CategoryProductListingView({
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 2xl:px-8 py-6 sm:py-8">
-      {/* 1. Breadcrumbs Navigation */}
-      <nav aria-label="Breadcrumb" className="mb-6 text-xs sm:text-sm text-[#94a3b8] flex items-center flex-wrap gap-2">
+    <div className="w-full">
+      {/* 0. Full-Width Edge-to-Edge Category Banner */}
+      {mainCategory?.banner && (
+        <section aria-label={`Banner danh mục ${mainCategory.name}`} className="w-full relative aspect-[1920/818] min-h-[160px] sm:min-h-[220px] bg-[#0c1825] border-b border-[#1e344d]/60 overflow-hidden shadow-2xl">
+          <img
+            src={mainCategory.banner}
+            alt={mainCategory.name}
+            className="w-full h-full object-cover object-center transform-gpu [image-rendering:-webkit-optimize-contrast]"
+            loading="eager"
+            fetchPriority="high"
+          />
+        </section>
+      )}
+
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 2xl:px-8 py-6 sm:py-8">
+        {/* 1. Breadcrumbs Navigation */}
+        <nav aria-label="Breadcrumb" className="mb-6 text-xs sm:text-sm text-[#94a3b8] flex items-center flex-wrap gap-2">
         {breadcrumbs.map((crumb, idx) => {
           const isLast = idx === breadcrumbs.length - 1;
           return (
@@ -695,6 +709,7 @@ export function CategoryProductListingView({
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

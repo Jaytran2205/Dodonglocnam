@@ -632,13 +632,14 @@ export function ModernHeader() {
     {
       id: "cup-golf",
       title: "CUP GOLF",
-      href: "/san-pham/qua-tang-dong?sub=Cúp%20vinh%20danh%20bằng%20đồng",
+      href: "/qua-tang/qua-tang-su-kien/cup",
       image: "/images/cup-golf-le-gia.jpg",
       previewTitle: "Cúp Golf & Kỷ Niệm Chương Bằng Đồng Mạ Vàng",
       previewDesc: "Cúp giải thi đấu golf, kỷ niệm chương đúc thủ công mạ vàng 24k đẳng cấp vương giả.",
       subItems: [
         {
           label: "CÚP GOLF MẠ VÀNG 24K",
+          href: "/qua-tang/qua-tang-su-kien/cup",
           query: "Cúp vinh danh bằng đồng",
           image: "/images/cup-golf-le-gia.jpg",
           previewTitle: "Cúp Golf Đúc Đồng Mạ Vàng 24K",
@@ -646,6 +647,7 @@ export function ModernHeader() {
         },
         {
           label: "CÚP GOLF THỦ CÔNG ĐỘC BẢN",
+          href: "/qua-tang/qua-tang-su-kien/cup",
           query: "Cúp vinh danh bằng đồng",
           image: "/images/cup-golf-le-gia.jpg",
           previewTitle: "Cúp Golf Thủ Công Độc Bản Theo Yêu Cầu",
@@ -653,6 +655,7 @@ export function ModernHeader() {
         },
         {
           label: "KỶ NIỆM CHƯƠNG GOLF",
+          href: "/qua-tang/qua-tang-su-kien/huy-chuong",
           query: "Huy chương bằng đồng",
           image: "/images/demo/demo_cup_vinh_danh.jpg",
           previewTitle: "Kỷ Niệm Chương Giải Golf Danh Giá",
@@ -660,6 +663,7 @@ export function ModernHeader() {
         },
         {
           label: "BIỂU TRƯNG GOLF ĐỂ BÀN",
+          href: "/qua-tang/qua-tang-su-kien/bien-chuc-danh",
           query: "Biển chức danh để bàn",
           image: "/images/qua-tang-su-kien-hoi-nghi-bang-dong.jpg",
           previewTitle: "Biểu Trưng Golf Để Bàn Làm Việc",
@@ -670,13 +674,14 @@ export function ModernHeader() {
     {
       id: "vat-pham-my-nghe",
       title: "VẬT PHẨM MỸ NGHỆ KHÁC",
-      href: "/san-pham/qua-tang-dong",
+      href: "/qua-tang/qua-tang-phong-thuy",
       image: "/images/locnam_real/locnam_thuyen_buom.jpg",
       previewTitle: "Vật Phẩm Mỹ Nghệ & Quà Tặng Phong Thủy",
       previewDesc: "Thuyền buồm phong thủy mạ vàng, cóc thiềm thừ, tỳ hưu hút tài lộc và tháp văn xương.",
       subItems: [
         {
           label: "MÔ HÌNH THUYỀN BUỒM MẠ VÀNG",
+          href: "/qua-tang/qua-tang-su-kien/qua-tang-tan-gia",
           query: "Quà tặng doanh nghiệp",
           image: "/images/locnam_real/locnam_thuyen_buom.jpg",
           previewTitle: "Mô Hình Thuyền Buồm Phong Thủy Mạ Vàng 24K",
@@ -684,6 +689,7 @@ export function ModernHeader() {
         },
         {
           label: "CÓC THIỀM THỪ NGẬM TIỀN",
+          href: "/qua-tang/qua-tang-phong-thuy/coc-thiem-thu",
           query: "Cóc thiềm thừ bằng đồng",
           image: "/images/locnam_real/locnam_thiem_thu.jpg",
           previewTitle: "Cóc Thiềm Thừ Ba Chân Ngậm Tiền Mạ Vàng",
@@ -691,6 +697,7 @@ export function ModernHeader() {
         },
         {
           label: "TỲ HƯU CHIÊU TÀI HÚT LỘC",
+          href: "/qua-tang/qua-tang-phong-thuy/ty-huu",
           query: "Tỳ hưu bằng đồng",
           image: "/images/locnam_real/locnam_thiem_thu.jpg",
           previewTitle: "Cặp Tỳ Hưu Bằng Đồng Chiêu Tài Hút Vượng Khí",
@@ -698,6 +705,7 @@ export function ModernHeader() {
         },
         {
           label: "THÁP VĂN XƯƠNG CÔNG DANH",
+          href: "/qua-tang/qua-tang-phong-thuy/thap-van-xuong",
           query: "Tháp văn xương bằng đồng",
           image: "/images/locnam_real/locnam_thap_van_xuong.jpg",
           previewTitle: "Tháp Văn Xương 9 Tầng Bằng Đồng Đúc",
@@ -705,6 +713,7 @@ export function ModernHeader() {
         },
         {
           label: "ĐỒNG HỒ ĐỒNG NGHỆ THUẬT",
+          href: "/qua-tang/qua-tang-phong-thuy/cac-mau-phong-thuy-khac",
           query: "Các mẫu phong thủy khác",
           image: "/images/belux/belux_phong_thuy.jpg",
           previewTitle: "Đồng Hồ Quả Lắc Bằng Đồng Nghệ Thuật",
@@ -1060,11 +1069,7 @@ export function ModernHeader() {
                                 }`}
                               >
                                 <span className="flex items-center gap-2">
-                                  {isSelected ? (
-                                    <span className="text-[#ffd700] text-xs">🔗</span>
-                                  ) : (
-                                    <span className="text-[#64748b] text-[10px]">›</span>
-                                  )}
+                                  <span className={`text-[10px] ${isSelected ? "text-[#ffd700] font-bold" : "text-[#64748b]"}`}>›</span>
                                   <span>{cat.title}</span>
                                 </span>
                               </Link>
@@ -1226,11 +1231,7 @@ export function ModernHeader() {
                                 }`}
                               >
                                 <span className="flex items-center gap-2">
-                                  {isSelected ? (
-                                    <span className="text-[#ffd700] text-xs">🔗</span>
-                                  ) : (
-                                    <span className="text-[#64748b] text-[10px]">›</span>
-                                  )}
+                                  <span className={`text-[10px] ${isSelected ? "text-[#ffd700] font-bold" : "text-[#64748b]"}`}>›</span>
                                   <span>{group.title}</span>
                                 </span>
                               </Link>

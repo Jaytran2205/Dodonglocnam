@@ -1,6 +1,6 @@
 import React from "react";
 import prisma from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
 import { ModernHeader } from "@/components/common/ModernHeader";
 import { ModernFooter } from "@/components/common/ModernFooter";
@@ -110,6 +110,16 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const categorySlug = params.category;
+
+  if (categorySlug === "qua-tang-dong" || categorySlug === "qua-tang") {
+    redirect("/qua-tang");
+  }
+  if (categorySlug === "vat-pham-my-nghe") {
+    redirect("/qua-tang/qua-tang-phong-thuy");
+  }
+  if (categorySlug === "cup-golf") {
+    redirect("/qua-tang/qua-tang-su-kien/cup");
+  }
 
   const mainCategoryData = findMainCategory(categorySlug);
 

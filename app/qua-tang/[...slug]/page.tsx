@@ -161,6 +161,7 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
               title={subCategory.name}
               subtitle={`${gridItems.length} DANH MỤC CHI TIẾT`}
               description={`Tuyển tập các mẫu ${subCategory.name.toLowerCase()} đúc thủ công tinh xảo, mạ vàng 24k sang trọng tại xưởng Đồ Đồng Lộc Nam.`}
+              banner={mainCat?.banner || "/images/banners/banner_danh_muc_qua_tang.jpg"}
               items={gridItems}
               breadcrumbs={breadcrumbs}
               parentBackHref="/qua-tang"

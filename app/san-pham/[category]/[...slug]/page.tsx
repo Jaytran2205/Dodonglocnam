@@ -1,6 +1,6 @@
 import React, { cache } from "react";
 import prisma from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
 import { ModernHeader } from "@/components/common/ModernHeader";
 import { ModernFooter } from "@/components/common/ModernFooter";
@@ -120,6 +120,11 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
 
 export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
   const { category: categorySlug, slug: slugs } = params;
+
+  if (categorySlug === "qua-tang-dong" || categorySlug === "qua-tang") {
+    redirect(`/qua-tang/${slugs.join("/")}`);
+  }
+
   const firstSlug = slugs[0];
   const secondSlug = slugs[1];
   const lastSlug = slugs[slugs.length - 1];
