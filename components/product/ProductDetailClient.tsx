@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   ChevronLeft,
@@ -87,6 +88,7 @@ export function ProductDetailClient({
   const currentImage = images[selectedImageIndex] || images[0];
 
   // Variant sizes: parse or create default options
+  const router = useRouter();
   const defaultSizes = ["Nến 50", "Nến 60", "Nến 70"];
   const parsedSizes = product.dimensions
     ? product.dimensions
@@ -102,6 +104,19 @@ export function ProductDetailClient({
 
   // Tabs state: 'detail' | 'faq' | 'reviews'
   const [activeTab, setActiveTab] = useState<"detail" | "faq" | "reviews">("detail");
+
+  // Pre-load all related products into client cache for instant click
+  useEffect(() => {
+    relatedProducts.slice(0, 8).forEach((rel) => {
+      const isGift =
+        rel.category?.slug === "qua-tang" ||
+        rel.category?.slug === "qua-tang-dong";
+      const relHref = isGift
+        ? `/qua-tang/${rel.slug}`
+        : `/san-pham/${rel.category.slug}/${rel.slug}`;
+      router.prefetch(relHref);
+    });
+  }, [relatedProducts, router]);
 
   // Read full product text toggle ("Xem đầy đủ" / "Xem chi tiết chữ sản phẩm")
   const [isExpanded, setIsExpanded] = useState(false);
@@ -752,14 +767,29 @@ export function ProductDetailClient({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {relatedProducts.map((rel) => {
               const thumb = rel.images[0] || "/images/hero_golden_ship.jpg";
+              const isGift =
+                rel.category?.slug === "qua-tang" ||
+                rel.category?.slug === "qua-tang-dong";
+              const relHref = isGift
+                ? `/qua-tang/${rel.slug}`
+                : `/san-pham/${rel.category.slug}/${rel.slug}`;
+
               return (
                 <div
                   key={rel.id}
-                  className="group bg-[#0b1422] rounded-xl border border-[#1c2c3d] hover:border-[#dfb755] p-3 flex flex-col justify-between transition-all duration-300 shadow-sm hover:shadow-[0_8px_30px_rgba(223,183,85,0.2)] hover:-translate-y-1"
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (target.closest("a") || target.closest("button")) return;
+                    router.push(relHref);
+                  }}
+                  onMouseEnter={() => router.prefetch(relHref)}
+                  onTouchStart={() => router.prefetch(relHref)}
+                  className="group bg-[#0b1422] rounded-xl border border-[#1c2c3d] hover:border-[#dfb755] p-3 flex flex-col justify-between transition-all duration-300 shadow-sm hover:shadow-[0_8px_30px_rgba(223,183,85,0.2)] hover:-translate-y-1 cursor-pointer"
                 >
                   <div>
                     <Link
-                      href={`/san-pham/${rel.category.slug}/${rel.slug}`}
+                      href={relHref}
+                      prefetch={true}
                       className="block aspect-square overflow-hidden bg-[#070e17] rounded-lg relative p-2 mb-2"
                     >
                       <img
@@ -772,7 +802,7 @@ export function ProductDetailClient({
                     </Link>
 
                     <div className="space-y-1">
-                      <Link href={`/san-pham/${rel.category.slug}/${rel.slug}`}>
+                      <Link href={relHref} prefetch={true}>
                         <h3 className="font-serif font-semibold text-xs text-[#f1f5f9] group-hover:text-[#ffd700] line-clamp-2 leading-snug transition-colors">
                           {rel.name}
                         </h3>

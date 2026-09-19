@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Phone } from "lucide-react";
 import { getWatermarkedImageUrl } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ interface LeGiaProductGridProps {
 }
 
 export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("all");
 
   const tabs = [
@@ -38,6 +40,19 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
   const filteredProducts = activeTab === "all"
     ? products
     : products.filter(p => p.category.slug === activeTab);
+
+  // Aggressive prefetch visible products
+  useEffect(() => {
+    filteredProducts.slice(0, 8).forEach((product) => {
+      const isGift =
+        product.category?.slug === "qua-tang" ||
+        product.category?.slug === "qua-tang-dong";
+      const productHref = isGift
+        ? `/qua-tang/${product.slug}`
+        : `/san-pham/${product.category?.slug || "tuong-dong"}/${product.slug}`;
+      router.prefetch(productHref);
+    });
+  }, [filteredProducts, router]);
 
   return (
     <section className="w-full bg-white py-14 px-4 sm:px-8 border-b-2 border-[#D4AF37]/30">
@@ -97,11 +112,19 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
             return (
               <div
                 key={product.id}
-                className="group bg-[#FFFDF7] border-2 border-[#D4AF37]/60 hover:border-[#D4AF37] rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-lg hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(212,175,55,0.35)]"
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest("a") || target.closest("button")) return;
+                  router.push(productHref);
+                }}
+                onMouseEnter={() => router.prefetch(productHref)}
+                onTouchStart={() => router.prefetch(productHref)}
+                className="group bg-[#FFFDF7] border-2 border-[#D4AF37]/60 hover:border-[#D4AF37] rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-lg hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(212,175,55,0.35)] cursor-pointer"
               >
                 <div>
                   <Link
                     href={productHref}
+                    prefetch={true}
                     className="block aspect-square overflow-hidden bg-[#FAF6EB] relative p-3 border-b border-[#E8DCC4]"
                   >
                     <img
@@ -122,7 +145,7 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
                     </span>
 
                     <h3 className="font-bold text-xs sm:text-[13px] text-[#1a1a1a] group-hover:text-[#D4AF37] line-clamp-2 leading-snug transition-colors">
-                      <Link href={productHref}>
+                      <Link href={productHref} prefetch={true}>
                         {product.name}
                       </Link>
                     </h3>
@@ -145,6 +168,7 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
                   <div className="grid grid-cols-2 gap-1.5 pt-2">
                     <Link
                       href={productHref}
+                      prefetch={true}
                       className="py-1.5 text-center text-[11px] font-bold text-[#F3E9D2] bg-[#4A0E17] hover:bg-[#631420] rounded transition-colors"
                     >
                       Chi Tiết

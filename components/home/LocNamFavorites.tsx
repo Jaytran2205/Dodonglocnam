@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, ShoppingBag } from "lucide-react";
 import { getWatermarkedImageUrl } from "@/lib/utils";
 
 export function LocNamFavorites() {
+  const router = useRouter();
   const [wishlist, setWishlist] = useState<number[]>([]);
 
   const products = [
@@ -47,8 +49,16 @@ export function LocNamFavorites() {
     },
   ];
 
+  // Aggressive prefetch on mount
+  useEffect(() => {
+    products.forEach((prod) => {
+      router.prefetch(prod.href);
+    });
+  }, [products, router]);
+
   const toggleWishlist = (id: number, e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setWishlist((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
@@ -76,7 +86,14 @@ export function LocNamFavorites() {
             return (
               <div
                 key={prod.id}
-                className={`group bg-white rounded-2xl border transition-all duration-300 p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:shadow-md hover:-translate-y-1 ${
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest("a") || target.closest("button")) return;
+                  router.push(prod.href);
+                }}
+                onMouseEnter={() => router.prefetch(prod.href)}
+                onTouchStart={() => router.prefetch(prod.href)}
+                className={`group bg-white rounded-2xl border transition-all duration-300 p-3 sm:p-3.5 flex flex-col justify-between shadow-xs hover:shadow-md hover:-translate-y-1 cursor-pointer ${
                   prod.isHighlighted
                     ? "border-[#d4af37] ring-1 ring-[#d4af37]/30"
                     : "border-[#ece4d5] hover:border-[#d4af37]"
@@ -86,6 +103,7 @@ export function LocNamFavorites() {
                   {/* Product Image Box */}
                   <Link
                     href={prod.href}
+                    prefetch={true}
                     className="block aspect-square w-full rounded-xl overflow-hidden bg-white border border-[#f5eee2] p-2 relative flex items-center justify-center"
                   >
                     {/* Badge LỘC NAM */}
@@ -104,7 +122,7 @@ export function LocNamFavorites() {
 
                   {/* Product Title */}
                   <div className="pt-2.5 pb-1">
-                    <Link href={prod.href}>
+                    <Link href={prod.href} prefetch={true}>
                       <h3 className="font-serif text-[12px] sm:text-[13px] font-bold text-[#231b15] group-hover:text-[#b8860b] transition-colors line-clamp-2 leading-snug min-h-[36px]">
                         {prod.name}
                       </h3>
@@ -134,6 +152,7 @@ export function LocNamFavorites() {
                     </button>
                     <Link
                       href={prod.href}
+                      prefetch={true}
                       className="p-1 text-gray-300 hover:text-[#b8860b] transition-colors"
                       title="Đặt mua sản phẩm"
                       aria-label="Đặt mua"

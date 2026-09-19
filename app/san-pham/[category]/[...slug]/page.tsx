@@ -1,4 +1,4 @@
-import React from "react";
+import React, { cache } from "react";
 import prisma from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
@@ -27,30 +27,66 @@ interface SlugPageProps {
 
 export const revalidate = 3600;
 
-const getCachedProduct = unstable_cache(
-  async (slug: string) => {
-    return prisma.product.findUnique({
-      where: { slug },
-      include: { category: true },
-    });
-  },
-  ["san-pham-product-detail"],
-  { revalidate: 3600, tags: ["products"] }
+const getCachedProduct = cache(
+  unstable_cache(
+    async (slug: string) => {
+      return prisma.product.findUnique({
+        where: { slug },
+        include: { category: true },
+      });
+    },
+    ["san-pham-product-detail"],
+    { revalidate: 3600, tags: ["products"] }
+  )
 );
 
-const getCachedRelatedProducts = unstable_cache(
-  async (categoryId: string, currentProductId: string) => {
-    return prisma.product.findMany({
-      where: {
-        categoryId,
-        id: { not: currentProductId },
-      },
-      take: 4,
-      include: { category: true },
-    });
-  },
-  ["san-pham-related-products"],
-  { revalidate: 3600, tags: ["products"] }
+const getCachedRelatedProducts = cache(
+  unstable_cache(
+    async (categoryId: string, currentProductId: string) => {
+      return prisma.product.findMany({
+        where: {
+          categoryId,
+          id: { not: currentProductId },
+        },
+        take: 4,
+        include: { category: true },
+      });
+    },
+    ["san-pham-related-products"],
+    { revalidate: 3600, tags: ["products"] }
+  )
+);
+
+const getCachedCategoryProducts = cache(
+  unstable_cache(
+    async (categorySlug: string, isCrossCategory: boolean) => {
+      return prisma.product.findMany({
+        where: isCrossCategory
+          ? {
+              category: {
+                slug: { in: [categorySlug, "tuong-dong", "qua-tang-dong", "trong-dong"] },
+              },
+            }
+          : {
+              category: { slug: categorySlug },
+            },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          originalPrice: true,
+          images: true,
+          category: {
+            select: { name: true, slug: true },
+          },
+        },
+      });
+    },
+    ["san-pham-category-products"],
+    { revalidate: 3600, tags: ["products"] }
+  )
 );
 
 export async function generateStaticParams() {
@@ -239,29 +275,7 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         subCategory.id === "linh-vat-12-con-giap" ||
         subCategory.id === "trong-dong-qua-tang";
 
-      const allProducts = await prisma.product.findMany({
-        where: isCrossCategory
-          ? {
-              category: {
-                slug: { in: [categorySlug, "tuong-dong", "qua-tang-dong", "trong-dong"] },
-              },
-            }
-          : {
-              category: { slug: categorySlug },
-            },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          price: true,
-          originalPrice: true,
-          images: true,
-          category: {
-            select: { name: true, slug: true },
-          },
-        },
-      });
+      const allProducts = await getCachedCategoryProducts(categorySlug, isCrossCategory);
 
       const breadcrumbs = [
         { name: "Trang chủ", url: "/" },
@@ -317,29 +331,7 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         subCategory.id === "linh-vat-12-con-giap" ||
         subCategory.id === "trong-dong-qua-tang";
 
-      const allProducts = await prisma.product.findMany({
-        where: isCrossCategory
-          ? {
-              category: {
-                slug: { in: [categorySlug, "tuong-dong", "qua-tang-dong", "trong-dong"] },
-              },
-            }
-          : {
-              category: { slug: categorySlug },
-            },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          price: true,
-          originalPrice: true,
-          images: true,
-          category: {
-            select: { name: true, slug: true },
-          },
-        },
-      });
+      const allProducts = await getCachedCategoryProducts(categorySlug, isCrossCategory);
 
       const breadcrumbs = [
         { name: "Trang chủ", url: "/" },

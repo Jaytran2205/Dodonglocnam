@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Phone, ArrowRight } from "lucide-react";
 import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ interface FeaturedProductsProps {
 }
 
 export function FeaturedProducts({ products }: FeaturedProductsProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>("all");
 
   const tabs = [
@@ -38,6 +40,22 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
   const filteredProducts = activeTab === "all"
     ? products
     : products.filter((p) => p.category?.slug === activeTab);
+
+  // Aggressive prefetch on mount / tab change for visible products
+  useEffect(() => {
+    filteredProducts.slice(0, 12).forEach((prod) => {
+      const categorySlug = prod.category?.slug || "do-tho-cung";
+      const isGift =
+        categorySlug === "qua-tang" ||
+        categorySlug === "qua-tang-dong" ||
+        prod.category?.slug === "qua-tang" ||
+        prod.category?.slug === "qua-tang-dong";
+      const productHref = isGift
+        ? `/qua-tang/${prod.slug}`
+        : `/san-pham/${categorySlug}/${prod.slug}`;
+      router.prefetch(productHref);
+    });
+  }, [filteredProducts, router]);
 
   return (
     <section className="w-full bg-[#FAF6ED] py-12 lg:py-16 px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto border-t border-[#E5DAC3]">
@@ -98,12 +116,20 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
           return (
             <div
               key={prod.id}
-              className="group bg-[#F4EDE0] border border-[#E5DAC3] rounded-sm p-4 hover-lift flex flex-col justify-between h-full shadow-sm hover:border-[#8B6B38] transition-all duration-300"
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest("a") || target.closest("button")) return;
+                router.push(productHref);
+              }}
+              onMouseEnter={() => router.prefetch(productHref)}
+              onTouchStart={() => router.prefetch(productHref)}
+              className="group bg-[#F4EDE0] border border-[#E5DAC3] rounded-sm p-4 hover-lift flex flex-col justify-between h-full shadow-sm hover:border-[#8B6B38] transition-all duration-300 cursor-pointer"
             >
               <div>
                 {/* Image Frame */}
                 <Link
                   href={productHref}
+                  prefetch={true}
                   className="block aspect-square mb-3 overflow-hidden rounded-sm bg-[#FAF6ED] relative border border-[#E5DAC3]/60"
                 >
                   <img
@@ -122,7 +148,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
 
                 {/* Info */}
                 <div className="space-y-1">
-                  <Link href={productHref}>
+                  <Link href={productHref} prefetch={true}>
                     <h3 className="font-serif text-sm sm:text-base font-bold text-[#3A2418] group-hover:text-[#7B1E2B] transition-colors line-clamp-2 leading-snug">
                       {prod.name}
                     </h3>
@@ -152,6 +178,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
               <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#E5DAC3]/50 mt-auto">
                 <Link
                   href={productHref}
+                  prefetch={true}
                   className="inline-flex items-center justify-center py-2 px-1 bg-[#7B1E2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#611722] transition-colors rounded-sm shadow-sm"
                 >
                   Xem Chi Tiết
@@ -170,4 +197,4 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
       </div>
     </section>
   );
-}
+}

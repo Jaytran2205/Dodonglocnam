@@ -1,5 +1,8 @@
-import React from "react";
+"use client";
+
+import React, { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Phone, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
 import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
 
@@ -30,7 +33,22 @@ export function ProductShowcaseSection({
   products,
   hotline = "0977.62.4444",
 }: ProductShowcaseSectionProps) {
+  const router = useRouter();
   const cleanPhone = hotline.replace(/\./g, "").replace(/\s/g, "");
+
+  useEffect(() => {
+    products.slice(0, 12).forEach((prod) => {
+      const isGift =
+        categorySlug === "qua-tang" ||
+        categorySlug === "qua-tang-dong" ||
+        (prod as any).category?.slug === "qua-tang" ||
+        (prod as any).category?.slug === "qua-tang-dong";
+      const productHref = isGift
+        ? `/qua-tang/${prod.slug}`
+        : `/san-pham/${(prod as any).category?.slug || categorySlug}/${prod.slug}`;
+      router.prefetch(productHref);
+    });
+  }, [products, categorySlug, router]);
 
   return (
     <section className="py-12 px-4 sm:px-8 max-w-container mx-auto">
@@ -48,6 +66,7 @@ export function ProductShowcaseSection({
 
         <Link
           href={`/san-pham/${categorySlug}`}
+          prefetch={true}
           className="inline-flex items-center gap-1.5 text-xs font-bold uppercase text-[#1a1a1a] hover:text-[#D4AF37] bg-[#F4ECDA] px-4 py-2 rounded border border-[#D4AF37] hover:bg-[#1a1a2e] hover:text-[#D4AF37] transition-all shadow-sm"
         >
           <span>XEM TẤT CẢ ({products.length} SP)</span>
@@ -79,12 +98,20 @@ export function ProductShowcaseSection({
           return (
             <div
               key={prod.id}
-              className="bg-white rounded-lg border-2 border-[#D4AF37]/40 hover:border-[#D4AF37] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover-lift flex flex-col justify-between group"
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest("a") || target.closest("button")) return;
+                router.push(productHref);
+              }}
+              onMouseEnter={() => router.prefetch(productHref)}
+              onTouchStart={() => router.prefetch(productHref)}
+              className="bg-white rounded-lg border-2 border-[#D4AF37]/40 hover:border-[#D4AF37] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover-lift flex flex-col justify-between group cursor-pointer"
             >
               <div>
                 {/* Product Image Frame */}
                 <Link
                   href={productHref}
+                  prefetch={true}
                   className="block relative aspect-square bg-[#F6EDE0]/60 overflow-hidden"
                 >
                   <img
@@ -101,7 +128,7 @@ export function ProductShowcaseSection({
 
                 {/* Info Container */}
                 <div className="p-4 space-y-2">
-                  <Link href={productHref}>
+                  <Link href={productHref} prefetch={true}>
                     <h3 className="font-serif font-bold text-sm sm:text-[15px] text-[#1a1a1a] group-hover:text-[#D4AF37] line-clamp-2 leading-snug transition-colors">
                       {prod.name}
                     </h3>
@@ -131,6 +158,7 @@ export function ProductShowcaseSection({
               <div className="p-4 pt-0 grid grid-cols-2 gap-2">
                 <Link
                   href={productHref}
+                  prefetch={true}
                   className="py-2 px-2 bg-[#2A1408] hover:bg-[#3D1F0D] text-white text-center text-[11px] font-bold uppercase rounded transition-colors"
                 >
                   Chi Tiết

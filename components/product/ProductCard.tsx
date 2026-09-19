@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Star, ShoppingCart } from "lucide-react";
 import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const router = useRouter();
   const [activeAngleIndex, setActiveAngleIndex] = useState(0);
 
   let parsedImages: string[] = [];
@@ -91,11 +93,22 @@ export function ProductCard({ product }: ProductCardProps) {
     : `/san-pham/${categorySlug || product.category?.slug || "tuong-dong"}/${product.slug}`;
 
   return (
-    <div className="group bg-[#FFFDF9] border border-[#EBDCC3] hover:border-[#801019]/60 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between h-full shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300">
+    <div
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest("button") && !target.closest("a")) {
+          router.push(productHref);
+        }
+      }}
+      onMouseEnter={() => router.prefetch(productHref)}
+      onTouchStart={() => router.prefetch(productHref)}
+      className="group bg-[#FFFDF9] border border-[#EBDCC3] hover:border-[#801019]/60 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between h-full shadow-md hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
+    >
       <div>
         {/* Product Image Window */}
         <Link
           href={productHref}
+          prefetch={true}
           className="block aspect-[4/3] sm:aspect-square mb-2 overflow-hidden rounded-xl bg-white border border-[#F3EDE2] p-2.5 relative flex items-center justify-center group/img"
         >
           <img
@@ -146,7 +159,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Product Info */}
         <div className="space-y-1">
-          <Link href={productHref}>
+          <Link href={productHref} prefetch={true}>
             <h3 className="font-serif text-[13px] sm:text-sm font-bold text-[#2A160F] group-hover:text-[#801019] transition-colors line-clamp-2 leading-snug min-h-[38px]">
               {product.name}
             </h3>
@@ -190,6 +203,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </button>
         <Link
           href={productHref}
+          prefetch={true}
           className="bg-[#ffd700] hover:bg-[#ffe082] text-[#070e17] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-[#ffd700]"
           title="Xem chi tiết sản phẩm"
         >

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
 import { Noto_Serif, Inter } from "next/font/google";
+import { NavigationProgressBar } from "@/components/common/NavigationProgressBar";
 import "./globals.css";
 
 const notoSerif = Noto_Serif({
@@ -183,6 +184,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background text-on-background font-sans antialiased selection:bg-primary selection:text-on-primary min-h-screen flex flex-col">
+        <NavigationProgressBar />
         {children}
         <Analytics />
       </body>

@@ -67,6 +67,7 @@ export function LocNamCategories() {
 
           <Link
             href="/san-pham"
+            prefetch={true}
             className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-serif font-bold text-[#b8860b] hover:text-[#8c6508] transition-colors uppercase tracking-wider group shrink-0"
           >
             <span>Xem tất cả danh mục</span>
@@ -80,6 +81,7 @@ export function LocNamCategories() {
             <Link
               key={cat.id}
               href={cat.href}
+              prefetch={true}
               className="flex items-stretch rounded-2xl overflow-hidden border-2 border-[#1c2e42] hover:border-[#dfb755] bg-[#071322] shadow-lg hover:shadow-[0_8px_24px_rgba(223,183,85,0.2)] transition-all duration-300 active:scale-[0.99] group"
             >
               {/* Left Column (~48%): Bold Gold Title Centered */}
@@ -109,6 +111,7 @@ export function LocNamCategories() {
             <Link
               key={cat.id}
               href={cat.href}
+              prefetch={true}
               className="group relative rounded-2xl overflow-hidden bg-[#0c1825] border-2 border-[#1c2e42] hover:border-[#dfb755] shadow-[0_8px_24px_rgba(0,0,0,0.18)] hover:shadow-[0_14px_36px_rgba(223,183,85,0.3)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col justify-between block aspect-square"
             >
               {/* Image Collage with Dark Luxury Background */}

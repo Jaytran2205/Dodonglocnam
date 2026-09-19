@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Star,
   Heart,
@@ -99,6 +99,7 @@ export function LeGiaProductListing({
   initialSearch,
   pageTitle = "TẤT CẢ SẢN PHẨM",
 }: LeGiaProductListingProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [selectedCategory, setSelectedCategory] = useState<string>(
@@ -433,6 +434,19 @@ export function LeGiaProductListing({
 
     return result;
   }, [products, selectedCategory, selectedSubItem, searchQuery, priceFilter, sortBy]);
+
+  // Aggressive prefetch for filtered products
+  useEffect(() => {
+    filteredProducts.slice(0, 24).forEach((prod) => {
+      const isGift =
+        prod.category?.slug === "qua-tang" ||
+        prod.category?.slug === "qua-tang-dong";
+      const href = isGift
+        ? `/qua-tang/${prod.slug}`
+        : `/san-pham/${prod.category?.slug || "tuong-dong"}/${prod.slug}`;
+      router.prefetch(href);
+    });
+  }, [filteredProducts, router]);
 
   const handleClearSearch = () => {
     setSearchQuery("");
@@ -1109,6 +1123,7 @@ function ListingProductCard({
   isWishlisted: boolean;
   onToggleWishlist: (id: string, e: React.MouseEvent) => void;
 }) {
+  const router = useRouter();
   const [activeAngleIndex, setActiveAngleIndex] = useState(0);
 
   let imageList: string[] = [];
@@ -1144,12 +1159,22 @@ function ListingProductCard({
     : `/san-pham/${product.category?.slug || "tuong-dong"}/${product.slug}`;
 
   return (
-    <div className="group bg-[#0c1825] rounded-xl border border-[#1e344d] hover:border-[#ffd700] p-3 flex flex-col justify-between shadow-md hover:shadow-[0_8px_25px_rgba(255,215,0,0.2)] hover:-translate-y-1 transition-all duration-300">
+    <div
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest("a") || target.closest("button")) return;
+        router.push(productHref);
+      }}
+      onMouseEnter={() => router.prefetch(productHref)}
+      onTouchStart={() => router.prefetch(productHref)}
+      className="group bg-[#0c1825] rounded-xl border border-[#1e344d] hover:border-[#ffd700] p-3 flex flex-col justify-between shadow-md hover:shadow-[0_8px_25px_rgba(255,215,0,0.2)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+    >
       <div>
         {/* Product Image Window */}
         <div className="relative aspect-square overflow-hidden bg-[#050c14] rounded-lg border border-[#1c2e42] p-2 flex items-center justify-center group/img">
           <Link
             href={productHref}
+            prefetch={true}
             className="w-full h-full flex items-center justify-center"
           >
             <img
@@ -1164,7 +1189,10 @@ function ListingProductCard({
           {/* Wishlist Button */}
           <button
             type="button"
-            onClick={(e) => onToggleWishlist(product.id, e)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleWishlist(product.id, e);
+            }}
             className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 backdrop-blur-sm border border-[#1e344d] flex items-center justify-center text-gray-400 hover:text-red-500 transition-all z-10"
             aria-label="Yêu thích"
           >
@@ -1207,6 +1235,7 @@ function ListingProductCard({
         <div className="pt-1.5 pb-1 space-y-1">
           <Link
             href={productHref}
+            prefetch={true}
             className="block"
           >
             <h4 className="font-serif text-xs font-bold text-[#e2e8f0] group-hover:text-[#ffd700] line-clamp-2 transition-colors leading-snug min-h-[32px]">

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   ChevronLeft,
@@ -60,6 +61,7 @@ export function CategoryProductListingView({
   parentBackHref,
   parentBackText,
 }: CategoryProductListingViewProps) {
+  const router = useRouter();
   const [priceFilter, setPriceFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [wishlist, setWishlist] = useState<string[]>([]);
@@ -275,6 +277,21 @@ export function CategoryProductListingView({
     const start = (currentPage - 1) * itemsPerPage;
     return filteredProducts.slice(start, start + itemsPerPage);
   }, [filteredProducts, currentPage]);
+
+  // Aggressive prefetch for all visible products on current page for 0ms instant click
+  useEffect(() => {
+    paginatedProducts.forEach((p) => {
+      const isGift =
+        p.category?.slug === "qua-tang" ||
+        p.category?.slug === "qua-tang-dong" ||
+        mainCategory.slug === "qua-tang" ||
+        mainCategory.slug === "qua-tang-dong";
+      const href = isGift
+        ? `/qua-tang/${p.slug}`
+        : `/san-pham/${p.category?.slug || mainCategory.slug}/${p.slug}`;
+      router.prefetch(href);
+    });
+  }, [paginatedProducts, mainCategory.slug, router]);
 
   const handlePageChange = (p: number) => {
     setCurrentPage(p);
@@ -807,6 +824,7 @@ function ListingProductCard({
   onToggleWishlist,
   onAddToCart,
 }: ListingProductCardProps) {
+  const router = useRouter();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   let imageList: string[] = [];
@@ -852,10 +870,20 @@ function ListingProductCard({
   };
 
   return (
-    <div className="group bg-[#0a1524] border border-[#1e344d] rounded-xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all duration-300 flex flex-col justify-between">
+    <div
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest("button") && !target.closest("a")) {
+          router.push(detailHref);
+        }
+      }}
+      onMouseEnter={() => router.prefetch(detailHref)}
+      onTouchStart={() => router.prefetch(detailHref)}
+      className="group bg-[#0a1524] border border-[#1e344d] rounded-xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all duration-300 flex flex-col justify-between cursor-pointer"
+    >
       {/* Image Area */}
       <div className="relative aspect-square overflow-hidden bg-[#070e17] group/cardimg">
-        <Link href={detailHref} className="block w-full h-full">
+        <Link href={detailHref} prefetch={true} className="block w-full h-full">
           <img
             src={getWatermarkedImageUrl(currentImg)}
             alt={product.name}
@@ -935,7 +963,7 @@ function ListingProductCard({
 
       {/* Product Info */}
       <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-grow gap-2">
-        <Link href={detailHref}>
+        <Link href={detailHref} prefetch={true}>
           <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-[#ffd700] transition-colors line-clamp-2 min-h-[38px] leading-snug">
             {product.name}
           </h3>
@@ -976,6 +1004,7 @@ function ListingProductCard({
           </button>
           <Link
             href={detailHref}
+            prefetch={true}
             className="bg-[#ffd700] hover:bg-[#ffe082] text-[#070e17] text-[11px] sm:text-xs font-black py-2 px-1 rounded-lg text-center transition-all shadow-sm flex items-center justify-center gap-1 active:scale-95 border border-[#ffd700]"
             title="Xem chi tiết sản phẩm"
           >

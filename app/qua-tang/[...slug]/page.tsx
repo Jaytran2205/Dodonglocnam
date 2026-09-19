@@ -1,4 +1,4 @@
-import React from "react";
+import React, { cache } from "react";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
@@ -25,34 +25,66 @@ interface SlugPageProps {
 
 export const revalidate = 3600;
 
-const getCachedProduct = unstable_cache(
-  async (slug: string) => {
-    return prisma.product.findUnique({
-      where: { slug },
-      include: { category: true },
-    });
-  },
-  ["qua-tang-product-detail"],
-  { revalidate: 3600, tags: ["products"] }
+const getCachedProduct = cache(
+  unstable_cache(
+    async (slug: string) => {
+      return prisma.product.findUnique({
+        where: { slug },
+        include: { category: true },
+      });
+    },
+    ["qua-tang-product-detail"],
+    { revalidate: 3600, tags: ["products"] }
+  )
 );
 
-const getCachedRelatedProducts = unstable_cache(
-  async (categoryId: string, currentProductId: string) => {
-    return prisma.product.findMany({
-      where: {
-        categoryId,
-        id: { not: currentProductId },
-      },
-      take: 4,
-      include: {
-        category: {
-          select: { name: true, slug: true },
+const getCachedRelatedProducts = cache(
+  unstable_cache(
+    async (categoryId: string, currentProductId: string) => {
+      return prisma.product.findMany({
+        where: {
+          categoryId,
+          id: { not: currentProductId },
         },
-      },
-    });
-  },
-  ["qua-tang-related-products"],
-  { revalidate: 3600, tags: ["products"] }
+        take: 4,
+        include: {
+          category: {
+            select: { name: true, slug: true },
+          },
+        },
+      });
+    },
+    ["qua-tang-related-products"],
+    { revalidate: 3600, tags: ["products"] }
+  )
+);
+
+const getCachedAllGiftProducts = cache(
+  unstable_cache(
+    async () => {
+      return prisma.product.findMany({
+        where: {
+          category: {
+            slug: { in: ["qua-tang", "qua-tang-dong"] },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          originalPrice: true,
+          images: true,
+          category: {
+            select: { name: true, slug: true },
+          },
+        },
+      });
+    },
+    ["qua-tang-all-category-products"],
+    { revalidate: 3600, tags: ["products"] }
+  )
 );
 
 export async function generateStaticParams() {
@@ -179,25 +211,7 @@ export default async function QuaTangCatchAllPage({ params }: SlugPageProps) {
   // =========================================================================
   if (mainCat && subCategory) {
     if (slugs.length === 1 || (slugs.length === 2 && (detailCategory || isSecondSlugSubAlias))) {
-      const allProducts = await prisma.product.findMany({
-        where: {
-          category: {
-            slug: { in: ["qua-tang", "qua-tang-dong"] },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          price: true,
-          originalPrice: true,
-          images: true,
-          category: {
-            select: { name: true, slug: true },
-          },
-        },
-      });
+      const allProducts = await getCachedAllGiftProducts();
 
       const breadcrumbs = [
         { name: "Trang chủ", url: "/" },
