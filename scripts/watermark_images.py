@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 from PIL import Image, ImageDraw, ImageFont
 
@@ -18,14 +18,40 @@ def apply_watermark(image_path, output_path=None):
             print(f"Logo not found at {logo_path}")
             return
 
-        badge_w = int(W * 0.38)
-        badge_h = int(badge_w * 0.26)
+        badge_h = max(38, int(min(W, H) * 0.095))
         logo_sz = int(badge_h * 0.72)
 
-        logo = Image.open(logo_path).convert('RGBA')
-        logo = logo.resize((logo_sz, logo_sz), Image.Resampling.LANCZOS)
+        font_size_title = int(badge_h * 0.28)
+        font_size_phone = int(badge_h * 0.20)
+        try:
+            font_title = ImageFont.truetype('C:/Windows/Fonts/timesbd.ttf', font_size_title)
+            font_phone = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', font_size_phone)
+        except Exception:
+            font_title = ImageFont.load_default()
+            font_phone = ImageFont.load_default()
 
-        margin = int(W * 0.02)
+        title_text = 'ĐỒ ĐỒNG LỘC NAM'
+        phone_text = '0836.122.222 - 0846.699.997'
+
+        title_bbox = font_title.getbbox(title_text)
+        phone_bbox = font_phone.getbbox(phone_text)
+
+        title_w = title_bbox[2] - title_bbox[0]
+        title_h = title_bbox[3] - title_bbox[1]
+        phone_w = phone_bbox[2] - phone_bbox[0]
+        phone_h = phone_bbox[3] - phone_bbox[1]
+
+        max_text_w = max(title_w, phone_w)
+
+        pad_left = int(badge_h * 0.16)
+        gap_logo_text = int(badge_h * 0.14)
+        pad_right = int(badge_h * 0.25)
+
+        badge_w = pad_left + logo_sz + gap_logo_text + max_text_w + pad_right
+        gap_lines = int(badge_h * 0.08)
+        total_text_h = title_h + gap_lines + phone_h
+
+        margin = int(min(W, H) * 0.02)
         bx2 = W - margin
         by2 = H - margin
         bx1 = bx2 - badge_w
@@ -34,30 +60,26 @@ def apply_watermark(image_path, output_path=None):
         draw.rounded_rectangle(
             [bx1, by1, bx2, by2],
             radius=int(badge_h * 0.18),
-            fill=(6, 14, 24, 215),
-            outline=(223, 183, 85, 180),
-            width=int(max(1, W * 0.002))
+            fill=(6, 14, 24, 225),
+            outline=(223, 183, 85, 200),
+            width=int(max(1, min(W, H) * 0.002))
         )
 
-        lx = bx1 + int(badge_h * 0.14)
+        logo = Image.open(logo_path).convert('RGBA')
+        logo = logo.resize((logo_sz, logo_sz), Image.Resampling.LANCZOS)
+        lx = bx1 + pad_left
         ly = by1 + (badge_h - logo_sz) // 2
         overlay.paste(logo, (lx, ly), logo)
 
-        font_size_title = int(badge_h * 0.28)
-        font_size_phone = int(badge_h * 0.22)
-        try:
-            font_title = ImageFont.truetype('C:/Windows/Fonts/timesbd.ttf', font_size_title)
-            font_phone = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', font_size_phone)
-        except Exception:
-            font_title = ImageFont.load_default()
-            font_phone = ImageFont.load_default()
+        tx_base = lx + logo_sz + gap_logo_text
+        ty1 = by1 + (badge_h - total_text_h) // 2
+        ty2 = ty1 + title_h + gap_lines
 
-        tx = lx + logo_sz + int(badge_h * 0.12)
-        ty1 = by1 + int(badge_h * 0.18)
-        ty2 = ty1 + font_size_title + int(badge_h * 0.08)
+        tx1 = tx_base + (max_text_w - title_w) // 2
+        tx2 = tx_base + (max_text_w - phone_w) // 2
 
-        draw.text((tx, ty1), 'ĐỒ ĐỒNG LỘC NAM', fill=(255, 215, 0, 255), font=font_title)
-        draw.text((tx, ty2), '0836.122.222 - 0846.699.997', fill=(240, 245, 250, 240), font=font_phone)
+        draw.text((tx1, ty1), title_text, fill=(255, 215, 0, 255), font=font_title)
+        draw.text((tx2, ty2), phone_text, fill=(240, 245, 250, 245), font=font_phone)
 
         center_logo_sz = int(min(W, H) * 0.35)
         c_logo = Image.open(logo_path).convert('RGBA')
