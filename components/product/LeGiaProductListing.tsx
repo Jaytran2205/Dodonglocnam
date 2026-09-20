@@ -601,7 +601,7 @@ export function LeGiaProductListing({
                   {/* Card Upper Image on Dark Gradient Background */}
                   <div className="aspect-[4/3] bg-[#050c14] relative p-4 flex items-center justify-center overflow-hidden border-b border-[#1c2e42]/60">
                     <img
-                      src={sub.image}
+                      src={sub.image ? `${sub.image.split("?")[0]}?v=locnam_clean_grid_v5` : "/images/hero_golden_ship.jpg"}
                       alt={sub.name}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"

@@ -162,7 +162,7 @@ export function CategorySubGrid({
             {/* 4:3 Image with Zoom on Hover */}
             <div className="aspect-[4/3] w-full overflow-hidden bg-[#060c14] relative border-b border-[#1e344d]/60 flex items-center justify-center">
               <img
-                src={item.image || "/images/hero_golden_ship.jpg"}
+                src={item.image ? `${item.image.split("?")[0]}?v=locnam_clean_grid_v5` : "/images/hero_golden_ship.jpg"}
                 alt={item.name}
                 className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
