@@ -2,12 +2,13 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { Lock, Mail, ArrowRight, Sparkles } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@dodonglocnam.com");
-  const [password, setPassword] = useState("admin123");
+  const [account, setAccount] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -20,7 +21,7 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/admin/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: account, password }),
       });
       const data = await res.json();
 
@@ -67,15 +68,15 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4 text-xs">
           <div className="space-y-1.5">
-            <label className="font-bold text-white block uppercase">Email Quản Trị</label>
+            <label className="font-bold text-white block uppercase">Tài Khoản / Email Quản Trị</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-[#d4af37] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@dodonglocnam.com"
+                value={account}
+                onChange={(e) => setAccount(e.target.value)}
+                placeholder="Nhập tài khoản hoặc email quản trị..."
                 className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs pl-10 pr-4 py-3 rounded-xl focus:outline-none transition-all font-medium"
               />
             </div>
@@ -86,20 +87,24 @@ export default function AdminLoginPage() {
             <div className="relative">
               <Lock className="w-4 h-4 text-[#d4af37] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs pl-10 pr-4 py-3 rounded-xl focus:outline-none transition-all font-medium"
+                placeholder="••••••••••••"
+                className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs pl-10 pr-10 py-3 rounded-xl focus:outline-none transition-all font-medium"
               />
-            </div>
-          </div>
-
-          <div className="p-3 bg-[#111c2e] rounded-xl border border-[#1f2d42] text-[11px] text-[#94a3b8] flex items-center gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-[#d4af37] shrink-0" />
-            <div>
-              Tài khoản mẫu: <strong className="text-[#d4af37]">admin@dodonglocnam.com</strong> | Pass: <strong className="text-[#d4af37]">admin123</strong>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#d4af37] transition-colors"
+              >
+                {showPassword ? (
+                  <span className="text-[10px] font-semibold">ẨN</span>
+                ) : (
+                  <span className="text-[10px] font-semibold">HIỆN</span>
+                )}
+              </button>
             </div>
           </div>
 

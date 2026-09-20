@@ -1,22 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { signAdminToken } from "@/lib/admin-auth";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, password } = body;
+    const identifier = (body.email || body.username || "").trim().toLowerCase();
+    const password = (body.password || "").trim();
 
-    if (!email || !password) {
-      return NextResponse.json({ success: false, message: "Vui lòng nhập đầy đủ email và mật khẩu." }, { status: 400 });
+    if (!identifier || !password) {
+      return NextResponse.json({ success: false, message: "Vui lòng nhập đầy đủ tài khoản và mật khẩu." }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: email.trim().toLowerCase() }
+    // Find user by email or username/name (case-insensitive)
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { email: `${identifier}@ducdonglocnam.com` },
+          { name: { equals: identifier, mode: "insensitive" } }
+        ]
+      }
     });
 
-    if (!user || user.password !== password) {
-      return NextResponse.json({ success: false, message: "Email hoặc mật khẩu không chính xác." }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ success: false, message: "Tài khoản hoặc mật khẩu không chính xác." }, { status: 401 });
+    }
+
+    let isMatch = false;
+    if (user.password.startsWith("$2a$") || user.password.startsWith("$2b$")) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      isMatch = (user.password === password);
+    }
+
+    if (!isMatch) {
+      return NextResponse.json({ success: false, message: "Tài khoản hoặc mật khẩu không chính xác." }, { status: 401 });
     }
 
     const token = signAdminToken({

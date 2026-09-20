@@ -55,3 +55,5 @@ cloudflared.exe
 /scraped_belux_products.json
 *.bak
 prisma/sqlite_dump.json
+/scratch/
+import_manifest.json
