@@ -192,7 +192,7 @@ export function LocNamPartners() {
             <div className="order-1 lg:order-2 lg:col-span-7 h-[210px] sm:h-[290px] md:h-[340px] lg:h-full relative overflow-hidden bg-[#e8dfd1]/30">
               <img
                 key={current.id}
-                src={current.image}
+                src={current.image ? `${current.image.split("?")[0]}?v=clean_cat_v6` : "/images/showroom_1.jpg"}
                 alt={current.name}
                 className={`w-full h-full object-cover ${current.objectPos || "object-center"} transition-all duration-700 animate-fadeIn`}
                 loading="lazy"
@@ -293,7 +293,7 @@ export function LocNamPartners() {
                   {/* Mini Photo Thumbnail */}
                   <div className="w-8 h-7 sm:w-10 sm:h-8 rounded overflow-hidden bg-[#e8dfd1] flex-shrink-0 border border-[#d8cdbc]">
                     <img
-                      src={b.image}
+                      src={b.image ? `${b.image.split("?")[0]}?v=clean_cat_v6` : "/images/showroom_1.jpg"}
                       alt={b.name}
                       className="w-full h-full object-cover"
                     />

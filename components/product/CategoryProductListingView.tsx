@@ -69,6 +69,11 @@ export function CategoryProductListingView({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 16;
 
+  // Always pin/scroll to the top of the product listing when entering from grid or switching subcategories
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [activeSubCategory?.id, activeDetailCategory?.id]);
+
   // Active filter keywords
   const activeKeywords = useMemo(() => {
     if (activeDetailCategory) {

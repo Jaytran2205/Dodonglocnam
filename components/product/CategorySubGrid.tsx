@@ -115,7 +115,6 @@ export function CategorySubGrid({
             <div className="mt-4 flex justify-center">
               <Link
                 href={viewAllHref}
-                scroll={false}
                 className="inline-flex items-center gap-2 bg-[#ffd700]/10 hover:bg-[#ffd700] text-[#ffd700] hover:text-black border border-[#ffd700]/40 font-bold text-xs uppercase px-5 py-2 rounded-full transition-all duration-300 shadow-sm active:scale-95"
               >
                 <span>{viewAllText || "Xem toàn bộ sản phẩm danh mục này ›"}</span>
@@ -156,7 +155,6 @@ export function CategorySubGrid({
             <Link
               key={item.id}
               href={item.href}
-              scroll={false}
               prefetch={true}
               className={`col-span-1 ${smClass} ${lgClass} group bg-[#0a1524] border border-[#1e344d] rounded-2xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_25px_rgba(255,215,0,0.35)] transition-all duration-300 flex flex-col justify-between transform hover:-translate-y-1`}
             >
