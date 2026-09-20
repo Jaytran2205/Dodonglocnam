@@ -456,7 +456,7 @@ export function ModernHeader() {
           label: "TƯỢNG THẦN - THÁNH",
           href: "/san-pham/tuong-dong/tuong-than-thanh",
           query: "Tượng thần - thánh",
-          image: "/images/locnam_real/locnam_quan_cong.jpg",
+          image: "/images/locnam_real/locnam_quan_cong.jpg?v=clean_grid_v5",
           previewTitle: "Tượng Quan Thánh Đế Quân, Thánh Gióng Bằng Đồng",
           previewDesc: "Tượng thần linh trấn trạch, xua tan hung khí, hộ trì gia chủ bình an thịnh vượng.",
         },

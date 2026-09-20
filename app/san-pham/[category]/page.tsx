@@ -39,9 +39,11 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const categorySlug = params.category;
   const mainCatData = findMainCategory(categorySlug);
   const category = !mainCatData
-    ? await prisma.category.findUnique({
-        where: { slug: categorySlug },
-      })
+    ? await prisma.category
+        .findUnique({
+          where: { slug: categorySlug },
+        })
+        .catch(() => null)
     : null;
   const catName = mainCatData?.name || category?.name || "Danh Mục Sản Phẩm";
 
@@ -125,9 +127,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   // Check if category exists in DB only if not found in static subcategories
   const dbCategory = !mainCategoryData
-    ? await prisma.category.findUnique({
-        where: { slug: categorySlug },
-      })
+    ? await prisma.category
+        .findUnique({
+          where: { slug: categorySlug },
+        })
+        .catch(() => null)
     : null;
 
   if (!mainCategoryData && !dbCategory) {
@@ -188,23 +192,25 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }
 
   // Fallback if no subcategories: render Level 5 Product Listing
-  const products = await prisma.product.findMany({
-    where: {
-      category: { slug: categorySlug },
-    },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      price: true,
-      originalPrice: true,
-      images: true,
-      category: {
-        select: { name: true, slug: true },
+  const products = await prisma.product
+    .findMany({
+      where: {
+        category: { slug: categorySlug },
       },
-    },
-  });
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        price: true,
+        originalPrice: true,
+        images: true,
+        category: {
+          select: { name: true, slug: true },
+        },
+      },
+    })
+    .catch(() => []);
 
   const fallbackCategoryData = mainCategoryData || {
     name: catName,

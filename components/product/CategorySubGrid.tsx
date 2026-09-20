@@ -157,6 +157,7 @@ export function CategorySubGrid({
               key={item.id}
               href={item.href}
               scroll={false}
+              prefetch={true}
               className={`col-span-1 ${smClass} ${lgClass} group bg-[#0a1524] border border-[#1e344d] rounded-2xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_25px_rgba(255,215,0,0.35)] transition-all duration-300 flex flex-col justify-between transform hover:-translate-y-1`}
             >
             {/* 4:3 Image with Zoom on Hover */}
@@ -165,7 +166,9 @@ export function CategorySubGrid({
                 src={item.image ? `${item.image.split("?")[0]}?v=locnam_clean_grid_v5` : "/images/hero_golden_ship.jpg"}
                 alt={item.name}
                 className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
+                loading={index < 4 ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={index < 2 ? "high" : "auto"}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0a1524]/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             </div>
