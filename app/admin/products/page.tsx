@@ -18,7 +18,9 @@ import {
   Layers,
   Sparkles,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Copy,
+  Link2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -629,6 +631,45 @@ export default function AdminProductsPage() {
             {/* Modal Form Body */}
             <form onSubmit={handleSave} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Product Live URL / Address Display */}
+                {editingProduct && (
+                  <div className="sm:col-span-2 p-3.5 bg-[#111c2e] rounded-xl border border-[#d4af37]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-1.5 text-xs text-[#d4af37] font-semibold uppercase">
+                        <Link2 className="w-3.5 h-3.5" />
+                        <span>Đường Dẫn Xem Trực Tiếp (Địa Chỉ URL Sản Phẩm):</span>
+                      </div>
+                      <div className="text-[11px] font-mono text-gray-300 truncate">
+                        {`/san-pham/${categories.find((c) => c.id === formData.categoryId)?.slug || editingProduct.category?.slug || "tuong-dong"}/${editingProduct.slug}`}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const catSlug = categories.find((c) => c.id === formData.categoryId)?.slug || editingProduct.category?.slug || "tuong-dong";
+                          const fullUrl = `${window.location.origin}/san-pham/${catSlug}/${editingProduct.slug}`;
+                          navigator.clipboard.writeText(fullUrl);
+                          alert("Đã sao chép liên kết sản phẩm vào bộ nhớ tạm!");
+                        }}
+                        className="px-3 py-1.5 bg-[#152236] hover:bg-[#1d2f4a] text-[#d4af37] border border-[#d4af37]/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>Sao chép Link</span>
+                      </button>
+                      <a
+                        href={`/san-pham/${categories.find((c) => c.id === formData.categoryId)?.slug || editingProduct.category?.slug || "tuong-dong"}/${editingProduct.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 bg-gradient-to-r from-[#d4af37] to-[#e5b869] text-[#070c14] hover:brightness-110 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        <span>Xem Thực Tế</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 {/* Product Name */}
                 <div className="sm:col-span-2 space-y-1.5">
                   <label className="text-xs font-bold text-white block uppercase">
