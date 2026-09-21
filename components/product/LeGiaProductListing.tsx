@@ -7,6 +7,7 @@ import {
   Star,
   Heart,
   ShoppingBag,
+  ChevronLeft,
   ChevronRight,
   ChevronDown,
   SlidersHorizontal,
@@ -977,10 +978,11 @@ export function LeGiaProductListing({
                 {/* 4-Column Product Cards Grid (Image 4) */}
                 {filteredProducts.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-                    {filteredProducts.map((product) => (
+                    {filteredProducts.map((product, idx) => (
                       <ListingProductCard
                         key={product.id}
                         product={product}
+                        priority={idx < 4}
                         isWishlisted={wishlist.includes(product.id)}
                         onToggleWishlist={toggleWishlist}
                       />
@@ -1212,15 +1214,18 @@ export function LeGiaProductListing({
 // -------------------------------------------------------------
 function ListingProductCard({
   product,
+  priority = false,
   isWishlisted,
   onToggleWishlist,
 }: {
   product: Product;
+  priority?: boolean;
   isWishlisted: boolean;
   onToggleWishlist: (id: string, e: React.MouseEvent) => void;
 }) {
   const router = useRouter();
   const [activeAngleIndex, setActiveAngleIndex] = useState(0);
+  const [isInteracted, setIsInteracted] = useState(false);
 
   let imageList: string[] = [];
   try {
@@ -1242,10 +1247,6 @@ function ListingProductCard({
     "Chi tiết tổng thể",
   ];
 
-  const currentImage = hasMultiple
-    ? imageList[activeAngleIndex % imageList.length]
-    : imageList[0];
-
   const isGift =
     product.category?.slug === "qua-tang" ||
     product.category?.slug === "qua-tang-dong";
@@ -1254,14 +1255,25 @@ function ListingProductCard({
     ? `/qua-tang/${product.slug}`
     : `/san-pham/${product.category?.slug || "tuong-dong"}/${product.slug}`;
 
-  const preloadCardImages = () => {
+  const activateCardImages = () => {
     router.prefetch(productHref);
-    if (hasMultiple && typeof window !== "undefined") {
-      imageList.forEach((img) => {
-        const p = new window.Image();
-        p.src = getWatermarkedImageUrl(img);
-      });
+    if (!isInteracted) {
+      setIsInteracted(true);
     }
+  };
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isInteracted) setIsInteracted(true);
+    setActiveAngleIndex((prev) => (prev + 1) % imageList.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isInteracted) setIsInteracted(true);
+    setActiveAngleIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
   };
 
   return (
@@ -1271,8 +1283,8 @@ function ListingProductCard({
         if (target.closest("a") || target.closest("button")) return;
         router.push(productHref);
       }}
-      onMouseEnter={preloadCardImages}
-      onTouchStart={preloadCardImages}
+      onMouseEnter={activateCardImages}
+      onTouchStart={activateCardImages}
       className="group bg-[#0c1825] rounded-xl border border-[#1e344d] hover:border-[#ffd700] p-3 flex flex-col justify-between shadow-md hover:shadow-[0_8px_25px_rgba(255,215,0,0.2)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
     >
       <div>
@@ -1283,26 +1295,67 @@ function ListingProductCard({
             prefetch={true}
             className="w-full h-full relative flex items-center justify-center"
           >
-            {imageList.map((img, idx) => {
-              const isActive = (activeAngleIndex % imageList.length) === idx;
+            {/* Primary image - loaded immediately */}
+            <img
+              src={getWatermarkedImageUrl(imageList[0])}
+              alt={`${product.name} - ảnh chính`}
+              className={`w-full h-full object-contain group-hover/img:scale-105 transition-all duration-200 ${
+                hasMultiple && isInteracted && (activeAngleIndex % imageList.length) !== 0
+                  ? "opacity-0 pointer-events-none absolute inset-0 m-auto"
+                  : "opacity-100 z-10 relative"
+              }`}
+              loading={priority ? "eager" : "lazy"}
+              decoding="async"
+              // @ts-ignore
+              fetchPriority={priority ? "high" : "auto"}
+              width={400}
+              height={400}
+            />
+
+            {/* Secondary images - mounted lazily on interaction only */}
+            {isInteracted && hasMultiple && imageList.slice(1).map((img, sliceIdx) => {
+              const realIdx = sliceIdx + 1;
+              const isActive = (activeAngleIndex % imageList.length) === realIdx;
               return (
                 <img
-                  key={img + idx}
+                  key={img + realIdx}
                   src={getWatermarkedImageUrl(img)}
-                  alt={`${product.name} - góc ${idx + 1}`}
+                  alt={`${product.name} - góc ${realIdx + 1}`}
                   className={`w-full h-full object-contain group-hover/img:scale-105 transition-all duration-200 ${
-                    hasMultiple
-                      ? isActive
-                        ? "opacity-100 z-10 relative"
-                        : "opacity-0 pointer-events-none absolute inset-0 m-auto"
-                      : ""
+                    isActive
+                      ? "opacity-100 z-10 relative"
+                      : "opacity-0 pointer-events-none absolute inset-0 m-auto"
                   }`}
-                  loading={idx === 0 ? "lazy" : "lazy"}
+                  loading="eager"
                   decoding="async"
+                  width={400}
+                  height={400}
                 />
               );
             })}
           </Link>
+
+          {/* Next/Prev Arrow Buttons on Hover */}
+          {hasMultiple && (
+            <>
+              <button
+                type="button"
+                onClick={prevImage}
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 text-[#ffd700] hover:text-white border border-[#ffd700]/30 opacity-0 group-hover/img:opacity-100 transition-all duration-200 flex items-center justify-center z-20 shadow-lg active:scale-95"
+                aria-label="Ảnh trước"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={nextImage}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 text-[#ffd700] hover:text-white border border-[#ffd700]/30 opacity-0 group-hover/img:opacity-100 transition-all duration-200 flex items-center justify-center z-20 shadow-lg active:scale-95"
+                aria-label="Ảnh sau"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </>
+          )}
 
           {/* Wishlist Button */}
           <button
@@ -1333,9 +1386,13 @@ function ListingProductCard({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  if (!isInteracted) setIsInteracted(true);
                   setActiveAngleIndex(i);
                 }}
-                onMouseEnter={() => setActiveAngleIndex(i)}
+                onMouseEnter={() => {
+                  if (!isInteracted) setIsInteracted(true);
+                  setActiveAngleIndex(i);
+                }}
                 className={`w-2.5 h-2.5 rounded-full transition-all duration-200 relative border ${
                   isActive
                     ? "ring-1 ring-[#ffd700] ring-offset-1 scale-110 border-white"

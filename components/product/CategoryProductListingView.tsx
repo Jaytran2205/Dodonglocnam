@@ -844,6 +844,7 @@ function ListingProductCard({
 }: ListingProductCardProps) {
   const router = useRouter();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isInteracted, setIsInteracted] = useState(false);
 
   let imageList: string[] = [];
   try {
@@ -861,9 +862,6 @@ function ListingProductCard({
   }
 
   const hasMultiple = imageList.length > 1;
-  const currentImg = hasMultiple
-    ? imageList[activeImageIndex % imageList.length]
-    : imageList[0];
 
   const isGift =
     product.category?.slug === "qua-tang" ||
@@ -875,25 +873,24 @@ function ListingProductCard({
     ? `/qua-tang/${product.slug}`
     : `/san-pham/${product.category?.slug || mainCategorySlug}/${product.slug}`;
 
-  const preloadAllCardImages = () => {
+  const activateCardImages = () => {
     router.prefetch(detailHref);
-    if (hasMultiple && typeof window !== "undefined") {
-      imageList.forEach((img) => {
-        const p = new window.Image();
-        p.src = getWatermarkedImageUrl(img);
-      });
+    if (!isInteracted) {
+      setIsInteracted(true);
     }
   };
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isInteracted) setIsInteracted(true);
     setActiveImageIndex((prev) => (prev + 1) % imageList.length);
   };
 
   const prevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isInteracted) setIsInteracted(true);
     setActiveImageIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
   };
 
@@ -905,27 +902,44 @@ function ListingProductCard({
           router.push(detailHref);
         }
       }}
-      onMouseEnter={preloadAllCardImages}
-      onTouchStart={preloadAllCardImages}
+      onMouseEnter={activateCardImages}
+      onTouchStart={activateCardImages}
       className="group bg-[#0a1524] border border-[#1e344d] rounded-xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all duration-300 flex flex-col justify-between cursor-pointer"
     >
       {/* Image Area */}
       <div className="relative aspect-square overflow-hidden bg-[#070e17] group/cardimg">
         <Link href={detailHref} prefetch={true} className="block relative w-full h-full">
-          {imageList.map((img, idx) => {
-            const isActive = (activeImageIndex % imageList.length) === idx;
+          {/* Primary image - loaded immediately on page load */}
+          <img
+            src={getWatermarkedImageUrl(imageList[0])}
+            alt={product.name}
+            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+              isInteracted && hasMultiple && (activeImageIndex % imageList.length) !== 0
+                ? "opacity-0 pointer-events-none"
+                : "opacity-100"
+            }`}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            // @ts-ignore
+            fetchPriority={priority ? "high" : "auto"}
+            width={400}
+            height={400}
+          />
+
+          {/* Secondary images - ONLY rendered when user hovers/interacts with THIS specific card */}
+          {isInteracted && hasMultiple && imageList.slice(1).map((img, sliceIdx) => {
+            const realIdx = sliceIdx + 1;
+            const isActive = (activeImageIndex % imageList.length) === realIdx;
             return (
               <img
-                key={img + idx}
+                key={img}
                 src={getWatermarkedImageUrl(img)}
-                alt={`${product.name} - ảnh ${idx + 1}`}
+                alt={`${product.name} - ảnh ${realIdx + 1}`}
                 className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:scale-105 ${
                   isActive ? "opacity-100 z-10" : "opacity-0 pointer-events-none z-0"
                 }`}
-                loading={idx === 0 ? (priority ? "eager" : "lazy") : "lazy"}
+                loading="eager"
                 decoding="async"
-                // @ts-ignore
-                fetchPriority={idx === 0 && priority ? "high" : "auto"}
                 width={400}
                 height={400}
               />
