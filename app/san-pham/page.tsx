@@ -39,7 +39,7 @@ const getCachedAllProducts = cache(
       }
     },
     ["all-products-list"],
-    { revalidate: 3600, tags: ["products"] }
+    { revalidate: 60, tags: ["products"] }
   )
 );
 

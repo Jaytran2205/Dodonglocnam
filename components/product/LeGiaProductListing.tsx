@@ -320,7 +320,33 @@ export function LeGiaProductListing({
     if (selectedSubItem && !searchQuery.trim()) {
       const q = selectedSubItem.toLowerCase().trim();
 
-      if (q.includes("thất lân")) {
+      // Find matching subcategory or detail category from catalog if available
+      const subCat = categoriesCatalog
+        .flatMap((c) => [c.subCategories, ...(c.subCategories.flatMap((s) => s.children || []))])
+        .flat()
+        .find((s) => s && (s.name.toLowerCase() === q || s.id.toLowerCase() === q));
+
+      if (
+        q.includes("bộ sưu tập") ||
+        q.includes("đồ thờ đầy đủ") ||
+        q.includes("đầy đủ") ||
+        q.includes("day du") ||
+        q.includes("trọn bộ")
+      ) {
+        result = result.filter((p) => {
+          const name = (p.name || "").toLowerCase();
+          const images = (p.images || "").toLowerCase();
+          return (
+            name.includes("đầy đủ") ||
+            name.includes("bộ sưu tập") ||
+            name.includes("trọn bộ") ||
+            name.includes("day du") ||
+            images.includes("bộ sưu tập đồ thờ đầy đủ") ||
+            images.includes("bo_suu_tap_do_tho_day_du") ||
+            images.includes("bo-suu-tap-do-tho")
+          );
+        });
+      } else if (q.includes("thất lân")) {
         result = result.filter((p) => p.name.toLowerCase().includes("thất lân"));
       } else if (q.includes("lọ hoa")) {
         result = result.filter(
@@ -367,6 +393,12 @@ export function LeGiaProductListing({
             p.name.toLowerCase().includes("ngai chén") ||
             p.name.toLowerCase().includes("ấm nước")
         );
+      } else if (q.includes("cửu huyền")) {
+        result = result.filter((p) => p.name.toLowerCase().includes("cửu huyền"));
+      } else if (q.includes("ngai thờ")) {
+        result = result.filter((p) => p.name.toLowerCase().includes("ngai thờ"));
+      } else if (q.includes("bài vị")) {
+        result = result.filter((p) => p.name.toLowerCase().includes("bài vị"));
       } else if (q.includes("chuông")) {
         result = result.filter((p) => p.name.toLowerCase().includes("chuông"));
       } else if (q.includes("hoành phi") || q.includes("câu đối") || q.includes("đại tự")) {
@@ -389,6 +421,22 @@ export function LeGiaProductListing({
             p.name.toLowerCase().includes("lục bình") ||
             p.name.toLowerCase().includes("chóe")
         );
+      } else if (subCat && subCat.keyword) {
+        const kws = subCat.keyword
+          .split(",")
+          .map((k) => k.trim().toLowerCase())
+          .filter(Boolean);
+        result = result.filter((p) => {
+          const pName = (p.name || "").toLowerCase();
+          return kws.some((kw) => {
+            if (kw.includes(" ")) return pName.includes(kw);
+            const regex = new RegExp(
+              `(^|[\\s,./()_\\-+:"'])${kw.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`,
+              "i"
+            );
+            return regex.test(pName);
+          });
+        });
       } else {
         // Fallback: match by keywords with tone normalization
         const cleanQ = removeVietnameseTones(q);

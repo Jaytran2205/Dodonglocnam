@@ -25,7 +25,7 @@ interface SlugPageProps {
   };
 }
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 const getCachedProduct = cache(
   unstable_cache(
@@ -36,7 +36,7 @@ const getCachedProduct = cache(
       });
     },
     ["san-pham-product-detail"],
-    { revalidate: 3600, tags: ["products"] }
+    { revalidate: 60, tags: ["products"] }
   )
 );
 
@@ -53,7 +53,7 @@ const getCachedRelatedProducts = cache(
       });
     },
     ["san-pham-related-products"],
-    { revalidate: 3600, tags: ["products"] }
+    { revalidate: 60, tags: ["products"] }
   )
 );
 
@@ -85,7 +85,7 @@ const getCachedCategoryProducts = cache(
       });
     },
     ["san-pham-category-products"],
-    { revalidate: 3600, tags: ["products"] }
+    { revalidate: 60, tags: ["products"] }
   )
 );
 
