@@ -435,6 +435,30 @@ export function LeGiaProductListing({
             p.name.toLowerCase().includes("củ tỏi") ||
             p.name.toLowerCase().includes("chóe")
         );
+      } else if (
+        q.includes("di lặc") ||
+        q.includes("di lạc") ||
+        q.includes("di lac")
+      ) {
+        result = result.filter(
+          (p) =>
+            p.name.toLowerCase().includes("di lặc") ||
+            p.name.toLowerCase().includes("di lạc") ||
+            removeVietnameseTones(p.name || "").includes("di lac")
+        );
+      } else if (
+        q.includes("văn thù") ||
+        q.includes("phổ hiền") ||
+        q.includes("van thu") ||
+        q.includes("pho hien")
+      ) {
+        result = result.filter(
+          (p) =>
+            p.name.toLowerCase().includes("văn thù") ||
+            p.name.toLowerCase().includes("phổ hiền") ||
+            removeVietnameseTones(p.name || "").includes("van thu") ||
+            removeVietnameseTones(p.name || "").includes("pho hien")
+        );
       } else if (subCat && subCat.keyword) {
         const kws = subCat.keyword
           .split(",")
