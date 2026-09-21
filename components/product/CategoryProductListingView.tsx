@@ -283,19 +283,23 @@ export function CategoryProductListingView({
     return filteredProducts.slice(start, start + itemsPerPage);
   }, [filteredProducts, currentPage]);
 
-  // Aggressive prefetch for all visible products on current page for 0ms instant click
+  // Prefetch for visible products deferred until after initial render so images load first at full bandwidth
   useEffect(() => {
-    paginatedProducts.forEach((p) => {
-      const isGift =
-        p.category?.slug === "qua-tang" ||
-        p.category?.slug === "qua-tang-dong" ||
-        mainCategory.slug === "qua-tang" ||
-        mainCategory.slug === "qua-tang-dong";
-      const href = isGift
-        ? `/qua-tang/${p.slug}`
-        : `/san-pham/${p.category?.slug || mainCategory.slug}/${p.slug}`;
-      router.prefetch(href);
-    });
+    const timer = setTimeout(() => {
+      paginatedProducts.forEach((p) => {
+        const isGift =
+          p.category?.slug === "qua-tang" ||
+          p.category?.slug === "qua-tang-dong" ||
+          mainCategory.slug === "qua-tang" ||
+          mainCategory.slug === "qua-tang-dong";
+        const href = isGift
+          ? `/qua-tang/${p.slug}`
+          : `/san-pham/${p.category?.slug || mainCategory.slug}/${p.slug}`;
+        router.prefetch(href);
+      });
+    }, 1200);
+
+    return () => clearTimeout(timer);
   }, [paginatedProducts, mainCategory.slug, router]);
 
   const handlePageChange = (p: number) => {

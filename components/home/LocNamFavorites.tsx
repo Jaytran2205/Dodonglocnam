@@ -49,11 +49,15 @@ export function LocNamFavorites() {
     },
   ];
 
-  // Aggressive prefetch on mount
+  // Prefetch deferred to prioritize image loading
   useEffect(() => {
-    products.forEach((prod) => {
-      router.prefetch(prod.href);
-    });
+    const timer = setTimeout(() => {
+      products.forEach((prod) => {
+        router.prefetch(prod.href);
+      });
+    }, 1500);
+
+    return () => clearTimeout(timer);
   }, [products, router]);
 
   const toggleWishlist = (id: number, e: React.MouseEvent) => {

@@ -435,17 +435,21 @@ export function LeGiaProductListing({
     return result;
   }, [products, selectedCategory, selectedSubItem, searchQuery, priceFilter, sortBy]);
 
-  // Aggressive prefetch for filtered products
+  // Prefetch for filtered products deferred to prioritize image loading
   useEffect(() => {
-    filteredProducts.slice(0, 24).forEach((prod) => {
-      const isGift =
-        prod.category?.slug === "qua-tang" ||
-        prod.category?.slug === "qua-tang-dong";
-      const href = isGift
-        ? `/qua-tang/${prod.slug}`
-        : `/san-pham/${prod.category?.slug || "tuong-dong"}/${prod.slug}`;
-      router.prefetch(href);
-    });
+    const timer = setTimeout(() => {
+      filteredProducts.slice(0, 16).forEach((prod) => {
+        const isGift =
+          prod.category?.slug === "qua-tang" ||
+          prod.category?.slug === "qua-tang-dong";
+        const href = isGift
+          ? `/qua-tang/${prod.slug}`
+          : `/san-pham/${prod.category?.slug || "tuong-dong"}/${prod.slug}`;
+        router.prefetch(href);
+      });
+    }, 1500);
+
+    return () => clearTimeout(timer);
   }, [filteredProducts, router]);
 
   const handleClearSearch = () => {

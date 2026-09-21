@@ -209,6 +209,10 @@ export function ProductDetailClient({
               src={getWatermarkedImageUrl(currentImage)}
               alt={product.name}
               className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+              loading="eager"
+              decoding="async"
+              // @ts-ignore
+              fetchPriority="high"
             />
 
             {/* Previous Button */}
