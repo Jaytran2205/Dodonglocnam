@@ -20,7 +20,7 @@ import {
   SubCategoryItem,
   DetailCategoryItem,
 } from "@/lib/subcategories-data";
-import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
+import { formatPrice, getWatermarkedImageUrl, removeVietnameseTones } from "@/lib/utils";
 
 export interface ListingProduct {
   id: string;
@@ -182,20 +182,27 @@ export function CategoryProductListingView({
         }
         // Fallback to keyword matching for older legacy products in DB
         const pName = p.name.toLowerCase();
+        const pNameClean = removeVietnameseTones(pName);
         return activeKeywords.some((kw) => {
           const cleanKw = kw.trim();
           if (!cleanKw) return false;
-          if (cleanKw.includes(" ")) return pName.includes(cleanKw);
+          const cleanKwTones = removeVietnameseTones(cleanKw);
+          if (cleanKw.includes(" ")) return pName.includes(cleanKw) || pNameClean.includes(cleanKwTones);
           const regex = new RegExp(
             `(^|[\\s,./()_\\-+:"'])${cleanKw.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`,
             "i"
           );
-          return regex.test(pName);
+          const regexClean = new RegExp(
+            `(^|[\\s,./()_\\-+:"'])${cleanKwTones.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`,
+            "i"
+          );
+          return regex.test(pName) || regexClean.test(pNameClean);
         });
       });
     } else if (activeKeywords.length > 0) {
       result = result.filter((p) => {
         const pName = p.name.toLowerCase();
+        const pNameClean = removeVietnameseTones(pName);
 
         // Special exclusion: Tranh chữ must only be paintings/plaques, never statues
         if (activeDetailCategory?.id === "tranh-chu-dong-dat-vang" && (pName.includes("tượng") || !pName.includes("tranh"))) {
@@ -218,13 +225,15 @@ export function CategoryProductListingView({
         return activeKeywords.some((kw) => {
           const cleanKw = kw.trim();
           if (!cleanKw) return false;
+          const cleanKwTones = removeVietnameseTones(cleanKw);
           // Multi-word phrase: direct substring
           if (cleanKw.includes(" ")) {
-            return pName.includes(cleanKw);
+            return pName.includes(cleanKw) || pNameClean.includes(cleanKwTones);
           }
           // Single word: use word boundary regex to avoid matching substrings like "ngọ" in "ngọc" or "heo" in "theo"
-          const regex = new RegExp(`(^|[\\s,./()_\\-+:"'])${cleanKw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`, "i");
-          return regex.test(pName);
+          const regex = new RegExp(`(^|[\\s,./()_\\-+:"'])${cleanKw.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`, "i");
+          const regexClean = new RegExp(`(^|[\\s,./()_\\-+:"'])${cleanKwTones.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`, "i");
+          return regex.test(pName) || regexClean.test(pNameClean);
         });
       });
     }

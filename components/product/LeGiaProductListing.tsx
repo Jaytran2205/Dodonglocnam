@@ -324,7 +324,7 @@ export function LeGiaProductListing({
       const subCat = categoriesCatalog
         .flatMap((c) => [c.subCategories, ...(c.subCategories.flatMap((s) => s.children || []))])
         .flat()
-        .find((s) => s && (s.name.toLowerCase() === q || s.id.toLowerCase() === q));
+        .find((s) => s && (s.name.toLowerCase() === q || s.id.toLowerCase() === q || (s.aliases && s.aliases.includes(q))));
 
       if (
         q.includes("bộ sưu tập") ||
@@ -466,13 +466,19 @@ export function LeGiaProductListing({
           .filter(Boolean);
         result = result.filter((p) => {
           const pName = (p.name || "").toLowerCase();
+          const pNameClean = removeVietnameseTones(pName);
           return kws.some((kw) => {
-            if (kw.includes(" ")) return pName.includes(kw);
+            const kwClean = removeVietnameseTones(kw);
+            if (kw.includes(" ")) return pName.includes(kw) || pNameClean.includes(kwClean);
             const regex = new RegExp(
               `(^|[\\s,./()_\\-+:"'])${kw.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`,
               "i"
             );
-            return regex.test(pName);
+            const regexClean = new RegExp(
+              `(^|[\\s,./()_\\-+:"'])${kwClean.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`,
+              "i"
+            );
+            return regex.test(pName) || regexClean.test(pNameClean);
           });
         });
       } else {
