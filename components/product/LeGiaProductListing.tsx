@@ -382,8 +382,13 @@ export function LeGiaProductListing({
         );
       } else if (q.includes("bát hương")) {
         result = result.filter((p) => p.name.toLowerCase().includes("bát hương"));
-      } else if (q.includes("ống hương")) {
-        result = result.filter((p) => p.name.toLowerCase().includes("ống hương"));
+      } else if (q.includes("ống hương") || q.includes("đựng hương") || q.includes("ong huong") || q.includes("ong dung huong")) {
+        result = result.filter(
+          (p) =>
+            p.name.toLowerCase().includes("ống hương") ||
+            p.name.toLowerCase().includes("ống đựng hương") ||
+            p.name.toLowerCase().includes("đựng hương")
+        );
       } else if (q.includes("mâm bồng")) {
         result = result.filter((p) => p.name.toLowerCase().includes("mâm bồng"));
       } else if (q.includes("đài nước") || q.includes("ngai chén")) {
@@ -415,10 +420,19 @@ export function LeGiaProductListing({
             p.name.toLowerCase().includes("chiêng") ||
             p.name.toLowerCase().includes("khánh")
         );
-      } else if (q.includes("lục bình") || q.includes("chóe")) {
+      } else if (
+        q.includes("lộc bình") ||
+        q.includes("lục bình") ||
+        q.includes("củ tỏi") ||
+        q.includes("chóe") ||
+        q.includes("loc binh") ||
+        q.includes("luc binh")
+      ) {
         result = result.filter(
           (p) =>
+            p.name.toLowerCase().includes("lộc bình") ||
             p.name.toLowerCase().includes("lục bình") ||
+            p.name.toLowerCase().includes("củ tỏi") ||
             p.name.toLowerCase().includes("chóe")
         );
       } else if (subCat && subCat.keyword) {

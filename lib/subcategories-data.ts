@@ -36,8 +36,9 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
       { id: "hac-tho", name: "Hạc thờ", keyword: "hạc thờ", image: "/images/do-tho-cung/hac-tho.jpg" },
       { id: "den-tho", name: "Đèn thờ", keyword: "đèn thờ", image: "/images/do-tho-cung/den-tho.jpg" },
       { id: "bat-huong", name: "Bát hương", keyword: "bát hương", image: "/images/do-tho-cung/bat-huong.jpg" },
+      { id: "ong-huong", aliases: ["ong-dung-huong"], name: "Ống hương", keyword: "ống hương,ống đựng hương,đựng hương,ong huong,ong dung huong", image: "/images/do-tho-cung/ong-huong.jpg" },
       { id: "lo-hoa", name: "Lọ hoa", keyword: "lọ hoa", image: "/images/do-tho-cung/lo-hoa.jpg" },
-      { id: "ong-huong", name: "Ống hương", keyword: "ống hương", image: "/images/do-tho-cung/ong-huong.jpg" },
+      { id: "lo-loc-binh", aliases: ["loc-binh", "luc-binh-choe", "choe-dong", "loc-binh-choe", "luc-binh"], name: "Lọ lộc bình", keyword: "lộc bình,lọ lộc bình,đôi lọ lộc bình,đôi lộc bình,lục bình,củ tỏi,chóe,lọ lục bình", image: "/images/do-tho-cung/luc-binh-choe.jpg" },
       { id: "mam-bong", name: "Mâm bồng", keyword: "mâm bồng", image: "/images/do-tho-cung/mam-bong.jpg" },
       { id: "dai-nuoc", name: "Đài nước", keyword: "đài nước", image: "/images/do-tho-cung/dai-nuoc.jpg" },
       { id: "ngai-chen", name: "Ngai chén", keyword: "ngai chén", image: "/images/do-tho-cung/ngai-chen.jpg" },
@@ -52,7 +53,6 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
       { id: "dai-hong-chung", name: "Đúc đại hồng chung", keyword: "đại hồng chung", image: "/images/do-tho-cung/dai-hong-chung.jpg" },
       { id: "dinh-lu-huong", name: "Đỉnh - Lư hương cỡ lớn", keyword: "lư hương,đỉnh cỡ lớn", image: "/images/do-tho-cung/dinh-lu-huong.jpg" },
       { id: "dinh-that-lan", name: "Đỉnh thất lân vờn cầu", keyword: "thất lân,vờn cầu", image: "/images/do-tho-cung/dinh-that-lan.jpg" },
-      { id: "luc-binh-choe", name: "Lục bình - chóe đồng", keyword: "lục bình,chóe", image: "/images/do-tho-cung/luc-binh-choe.jpg" },
     ],
   },
   {
