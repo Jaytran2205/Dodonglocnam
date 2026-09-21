@@ -1254,6 +1254,16 @@ function ListingProductCard({
     ? `/qua-tang/${product.slug}`
     : `/san-pham/${product.category?.slug || "tuong-dong"}/${product.slug}`;
 
+  const preloadCardImages = () => {
+    router.prefetch(productHref);
+    if (hasMultiple && typeof window !== "undefined") {
+      imageList.forEach((img) => {
+        const p = new window.Image();
+        p.src = getWatermarkedImageUrl(img);
+      });
+    }
+  };
+
   return (
     <div
       onClick={(e) => {
@@ -1261,8 +1271,8 @@ function ListingProductCard({
         if (target.closest("a") || target.closest("button")) return;
         router.push(productHref);
       }}
-      onMouseEnter={() => router.prefetch(productHref)}
-      onTouchStart={() => router.prefetch(productHref)}
+      onMouseEnter={preloadCardImages}
+      onTouchStart={preloadCardImages}
       className="group bg-[#0c1825] rounded-xl border border-[#1e344d] hover:border-[#ffd700] p-3 flex flex-col justify-between shadow-md hover:shadow-[0_8px_25px_rgba(255,215,0,0.2)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
     >
       <div>
@@ -1271,15 +1281,27 @@ function ListingProductCard({
           <Link
             href={productHref}
             prefetch={true}
-            className="w-full h-full flex items-center justify-center"
+            className="w-full h-full relative flex items-center justify-center"
           >
-            <img
-              src={getWatermarkedImageUrl(currentImage)}
-              alt={product.name}
-              className="w-full h-full object-contain group-hover/img:scale-105 transition-all duration-300"
-              loading="lazy"
-              decoding="async"
-            />
+            {imageList.map((img, idx) => {
+              const isActive = (activeAngleIndex % imageList.length) === idx;
+              return (
+                <img
+                  key={img + idx}
+                  src={getWatermarkedImageUrl(img)}
+                  alt={`${product.name} - góc ${idx + 1}`}
+                  className={`w-full h-full object-contain group-hover/img:scale-105 transition-all duration-200 ${
+                    hasMultiple
+                      ? isActive
+                        ? "opacity-100 z-10 relative"
+                        : "opacity-0 pointer-events-none absolute inset-0 m-auto"
+                      : ""
+                  }`}
+                  loading={idx === 0 ? "lazy" : "lazy"}
+                  decoding="async"
+                />
+              );
+            })}
           </Link>
 
           {/* Wishlist Button */}

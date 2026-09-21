@@ -875,6 +875,16 @@ function ListingProductCard({
     ? `/qua-tang/${product.slug}`
     : `/san-pham/${product.category?.slug || mainCategorySlug}/${product.slug}`;
 
+  const preloadAllCardImages = () => {
+    router.prefetch(detailHref);
+    if (hasMultiple && typeof window !== "undefined") {
+      imageList.forEach((img) => {
+        const p = new window.Image();
+        p.src = getWatermarkedImageUrl(img);
+      });
+    }
+  };
+
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -895,24 +905,32 @@ function ListingProductCard({
           router.push(detailHref);
         }
       }}
-      onMouseEnter={() => router.prefetch(detailHref)}
-      onTouchStart={() => router.prefetch(detailHref)}
+      onMouseEnter={preloadAllCardImages}
+      onTouchStart={preloadAllCardImages}
       className="group bg-[#0a1524] border border-[#1e344d] rounded-xl overflow-hidden hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all duration-300 flex flex-col justify-between cursor-pointer"
     >
       {/* Image Area */}
       <div className="relative aspect-square overflow-hidden bg-[#070e17] group/cardimg">
-        <Link href={detailHref} prefetch={true} className="block w-full h-full">
-          <img
-            src={getWatermarkedImageUrl(currentImg)}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading={priority ? "eager" : "lazy"}
-            decoding="async"
-            // @ts-ignore
-            fetchPriority={priority ? "high" : "auto"}
-            width={400}
-            height={400}
-          />
+        <Link href={detailHref} prefetch={true} className="block relative w-full h-full">
+          {imageList.map((img, idx) => {
+            const isActive = (activeImageIndex % imageList.length) === idx;
+            return (
+              <img
+                key={img + idx}
+                src={getWatermarkedImageUrl(img)}
+                alt={`${product.name} - ảnh ${idx + 1}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:scale-105 ${
+                  isActive ? "opacity-100 z-10" : "opacity-0 pointer-events-none z-0"
+                }`}
+                loading={idx === 0 ? (priority ? "eager" : "lazy") : "lazy"}
+                decoding="async"
+                // @ts-ignore
+                fetchPriority={idx === 0 && priority ? "high" : "auto"}
+                width={400}
+                height={400}
+              />
+            );
+          })}
         </Link>
 
         {/* Navigation Dots if multiple images */}
