@@ -571,7 +571,7 @@ export function CategoryProductListingView({
                 <ListingProductCard
                   key={p.id}
                   product={p}
-                  priority={idx < 4}
+                  priority={idx < 8}
                   isWished={wishlist.includes(p.id)}
                   mainCategorySlug={mainCategory.slug}
                   onToggleWishlist={toggleWishlist}
@@ -845,6 +845,11 @@ function ListingProductCard({
   const router = useRouter();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isInteracted, setIsInteracted] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(false);
+  }, [activeImageIndex]);
 
   let imageList: string[] = [];
   try {
@@ -908,17 +913,27 @@ function ListingProductCard({
     >
       {/* Image Area */}
       <div className="relative aspect-square overflow-hidden bg-[#070e17] group/cardimg">
+        {/* Skeleton Shimmer Pulse while loading */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-br from-[#070e17] via-[#122234] to-[#070e17] animate-pulse rounded-lg z-0 transition-opacity duration-300 ${
+            isLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+        />
+
         <Link href={detailHref} prefetch={true} className="block relative w-full h-full">
           {/* Primary image - loaded immediately on page load */}
           <img
             src={getWatermarkedImageUrl(imageList[0])}
             alt={product.name}
-            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-              isInteracted && hasMultiple && (activeImageIndex % imageList.length) !== 0
-                ? "opacity-0 pointer-events-none"
-                : "opacity-100"
+            className={`w-full h-full object-cover group-hover:scale-105 transition-opacity duration-300 ${
+              isLoaded ? "opacity-100" : "opacity-0"
+            } ${
+              hasMultiple && isInteracted && (activeImageIndex % imageList.length) !== 0
+                ? "hidden"
+                : "block z-10 relative"
             }`}
-            loading={priority ? "eager" : "lazy"}
+            onLoad={() => setIsLoaded(true)}
+            loading="eager"
             decoding="async"
             // @ts-ignore
             fetchPriority={priority ? "high" : "auto"}
@@ -936,8 +951,15 @@ function ListingProductCard({
                 src={getWatermarkedImageUrl(img)}
                 alt={`${product.name} - ảnh ${realIdx + 1}`}
                 className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:scale-105 ${
-                  isActive ? "opacity-100 z-10" : "opacity-0 pointer-events-none z-0"
+                  isActive
+                    ? isLoaded
+                      ? "opacity-100 z-10"
+                      : "opacity-0 z-10"
+                    : "opacity-0 pointer-events-none z-0"
                 }`}
+                onLoad={() => {
+                  if (isActive) setIsLoaded(true);
+                }}
                 loading="eager"
                 decoding="async"
                 width={400}

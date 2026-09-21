@@ -123,6 +123,8 @@ export function LeGiaProductListing({
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 20;
 
   // Synchronize state when URL search params change
   useEffect(() => {
@@ -135,6 +137,19 @@ export function LeGiaProductListing({
     const sub = searchParams?.get("sub") || initialSub || "";
     setSelectedSubItem(sub || null);
   }, [searchParams, currentCategorySlug, initialSub]);
+
+  // Reset pagination when category, search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    selectedCategory,
+    selectedSubItem,
+    searchQuery,
+    priceFilter,
+    surfaceFilters,
+    materialFilters,
+    sortBy,
+  ]);
 
   // Live real-time filter as user types
   useEffect(() => {
@@ -527,6 +542,25 @@ export function LeGiaProductListing({
 
     return result;
   }, [products, selectedCategory, selectedSubItem, searchQuery, priceFilter, sortBy]);
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  const handlePageChange = (p: number) => {
+    setCurrentPage(p);
+    if (typeof window !== "undefined") {
+      const el = document.getElementById("product-grid-top");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollTo({ top: 350, behavior: "smooth" });
+      }
+    }
+  };
 
   // Prefetch for filtered products deferred to prioritize image loading
   useEffect(() => {
@@ -976,18 +1010,78 @@ export function LeGiaProductListing({
                 </div>
 
                 {/* 4-Column Product Cards Grid (Image 4) */}
-                {filteredProducts.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-                    {filteredProducts.map((product, idx) => (
-                      <ListingProductCard
-                        key={product.id}
-                        product={product}
-                        priority={idx < 4}
-                        isWishlisted={wishlist.includes(product.id)}
-                        onToggleWishlist={toggleWishlist}
-                      />
-                    ))}
-                  </div>
+                <div id="product-grid-top" className="scroll-mt-6" />
+                {paginatedProducts.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+                      {paginatedProducts.map((product, idx) => (
+                        <ListingProductCard
+                          key={product.id}
+                          product={product}
+                          priority={idx < 8}
+                          isWishlisted={wishlist.includes(product.id)}
+                          onToggleWishlist={toggleWishlist}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-8">
+                        <button
+                          type="button"
+                          disabled={currentPage === 1}
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0c1825] border border-[#1e344d] text-[#cbd5e1] hover:text-[#ffd700] hover:border-[#ffd700] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                        >
+                          ← Trang trước
+                        </button>
+
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                          const isActive = p === currentPage;
+                          if (
+                            totalPages > 7 &&
+                            p !== 1 &&
+                            p !== totalPages &&
+                            Math.abs(p - currentPage) > 2
+                          ) {
+                            if (Math.abs(p - currentPage) === 3) {
+                              return (
+                                <span key={p} className="px-1 text-xs text-gray-500">
+                                  ...
+                                </span>
+                              );
+                            }
+                            return null;
+                          }
+
+                          return (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => handlePageChange(p)}
+                              className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                                isActive
+                                  ? "bg-gradient-to-r from-[#ffd700] to-[#dfb755] text-[#0b1622] font-black shadow-md scale-105"
+                                  : "bg-[#0c1825] border border-[#1e344d] text-[#cbd5e1] hover:text-[#ffd700] hover:border-[#ffd700]"
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          );
+                        })}
+
+                        <button
+                          type="button"
+                          disabled={currentPage === totalPages}
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0c1825] border border-[#1e344d] text-[#cbd5e1] hover:text-[#ffd700] hover:border-[#ffd700] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                        >
+                          Trang sau →
+                        </button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   /* Empty state */
                   <div className="bg-[#0c1825] rounded-2xl border border-[#1e344d] p-8 sm:p-12 text-center space-y-4 shadow-md">
@@ -1226,6 +1320,11 @@ function ListingProductCard({
   const router = useRouter();
   const [activeAngleIndex, setActiveAngleIndex] = useState(0);
   const [isInteracted, setIsInteracted] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(false);
+  }, [activeAngleIndex]);
 
   let imageList: string[] = [];
   try {
@@ -1237,7 +1336,7 @@ function ListingProductCard({
   if (imageList.length === 0) imageList = ["/images/locnam_real/locnam_bo_do_tho.jpg"];
 
   const hasMultiple = imageList.length > 1;
-  const dotCount = hasMultiple ? Math.min(imageList.length, 5) : 4;
+  const dotCount = hasMultiple ? Math.min(imageList.length, 5) : 0;
   const angleColors = ["#f3eee4", "#e8cf8d", "#c59239", "#784421", "#3d2314"];
   const angleLabels = [
     "Ảnh chính diện",
@@ -1290,6 +1389,13 @@ function ListingProductCard({
       <div>
         {/* Product Image Window */}
         <div className="relative aspect-square overflow-hidden bg-[#050c14] rounded-lg border border-[#1c2e42] p-2 flex items-center justify-center group/img">
+          {/* Skeleton Shimmer Pulse while loading */}
+          <div
+            className={`absolute inset-0 bg-gradient-to-br from-[#0c1825] via-[#14263b] to-[#0c1825] animate-pulse rounded-lg z-0 transition-opacity duration-300 ${
+              isLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
+            }`}
+          />
+
           <Link
             href={productHref}
             prefetch={true}
@@ -1299,12 +1405,15 @@ function ListingProductCard({
             <img
               src={getWatermarkedImageUrl(imageList[0])}
               alt={`${product.name} - ảnh chính`}
-              className={`w-full h-full object-contain group-hover/img:scale-105 transition-all duration-200 ${
+              className={`w-full h-full object-contain group-hover/img:scale-105 transition-opacity duration-300 ${
+                isLoaded ? "opacity-100" : "opacity-0"
+              } ${
                 hasMultiple && isInteracted && (activeAngleIndex % imageList.length) !== 0
-                  ? "opacity-0 pointer-events-none absolute inset-0 m-auto"
-                  : "opacity-100 z-10 relative"
+                  ? "hidden"
+                  : "block z-10 relative"
               }`}
-              loading={priority ? "eager" : "lazy"}
+              onLoad={() => setIsLoaded(true)}
+              loading="eager"
               decoding="async"
               // @ts-ignore
               fetchPriority={priority ? "high" : "auto"}
@@ -1321,11 +1430,16 @@ function ListingProductCard({
                   key={img + realIdx}
                   src={getWatermarkedImageUrl(img)}
                   alt={`${product.name} - góc ${realIdx + 1}`}
-                  className={`w-full h-full object-contain group-hover/img:scale-105 transition-all duration-200 ${
+                  className={`w-full h-full object-contain group-hover/img:scale-105 transition-opacity duration-300 ${
                     isActive
-                      ? "opacity-100 z-10 relative"
+                      ? isLoaded
+                        ? "opacity-100 z-10 relative"
+                        : "opacity-0 z-10 relative"
                       : "opacity-0 pointer-events-none absolute inset-0 m-auto"
                   }`}
+                  onLoad={() => {
+                    if (isActive) setIsLoaded(true);
+                  }}
                   loading="eager"
                   decoding="async"
                   width={400}
@@ -1376,35 +1490,37 @@ function ListingProductCard({
         </div>
 
         {/* Multi-angle switcher dots */}
-        <div className="flex items-center gap-1.5 pt-2 pb-1 px-0.5">
-          {[...Array(dotCount)].map((_, i) => {
-            const isActive = activeAngleIndex === i;
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!isInteracted) setIsInteracted(true);
-                  setActiveAngleIndex(i);
-                }}
-                onMouseEnter={() => {
-                  if (!isInteracted) setIsInteracted(true);
-                  setActiveAngleIndex(i);
-                }}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-200 relative border ${
-                  isActive
-                    ? "ring-1 ring-[#ffd700] ring-offset-1 scale-110 border-white"
-                    : "border-black/30 opacity-70 hover:opacity-100"
-                }`}
-                style={{ backgroundColor: angleColors[i % angleColors.length] }}
-                title={angleLabels[i] || `Góc chụp ${i + 1}`}
-                aria-label={`Xem ${angleLabels[i] || `góc chụp ${i + 1}`}`}
-              />
-            );
-          })}
-        </div>
+        {hasMultiple && dotCount > 1 && (
+          <div className="flex items-center gap-1.5 pt-2 pb-1 px-0.5">
+            {[...Array(dotCount)].map((_, i) => {
+              const isActive = activeAngleIndex === i;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isInteracted) setIsInteracted(true);
+                    setActiveAngleIndex(i);
+                  }}
+                  onMouseEnter={() => {
+                    if (!isInteracted) setIsInteracted(true);
+                    setActiveAngleIndex(i);
+                  }}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-200 relative border ${
+                    isActive
+                      ? "ring-1 ring-[#ffd700] ring-offset-1 scale-110 border-white"
+                      : "border-black/30 opacity-70 hover:opacity-100"
+                  }`}
+                  style={{ backgroundColor: angleColors[i % angleColors.length] }}
+                  title={angleLabels[i] || `Góc chụp ${i + 1}`}
+                  aria-label={`Xem ${angleLabels[i] || `góc chụp ${i + 1}`}`}
+                />
+              );
+            })}
+          </div>
+        )}
 
         {/* Product Info */}
         <div className="pt-1.5 pb-1 space-y-1">
