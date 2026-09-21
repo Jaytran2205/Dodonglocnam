@@ -30,7 +30,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
     slug: "do-tho-cung",
     banner: "/images/banners/banner_danh_muc_do_tho.jpg",
     subCategories: [
-      { id: "bo-suu-tap-do-tho", name: "Bộ sưu tập đồ thờ đầy đủ", keyword: "bộ sưu tập,đồ thờ đầy đủ", image: "/images/do-tho-cung/bo-suu-tap-do-tho.jpg" },
+      { id: "bo-suu-tap-do-tho", name: "Bộ sưu tập đồ thờ đầy đủ", keyword: "bộ sưu tập,đồ thờ đầy đủ,đầy đủ,day du,trọn bộ đồ thờ,bộ đồ thờ đầy đủ,đồ thờ cúng đầy đủ", image: "/images/do-tho-cung/bo-suu-tap-do-tho.jpg" },
       { id: "bo-tam-su-ngu-su", aliases: ["bo-ngu-su", "dinh-dong"], name: "Bộ tam sự, ngũ sự bằng đồng", keyword: "tam sự,ngũ sự,đỉnh đồng", image: "/images/do-tho-cung/bo-tam-su-ngu-su.jpg" },
       { id: "chan-nen", name: "Chân nến", keyword: "chân nến", image: "/images/do-tho-cung/chan-nen.jpg" },
       { id: "hac-tho", name: "Hạc thờ", keyword: "hạc thờ", image: "/images/do-tho-cung/hac-tho.jpg" },
