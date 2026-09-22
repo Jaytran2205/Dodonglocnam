@@ -1320,11 +1320,6 @@ function ListingProductCard({
   const router = useRouter();
   const [activeAngleIndex, setActiveAngleIndex] = useState(0);
   const [isInteracted, setIsInteracted] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    setIsLoaded(false);
-  }, [activeAngleIndex]);
 
   let imageList: string[] = [];
   try {
@@ -1389,13 +1384,6 @@ function ListingProductCard({
       <div>
         {/* Product Image Window */}
         <div className="relative aspect-square overflow-hidden bg-[#050c14] rounded-lg border border-[#1c2e42] p-2 flex items-center justify-center group/img">
-          {/* Skeleton Shimmer Pulse while loading */}
-          <div
-            className={`absolute inset-0 bg-gradient-to-br from-[#0c1825] via-[#14263b] to-[#0c1825] animate-pulse rounded-lg z-0 transition-opacity duration-300 ${
-              isLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
-            }`}
-          />
-
           <Link
             href={productHref}
             prefetch={true}
@@ -1405,14 +1393,11 @@ function ListingProductCard({
             <img
               src={getWatermarkedImageUrl(imageList[0])}
               alt={`${product.name} - ảnh chính`}
-              className={`w-full h-full object-contain group-hover/img:scale-105 transition-opacity duration-300 ${
-                isLoaded ? "opacity-100" : "opacity-0"
-              } ${
+              className={`w-full h-full object-contain group-hover/img:scale-105 transition-transform duration-200 ${
                 hasMultiple && isInteracted && (activeAngleIndex % imageList.length) !== 0
                   ? "hidden"
                   : "block z-10 relative"
               }`}
-              onLoad={() => setIsLoaded(true)}
               loading="eager"
               decoding="async"
               // @ts-ignore
@@ -1430,16 +1415,9 @@ function ListingProductCard({
                   key={img + realIdx}
                   src={getWatermarkedImageUrl(img)}
                   alt={`${product.name} - góc ${realIdx + 1}`}
-                  className={`w-full h-full object-contain group-hover/img:scale-105 transition-opacity duration-300 ${
-                    isActive
-                      ? isLoaded
-                        ? "opacity-100 z-10 relative"
-                        : "opacity-0 z-10 relative"
-                      : "opacity-0 pointer-events-none absolute inset-0 m-auto"
+                  className={`w-full h-full object-contain group-hover/img:scale-105 transition-transform duration-200 ${
+                    isActive ? "block z-10" : "hidden"
                   }`}
-                  onLoad={() => {
-                    if (isActive) setIsLoaded(true);
-                  }}
                   loading="eager"
                   decoding="async"
                   width={400}
