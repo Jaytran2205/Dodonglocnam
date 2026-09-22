@@ -339,9 +339,9 @@ export function ModernHeader() {
           previewDesc: "Ấm dâng rượu dâng trà thờ cúng gia tiên và thần linh đúc đồng thủ công dày dặn.",
         },
         {
-          label: "CHUÔNG THỜ CỠ NHỎ",
+          label: "CHUÔNG THỜ NHỎ - ĐẠI HỒNG CHUNG",
           href: "/san-pham/do-tho-cung/chuong-tho",
-          query: "Chuông thờ cỡ nhỏ",
+          query: "Chuông thờ nhỏ - đại hồng chung",
           image: "/images/do-tho-cung/chuong-tho.webp",
           previewTitle: "Chuông Thờ Bằng Đồng Cỡ Nhỏ Tiếng Trong Vang",
           previewDesc: "Chuông gia trì, chuông bát thờ tại gia và phòng thờ niệm Phật âm vang trầm ấm.",
@@ -387,9 +387,9 @@ export function ModernHeader() {
           previewDesc: "Bức đại tự vuông khắc chữ cổ truyền thếp vàng 9999 cho nhà thờ họ, từ đường tôn kính.",
         },
         {
-          label: "CHIÊNG - KHÁNH ĐỒNG",
+          label: "CHIÊNG - KHÁNH - CHUÔNG BÁT",
           href: "/san-pham/do-tho-cung/chieng-khanh",
-          query: "Chiêng - Khánh Đồng",
+          query: "Chiêng - Khánh - Chuông Bát",
           image: "/images/do-tho-cung/chieng-khanh.webp",
           previewTitle: "Chiêng Đồng - Khánh Đồng Đúc Thủ Công Tiếng Ngân",
           previewDesc: "Chiêng khánh chạm mặt trống đồng, hoa văn cổ truyền gõ âm vang rền xa.",

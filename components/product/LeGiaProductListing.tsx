@@ -475,6 +475,43 @@ export function LeGiaProductListing({
             removeVietnameseTones(p.name || "").includes("van thu") ||
             removeVietnameseTones(p.name || "").includes("pho hien")
         );
+      } else if (q.includes("đài nước") || q.includes("dai nuoc") || q === "dai-nuoc") {
+        result = result.filter((p) => {
+          const n = p.name.toLowerCase();
+          return (
+            (n.includes("đài nước") || n.includes("đài thờ")) &&
+            !n.includes("ngai chén") &&
+            !n.includes("kỷ chén") &&
+            !n.includes("ấm")
+          );
+        });
+      } else if (q.includes("ngai chén") || q.includes("ngai chen") || q === "ngai-chen") {
+        result = result.filter((p) => {
+          const n = p.name.toLowerCase();
+          return n.includes("ngai chén") || n.includes("kỷ chén") || n.includes("ấm khay chén") || n.includes("khay chén");
+        });
+      } else if (q.includes("quả trống") || q.includes("qua-trong-dong-co-lon") || q.includes("cỡ lớn")) {
+        result = result.filter((p) => {
+          const n = p.name.toLowerCase();
+          return (
+            (n.includes("quả trống") || n.includes("trống đồng")) &&
+            !n.includes("mặt trống") &&
+            !n.includes("tranh mặt trống")
+          );
+        });
+      } else if (q.includes("thần - thánh") || q.includes("than - thanh") || q === "tuong-than-thanh") {
+        result = result.filter((p) => {
+          const n = p.name.toLowerCase();
+          return (
+            (n.includes("cửu trùng thiên") || n.includes("sơn trang") || n.includes("quản gia") || n.includes("thần - thánh")) &&
+            !n.includes("quan công") &&
+            !n.includes("quan vân trường") &&
+            !n.includes("trần hưng đạo") &&
+            !n.includes("trần quốc tuấn") &&
+            !n.includes("voi") &&
+            !n.includes("ngựa thần tài")
+          );
+        });
       } else if (subCat && subCat.keyword) {
         const kws = subCat.keyword
           .split(",")
@@ -483,6 +520,17 @@ export function LeGiaProductListing({
         result = result.filter((p) => {
           const pName = (p.name || "").toLowerCase();
           const pNameClean = removeVietnameseTones(pName);
+
+          // Exclusions for specific subcategories
+          if (subCat.id === "tuong-ho" && (pName.includes("chó") || pName.includes("rắn") || pName.includes("hổ mang") || pName.includes("bác hồ") || pName.includes("tam đa") || pName.includes("phúc lộc thọ") || pName.includes("lê đại hành") || pNameClean.includes("bac ho") || pNameClean.includes("le dai hanh"))) return false;
+          if (subCat.id === "tuong-ngua" && (pName.includes("quan công") || pName.includes("quan vân trường") || pName.includes("ngô quyền") || pName.includes("mã thượng phong hầu") || pName.includes("bát mã"))) return false;
+          if (subCat.id === "tuong-de" && (pName.includes("chuẩn đề") || pName.includes("bồ đề") || pName.includes("lê đại hành") || pName.includes("đế tiền") || pNameClean.includes("chuan de") || pNameClean.includes("bo de"))) return false;
+          if (subCat.id === "tuong-khi" && (pName.includes("bán thân") || pName.includes("truyền thần") || pName.includes("toàn thân") || pName.includes("bác hồ") || pName.includes("bác giáp") || pName.includes("quang trung") || pName.includes("lê lợi") || pName.includes("mã thượng phong hầu"))) return false;
+          if (subCat.id === "tuong-cho" && (pName.includes("cho khách") || pName.includes("cho chùa") || pName.includes("cho doanh nghiệp") || pName.includes("bàn giao") || pName.includes("nguyễn trãi") || pName.includes("khổng minh") || pName.includes("tam thánh") || pName.includes("chuẩn đề") || pName.includes("di lặc"))) return false;
+          if (subCat.id === "tuong-lon" && (pName.includes("cỡ lớn") || pNameClean.includes("co lon") || pName.includes("di lặc") || pName.includes("tam thánh"))) return false;
+          if (subCat.id === "qua-trong-dong-co-lon" && (pName.includes("mặt trống") || pName.includes("tranh mặt trống") || pNameClean.includes("mat trong"))) return false;
+          if (subCat.id === "dai-nuoc" && (pName.includes("ngai chén") || pName.includes("kỷ chén") || pName.includes("ấm") || pNameClean.includes("ngai chen") || pNameClean.includes("ky chen"))) return false;
+
           return kws.some((kw) => {
             const kwClean = removeVietnameseTones(kw);
             if (kw.includes(" ")) return pName.includes(kw) || pNameClean.includes(kwClean);

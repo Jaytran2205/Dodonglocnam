@@ -222,6 +222,50 @@ export function CategoryProductListingView({
           return false;
         }
 
+        // Special exclusion: Quả trống đồng cỡ lớn must only be quả trống, NEVER mặt trống / tranh mặt trống
+        const isQuaTrongView =
+          activeDetailCategory?.id === "qua-trong-dong-co-lon" ||
+          activeSubCategory?.id === "qua-trong-dong-co-lon";
+        if (isQuaTrongView && (pName.includes("mặt trống") || pName.includes("tranh mặt trống") || pNameClean.includes("mat trong"))) {
+          return false;
+        }
+
+        // Special exclusion: Đài nước must only be đài thờ / đài nước, NEVER ngai chén / ấm chén
+        const isDaiNuocView =
+          activeDetailCategory?.id === "dai-nuoc" ||
+          activeSubCategory?.id === "dai-nuoc";
+        if (isDaiNuocView && (pName.includes("ngai chén") || pName.includes("kỷ chén") || pName.includes("ấm") || pNameClean.includes("ngai chen") || pNameClean.includes("ky chen"))) {
+          return false;
+        }
+
+        // Special exclusion: Tượng Thần - Thánh must NOT include Quan Công, Trần Hưng Đạo, Thần Tài Voi/Ngựa
+        const isThanThanhView =
+          activeDetailCategory?.id === "tuong-than-thanh" ||
+          activeSubCategory?.id === "tuong-than-thanh";
+        if (isThanThanhView && (pName.includes("quan công") || pName.includes("quan vân trường") || pName.includes("trần hưng đạo") || pName.includes("trần quốc tuấn") || pName.includes("voi") || pName.includes("ngựa thần tài"))) {
+          return false;
+        }
+
+        // Zodiac exclusions: prevent tone/substring leaks
+        if (activeDetailCategory?.id === "tuong-ho" && (pName.includes("chó") || pName.includes("rắn") || pName.includes("hổ mang") || pName.includes("bác hồ") || pName.includes("tam đa") || pName.includes("phúc lộc thọ") || pName.includes("lê đại hành") || pNameClean.includes("bac ho") || pNameClean.includes("le dai hanh"))) {
+          return false;
+        }
+        if (activeDetailCategory?.id === "tuong-ngua" && (pName.includes("quan công") || pName.includes("quan vân trường") || pName.includes("ngô quyền") || pName.includes("mã thượng phong hầu") || pName.includes("bát mã"))) {
+          return false;
+        }
+        if (activeDetailCategory?.id === "tuong-de" && (pName.includes("chuẩn đề") || pName.includes("bồ đề") || pName.includes("lê đại hành") || pName.includes("đế tiền") || pNameClean.includes("chuan de") || pNameClean.includes("bo de"))) {
+          return false;
+        }
+        if (activeDetailCategory?.id === "tuong-khi" && (pName.includes("bán thân") || pName.includes("truyền thần") || pName.includes("toàn thân") || pName.includes("bác hồ") || pName.includes("bác giáp") || pName.includes("quang trung") || pName.includes("lê lợi") || pName.includes("mã thượng phong hầu"))) {
+          return false;
+        }
+        if (activeDetailCategory?.id === "tuong-cho" && (pName.includes("cho khách") || pName.includes("cho chùa") || pName.includes("cho doanh nghiệp") || pName.includes("bàn giao") || pName.includes("nguyễn trãi") || pName.includes("khổng minh") || pName.includes("tam thánh") || pName.includes("chuẩn đề") || pName.includes("di lặc"))) {
+          return false;
+        }
+        if (activeDetailCategory?.id === "tuong-lon" && (pName.includes("cỡ lớn") || pNameClean.includes("co lon") || pName.includes("di lặc") || pName.includes("tam thánh"))) {
+          return false;
+        }
+
         return activeKeywords.some((kw) => {
           const cleanKw = kw.trim();
           if (!cleanKw) return false;
