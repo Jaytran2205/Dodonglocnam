@@ -25,6 +25,41 @@ const nextConfig = {
   },
   redirects: async () => [
     {
+      source: '/san-pham/tuong-dong/tuong-chan-dung-bang-dong-dai-tuong-dai-tuong-vo-nguyen-giap-cao-55cm',
+      destination: '/san-pham/tuong-dong/tuong-chan-dung-bang-dong-dai-tuong-vo-nguyen-giap-cao-55cm',
+      permanent: true,
+    },
+    {
+      source: '/san-pham/:category*/tuong-chan-dung-bang-dong-dai-tuong-dai-tuong-vo-nguyen-giap-cao-55cm',
+      destination: '/san-pham/tuong-dong/tuong-chan-dung-bang-dong-dai-tuong-vo-nguyen-giap-cao-55cm',
+      permanent: true,
+    },
+    {
+      source: '/san-pham/:category*/tuong-cho-bang-dong-doc-dao-duoc-tai-loc-cao-45cm',
+      destination: '/san-pham/tuong-dong/tuong-cho-bang-dong-doc-dao-ruoc-tai-loc-cao-45cm',
+      permanent: true,
+    },
+    {
+      source: '/san-pham/:category*/tuong-ho-gam-oai-phong-bang-dong-dai-33cm-ma-vang',
+      destination: '/san-pham/tuong-dong/tuong-ho-phong-thuy-bang-dong-gam-oai-phong-dat-vang-24k',
+      permanent: true,
+    },
+    {
+      source: '/san-pham/:category*/tuong-ran-bang-dong-ngam-ngoc',
+      destination: '/san-pham/tuong-dong/tuong-ran-bang-dong-ngam-ngoc-ma-vang-24k-phong-thuy',
+      permanent: true,
+    },
+    {
+      source: '/san-pham/:category*/ngua-hi-bang-dong-ma-vang-24k-cao-55-cm',
+      destination: '/san-pham/tuong-dong/tuong-ngua-hi-phong-thuy-bang-dong-ma-vang-24k-cao-55cm',
+      permanent: true,
+    },
+    {
+      source: '/san-pham/:category*/tuong-de-bang-dong-ngam-tien-dat-vang-24k',
+      destination: '/san-pham/tuong-dong/tuong-de-bang-dong-ngam-tien-dat-vang-24k-phong-thuy',
+      permanent: true,
+    },
+    {
       source: '/san-pham/tuong-dong/tuong-linh-vat-12-con-giap',
       destination: '/san-pham/tuong-dong/tuong-12-con-giap',
       permanent: true,

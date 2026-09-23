@@ -157,7 +157,14 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   }
 
   // 2. Check if last slug is a product in DB
-  const product = await getCachedProduct(lastSlug);
+  let product = await getCachedProduct(lastSlug);
+
+  if (!product && lastSlug.includes("dai-tuong-dai-tuong")) {
+    product = await getCachedProduct(lastSlug.replace(/dai-tuong-dai-tuong/g, "dai-tuong"));
+  }
+  if (!product && lastSlug === "tuong-cho-bang-dong-doc-dao-duoc-tai-loc-cao-45cm") {
+    product = await getCachedProduct("tuong-cho-bang-dong-doc-dao-ruoc-tai-loc-cao-45cm");
+  }
 
   if (product) {
     let parsedImages: string[] = [];
@@ -375,7 +382,34 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
   // =========================================================================
   // CASE 2: LAST SLUG IS A PRODUCT DETAIL IN DATABASE
   // =========================================================================
-  const product = await getCachedProduct(lastSlug);
+  let product = await getCachedProduct(lastSlug);
+
+  // Dynamic redirect fallback for legacy / typo-corrected slugs
+  if (!product) {
+    const legacyRedirectMap: Record<string, string> = {
+      "tuong-chan-dung-bang-dong-dai-tuong-dai-tuong-vo-nguyen-giap-cao-55cm":
+        "tuong-chan-dung-bang-dong-dai-tuong-vo-nguyen-giap-cao-55cm",
+      "tuong-cho-bang-dong-doc-dao-duoc-tai-loc-cao-45cm":
+        "tuong-cho-bang-dong-doc-dao-ruoc-tai-loc-cao-45cm",
+      "tuong-ho-gam-oai-phong-bang-dong-dai-33cm-ma-vang":
+        "tuong-ho-phong-thuy-bang-dong-gam-oai-phong-dat-vang-24k",
+      "tuong-ran-bang-dong-ngam-ngoc":
+        "tuong-ran-bang-dong-ngam-ngoc-ma-vang-24k-phong-thuy",
+      "ngua-hi-bang-dong-ma-vang-24k-cao-55-cm":
+        "tuong-ngua-hi-phong-thuy-bang-dong-ma-vang-24k-cao-55cm",
+      "tuong-de-bang-dong-ngam-tien-dat-vang-24k":
+        "tuong-de-bang-dong-ngam-tien-dat-vang-24k-phong-thuy",
+    };
+
+    if (legacyRedirectMap[lastSlug]) {
+      redirect(`/san-pham/${categorySlug}/${legacyRedirectMap[lastSlug]}`);
+    }
+
+    if (lastSlug.includes("dai-tuong-dai-tuong")) {
+      const fixedSlug = lastSlug.replace(/dai-tuong-dai-tuong/g, "dai-tuong");
+      redirect(`/san-pham/${categorySlug}/${fixedSlug}`);
+    }
+  }
 
   if (product) {
     const relatedProductsData = await getCachedRelatedProducts(product.categoryId, product.id);
