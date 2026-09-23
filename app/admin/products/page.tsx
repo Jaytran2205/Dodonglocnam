@@ -23,6 +23,7 @@ import {
   Link2
 } from "lucide-react";
 import Link from "next/link";
+import { ProductArticleEditor } from "@/components/admin/ProductArticleEditor";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -609,7 +610,7 @@ export default function AdminProductsPage() {
       {/* CREATE / EDIT PRODUCT MODAL */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative w-full max-w-3xl bg-[#0c1420] border-2 border-[#d4af37]/40 rounded-2xl shadow-2xl overflow-hidden my-8">
+          <div className="relative w-full max-w-5xl xl:max-w-6xl bg-[#0c1420] border-2 border-[#d4af37]/40 rounded-2xl shadow-2xl overflow-hidden my-6">
             {/* Modal Header */}
             <div className="p-6 bg-gradient-to-r from-[#111c2e] to-[#0c1420] border-b border-[#d4af37]/30 flex items-center justify-between">
               <div>
@@ -629,7 +630,7 @@ export default function AdminProductsPage() {
             </div>
 
             {/* Modal Form Body */}
-            <form onSubmit={handleSave} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSave} className="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Product Live URL / Address Display */}
                 {editingProduct && (
@@ -935,18 +936,13 @@ export default function AdminProductsPage() {
                   ></textarea>
                 </div>
 
-                {/* Full Description */}
-                <div className="sm:col-span-2 space-y-1.5">
-                  <label className="text-xs font-bold text-white block uppercase">
-                    Ý Nghĩa Phong Thủy & Quy Trình Chế Tác
-                  </label>
-                  <textarea
-                    rows={4}
+                {/* Full Description & Rich Article Editor */}
+                <div className="sm:col-span-2 space-y-1.5 pt-2">
+                  <ProductArticleEditor
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Mô tả nguồn phôi đồng, ý nghĩa phong thủy và cam kết bảo hành trọn đời..."
-                    className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none resize-none"
-                  ></textarea>
+                    onChange={(val) => setFormData({ ...formData, description: val })}
+                    productName={formData.name || "Sản phẩm Đồ Đồng Lộc Nam"}
+                  />
                 </div>
 
                 {/* Switches: InStock & IsFeatured */}
