@@ -222,11 +222,41 @@ export function CategoryProductListingView({
           return false;
         }
 
-        // Special exclusion: Quả trống đồng cỡ lớn must only be quả trống, NEVER mặt trống / tranh mặt trống
+        // Special exclusion: Quả trống đồng cỡ lớn must only be quả trống (3D drum), NEVER mặt trống / tranh / khung / đúc mặt
         const isQuaTrongView =
           activeDetailCategory?.id === "qua-trong-dong-co-lon" ||
           activeSubCategory?.id === "qua-trong-dong-co-lon";
-        if (isQuaTrongView && (pName.includes("mặt trống") || pName.includes("tranh mặt trống") || pNameClean.includes("mat trong"))) {
+        if (
+          isQuaTrongView &&
+          (pName.includes("tranh") ||
+            pName.includes("khung") ||
+            pName.includes("mặt trống") ||
+            pName.includes("đúc mặt") ||
+            pName.includes("treo tường") ||
+            pName.includes("ăn mòn") ||
+            pName.includes("lưu niệm") ||
+            pName.includes("quà tặng") ||
+            pNameClean.includes("mat trong") ||
+            pNameClean.includes("duc mat") ||
+            pNameClean.includes("treo tuong") ||
+            pNameClean.includes("an mon") ||
+            pNameClean.includes("luu niem") ||
+            pNameClean.includes("qua tang"))
+        ) {
+          return false;
+        }
+
+        // Special exclusion: Mặt trống đồng & Tranh mặt trống must NOT include 3D quả trống (unless it is a mặt/tranh)
+        const isMatTrongView =
+          activeDetailCategory?.id === "mat-trong-dong" ||
+          activeSubCategory?.id === "mat-trong-dong";
+        if (
+          isMatTrongView &&
+          (pName.includes("quả trống") || pNameClean.includes("qua trong")) &&
+          !pName.includes("mặt") &&
+          !pNameClean.includes("mat") &&
+          !pName.includes("tranh")
+        ) {
           return false;
         }
 

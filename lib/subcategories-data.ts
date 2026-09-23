@@ -60,9 +60,9 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
     slug: "trong-dong",
     banner: "/images/banners/banner_danh_muc_trong_dong.jpg",
     subCategories: [
-      { id: "qua-trong-dong-co-lon", aliases: ["trong-dong-dong-son", "trong-dong-ngoc-lu"], name: "Quả trống đồng Đông Sơn & Ngọc Lũ", keyword: "quả trống,quả trống đồng,cỡ lớn,đường kính,hoa văn nổi,hoa văn chìm,bàn trà,giả cổ,20cm,25cm,40cm,50cm,60cm,80cm,trong dong co lon,qua trong dong", image: "/images/trong-dong/qua-trong-dong-co-lon.jpg" },
+      { id: "qua-trong-dong-co-lon", aliases: ["trong-dong-dong-son", "trong-dong-ngoc-lu"], name: "Quả trống đồng Đông Sơn & Ngọc Lũ", keyword: "quả trống,qua trong,trống đồng đỏ,trống đồng đông sơn,trống đồng ngọc lũ,trống đông sơn,trống ngọc lũ,hoa văn nổi,hoa văn chìm,bàn uống trà,bàn trà,giả cổ,cỡ lớn,trong dong co lon,qua trong dong", image: "/images/trong-dong/qua-trong-dong-co-lon.jpg" },
       { id: "trong-dong-luu-niem", aliases: ["trong-dong-ma-vang", "trong-dong-qua-tang"], name: "Trống đồng lưu niệm & Quà tặng mạ vàng", keyword: "lưu niệm,mạ vàng,dát vàng,quà tặng,qua tang,tỉnh hưng yên,sang trọng,ma vang,dat vang,luu niem", image: "/images/trong-dong/trong-dong-luu-niem.jpg" },
-      { id: "mat-trong-dong", aliases: ["tranh-mat-trong-dong", "tranh-mat-trong"], name: "Mặt trống đồng & Tranh mặt trống", keyword: "mặt trống,tranh mặt trống,khung gỗ,gỗ hương,gỗ gụ,mat trong", image: "/images/trong-dong/mat-trong-dong.jpg" },
+      { id: "mat-trong-dong", aliases: ["tranh-mat-trong-dong", "tranh-mat-trong"], name: "Mặt trống đồng & Tranh mặt trống", keyword: "mặt trống,tranh mặt trống,tranh trống,đúc mặt,duc mat,khung gỗ,gỗ hương,gỗ gụ,treo tường,ăn mòn,an mon,bản đồ,mat trong", image: "/images/trong-dong/mat-trong-dong.jpg" },
     ],
   },
   {

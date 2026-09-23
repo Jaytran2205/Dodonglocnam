@@ -528,7 +528,32 @@ export function LeGiaProductListing({
           if (subCat.id === "tuong-khi" && (pName.includes("bán thân") || pName.includes("truyền thần") || pName.includes("toàn thân") || pName.includes("bác hồ") || pName.includes("bác giáp") || pName.includes("quang trung") || pName.includes("lê lợi") || pName.includes("mã thượng phong hầu"))) return false;
           if (subCat.id === "tuong-cho" && (pName.includes("cho khách") || pName.includes("cho chùa") || pName.includes("cho doanh nghiệp") || pName.includes("bàn giao") || pName.includes("nguyễn trãi") || pName.includes("khổng minh") || pName.includes("tam thánh") || pName.includes("chuẩn đề") || pName.includes("di lặc"))) return false;
           if (subCat.id === "tuong-lon" && (pName.includes("cỡ lớn") || pNameClean.includes("co lon") || pName.includes("di lặc") || pName.includes("tam thánh"))) return false;
-          if (subCat.id === "qua-trong-dong-co-lon" && (pName.includes("mặt trống") || pName.includes("tranh mặt trống") || pNameClean.includes("mat trong"))) return false;
+          if (
+            subCat.id === "qua-trong-dong-co-lon" &&
+            (pName.includes("tranh") ||
+              pName.includes("khung") ||
+              pName.includes("mặt trống") ||
+              pName.includes("đúc mặt") ||
+              pName.includes("treo tường") ||
+              pName.includes("ăn mòn") ||
+              pName.includes("lưu niệm") ||
+              pName.includes("quà tặng") ||
+              pNameClean.includes("mat trong") ||
+              pNameClean.includes("duc mat") ||
+              pNameClean.includes("treo tuong") ||
+              pNameClean.includes("an mon") ||
+              pNameClean.includes("luu niem") ||
+              pNameClean.includes("qua tang"))
+          )
+            return false;
+          if (
+            subCat.id === "mat-trong-dong" &&
+            (pName.includes("quả trống") || pNameClean.includes("qua trong")) &&
+            !pName.includes("mặt") &&
+            !pNameClean.includes("mat") &&
+            !pName.includes("tranh")
+          )
+            return false;
           if (subCat.id === "dai-nuoc" && (pName.includes("ngai chén") || pName.includes("kỷ chén") || pName.includes("ấm") || pNameClean.includes("ngai chen") || pNameClean.includes("ky chen"))) return false;
 
           return kws.some((kw) => {
