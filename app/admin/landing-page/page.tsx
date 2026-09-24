@@ -200,6 +200,7 @@ export default function AdminLandingPageManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [modifiedKeys, setModifiedKeys] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<
     | "hero"
     | "featured_categories"
@@ -375,21 +376,34 @@ export default function AdminLandingPageManager() {
 
   const handleChange = (key: string, value: string) => {
     setSettings((prev: any) => ({ ...prev, [key]: value }));
+    setModifiedKeys((prev) => new Set(prev).add(key));
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setSaving(true);
     setSavedSuccess(false);
 
     try {
+      // Nếu có các trường đã chỉnh sửa thì chỉ gửi các trường đó, nếu chưa có thì gửi toàn bộ settings
+      const payload: Record<string, any> = {};
+      if (modifiedKeys.size > 0) {
+        modifiedKeys.forEach((k) => {
+          payload[k] = settings[k];
+        });
+      }
+
       const res = await fetch("/api/admin/landing-page", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings }),
+        body: JSON.stringify({
+          settings: modifiedKeys.size > 0 ? payload : settings,
+        }),
       });
       const data = await res.json();
       if (data.success) {
+        setModifiedKeys(new Set());
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 4000);
       } else {
@@ -1870,8 +1884,15 @@ export default function AdminLandingPageManager() {
 
         {/* Save Button Bar */}
         <div className="sticky bottom-4 z-20 bg-[#0c1420]/95 backdrop-blur-xl border border-[#d4af37]/40 p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4">
-          <div className="text-[#94a3b8] hidden sm:block">
-            Mọi thay đổi sẽ được cập nhật trực tiếp lên website ngay sau khi bấm lưu.
+          <div className="text-[#94a3b8] hidden sm:flex items-center gap-2">
+            {modifiedKeys.size > 0 ? (
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/30 text-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                Có {modifiedKeys.size} trường dữ liệu thay đổi chưa lưu
+              </span>
+            ) : (
+              <span>Mọi thay đổi sẽ được cập nhật trực tiếp lên website ngay sau khi bấm lưu.</span>
+            )}
           </div>
           <button
             type="submit"
@@ -1886,7 +1907,11 @@ export default function AdminLandingPageManager() {
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>Lưu Tất Cả Cấu Hình</span>
+                <span>
+                  {modifiedKeys.size > 0
+                    ? `Lưu ${modifiedKeys.size} Thay Đổi`
+                    : "Lưu Cấu Hình"}
+                </span>
               </>
             )}
           </button>
