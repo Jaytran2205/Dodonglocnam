@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bold,
   Italic,
@@ -28,6 +28,8 @@ import {
   Play,
   HelpCircle,
   FileText,
+  Code,
+  Type,
 } from "lucide-react";
 import { ProductStructuredDescription } from "@/components/product/ProductStructuredDescription";
 
@@ -37,33 +39,388 @@ interface ProductArticleEditorProps {
   productName?: string;
 }
 
+// ---------------------------------------------------------------------------
+// CONVERTER 1: Markdown / BBCode -> HTML for Visual WYSIWYG Editor
+// ---------------------------------------------------------------------------
+export function markdownToHtml(md: string): string {
+  if (!md) return "<p><br></p>";
+
+  const lines = md.split("\n");
+  const htmlBlocks: string[] = [];
+  let inList = false;
+  let listItems: string[] = [];
+
+  const flushList = () => {
+    if (inList && listItems.length > 0) {
+      htmlBlocks.push(
+        `<ul class="list-disc pl-6 my-2 space-y-1">${listItems
+          .map((item) => `<li>${formatInline(item)}</li>`)
+          .join("")}</ul>`
+      );
+      listItems = [];
+      inList = false;
+    }
+  };
+
+  const formatInline = (text: string): string => {
+    let res = text;
+
+    // Color tags: [color=#hex]text[/color]
+    res = res.replace(
+      /\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/color\]/gi,
+      '<span style="color: $1; font-weight: 600;">$2</span>'
+    );
+
+    // Preset color tags: [gold]...[/gold]
+    const colorMap: Record<string, string> = {
+      gold: "#b45309",
+      bronze: "#d97706",
+      jade: "#059669",
+      sky: "#0284c7",
+      red: "#dc2626",
+      white: "#1e293b",
+    };
+    res = res.replace(
+      /\[(gold|bronze|jade|sky|red|white)\]([\s\S]*?)\[\/\1\]/gi,
+      (m, color, content) =>
+        `<span style="color: ${colorMap[color.toLowerCase()] || "#b45309"}; font-weight: 600;">${content}</span>`
+    );
+
+    // Bold: **text**
+    res = res.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>');
+
+    // Italic: *text* (not surrounded by other asterisks)
+    res = res.replace(/(^|[^\*])\*([^\*]+)\*([^\*]|$)/g, '$1<em class="italic text-slate-700">$2</em>$3');
+
+    // Underline: <u>text</u>
+    res = res.replace(/<u>([\s\S]*?)<\/u>/gi, '<u class="underline decoration-amber-500 underline-offset-4">$1</u>');
+
+    // Strikethrough: ~~text~~
+    res = res.replace(/~~([\s\S]*?)~~/g, '<s class="line-through text-slate-400">$1</s>');
+
+    return res;
+  };
+
+  let inBox: { type: string; lines: string[] } | null = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const trimmed = rawLine.trim();
+
+    // Check for callout box [box=gold]...[/box]
+    const boxStartMatch = trimmed.match(/^\[box=([a-zA-Z0-9_-]+)\]$/i);
+    if (boxStartMatch) {
+      flushList();
+      inBox = { type: boxStartMatch[1].toLowerCase(), lines: [] };
+      continue;
+    }
+    if (trimmed === "[/box]" && inBox) {
+      const boxType = inBox.type;
+      const content = inBox.lines.join("<br/>");
+      const boxClasses: Record<string, string> = {
+        gold: "bg-amber-50/90 border-amber-400 text-amber-950",
+        jade: "bg-emerald-50/90 border-emerald-400 text-emerald-950",
+        red: "bg-rose-50/90 border-rose-400 text-rose-950",
+        blue: "bg-sky-50/90 border-sky-400 text-sky-950",
+      };
+      const cls = boxClasses[boxType] || "bg-amber-50/90 border-amber-400 text-amber-950";
+      htmlBlocks.push(
+        `<div data-box="${boxType}" class="my-4 p-4 rounded-xl border-2 ${cls} font-medium shadow-sm leading-relaxed">${formatInline(
+          content
+        )}</div>`
+      );
+      inBox = null;
+      continue;
+    }
+    if (inBox) {
+      inBox.lines.push(rawLine);
+      continue;
+    }
+
+    // Inline box single-line: [box=gold]content[/box]
+    const singleBoxMatch = trimmed.match(/^\[box=([a-zA-Z0-9_-]+)\]([\s\S]*?)\[\/box\]$/i);
+    if (singleBoxMatch) {
+      flushList();
+      const bType = singleBoxMatch[1].toLowerCase();
+      htmlBlocks.push(
+        `<div data-box="${bType}" class="my-4 p-4 rounded-xl border-2 bg-amber-50 border-amber-400 text-amber-950 font-medium shadow-sm">${formatInline(
+          singleBoxMatch[2]
+        )}</div>`
+      );
+      continue;
+    }
+
+    // Video tag: [video title="..."]URL[/video] or [video=URL] or raw YouTube
+    const videoMatch = trimmed.match(/^\[video(?:=([^\]\s]+)|\s+title="([^"]+)")?\](?:([^\[]+)\[\/video\])?$/i);
+    if (videoMatch) {
+      flushList();
+      const vUrl = (videoMatch[1] || videoMatch[3] || "").trim();
+      const vTitle = videoMatch[2] || "Video sản phẩm";
+      htmlBlocks.push(
+        `<div data-video="${vUrl}" data-title="${vTitle}" class="my-4 p-3 rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-900 font-semibold flex items-center gap-2 shadow-sm cursor-pointer select-none">▶ [Video YouTube: ${vTitle} - ${vUrl}]</div>`
+      );
+      continue;
+    }
+    if (
+      trimmed.startsWith("https://www.youtube.com/") ||
+      trimmed.startsWith("https://youtube.com/") ||
+      trimmed.startsWith("https://youtu.be/")
+    ) {
+      flushList();
+      htmlBlocks.push(
+        `<div data-video="${trimmed}" class="my-4 p-3 rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-900 font-semibold flex items-center gap-2 shadow-sm cursor-pointer select-none">▶ [Video YouTube: ${trimmed}]</div>`
+      );
+      continue;
+    }
+
+    // Image tag: ![alt](url)
+    const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
+    if (imgMatch) {
+      flushList();
+      const alt = imgMatch[1];
+      const src = imgMatch[2];
+      htmlBlocks.push(
+        `<div class="my-4 text-center"><img src="${src}" alt="${alt}" class="max-h-72 rounded-xl mx-auto shadow-md border border-slate-200 object-contain" />${
+          alt ? `<p class="text-xs text-slate-500 italic mt-1.5">${alt}</p>` : ""
+        }</div>`
+      );
+      continue;
+    }
+
+    // Headings
+    if (trimmed.startsWith("### ")) {
+      flushList();
+      const hText = trimmed.replace(/^###\s+/, "");
+      htmlBlocks.push(
+        `<h3 class="text-lg font-bold text-amber-800 mt-5 mb-2 pb-1 border-b border-amber-200 flex items-center gap-2">${formatInline(
+          hText
+        )}</h3>`
+      );
+      continue;
+    }
+    if (trimmed.startsWith("## ")) {
+      flushList();
+      const hText = trimmed.replace(/^##\s+/, "");
+      htmlBlocks.push(
+        `<h2 class="text-xl font-bold text-amber-900 mt-6 mb-3 pb-1.5 border-b-2 border-amber-400 flex items-center gap-2">${formatInline(
+          hText
+        )}</h2>`
+      );
+      continue;
+    }
+    if (trimmed.startsWith("#### ")) {
+      flushList();
+      const hText = trimmed.replace(/^####\s+/, "");
+      htmlBlocks.push(
+        `<h4 class="text-base font-bold text-slate-800 mt-4 mb-1.5">${formatInline(hText)}</h4>`
+      );
+      continue;
+    }
+
+    // Bullet List Items: * item or - item
+    if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+      inList = true;
+      listItems.push(trimmed.replace(/^[\*\-]\s+/, ""));
+      continue;
+    } else {
+      flushList();
+    }
+
+    // Empty line
+    if (!trimmed) {
+      continue;
+    }
+
+    // Standard Paragraph
+    htmlBlocks.push(
+      `<p class="my-2.5 leading-relaxed text-slate-800">${formatInline(trimmed)}</p>`
+    );
+  }
+
+  flushList();
+
+  return htmlBlocks.length > 0 ? htmlBlocks.join("\n") : "<p><br></p>";
+}
+
+// ---------------------------------------------------------------------------
+// CONVERTER 2: HTML DOM -> Markdown / BBCode for Saving & Public Viewing
+// ---------------------------------------------------------------------------
+export function htmlToMarkdown(html: string): string {
+  if (!html) return "";
+  if (typeof window === "undefined") return html;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  function nodeToMd(node: Node): string {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || "";
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return "";
+
+    const el = node as HTMLElement;
+    const tag = el.tagName.toLowerCase();
+
+    // Check custom data attributes first
+    const boxType = el.getAttribute("data-box");
+    if (boxType) {
+      const boxText = Array.from(el.childNodes).map(nodeToMd).join("").trim();
+      return `\n\n[box=${boxType}]\n${boxText}\n[/box]\n\n`;
+    }
+
+    const videoUrl = el.getAttribute("data-video");
+    if (videoUrl) {
+      const videoTitle = el.getAttribute("data-title");
+      if (videoTitle && videoTitle !== "Video sản phẩm") {
+        return `\n\n[video title="${videoTitle}"]${videoUrl}[/video]\n\n`;
+      }
+      return `\n\n[video]${videoUrl}[/video]\n\n`;
+    }
+
+    // Recursive child markdown
+    const childrenMd = Array.from(el.childNodes).map(nodeToMd).join("");
+
+    if (tag === "h2") {
+      const text = childrenMd.trim();
+      return text ? `\n\n## ${text}\n\n` : "";
+    }
+    if (tag === "h3") {
+      const text = childrenMd.trim();
+      return text ? `\n\n### ${text}\n\n` : "";
+    }
+    if (tag === "h4") {
+      const text = childrenMd.trim();
+      return text ? `\n\n#### ${text}\n\n` : "";
+    }
+
+    if (tag === "strong" || tag === "b") {
+      if (!childrenMd.trim()) return "";
+      return `**${childrenMd}**`;
+    }
+    if (tag === "em" || tag === "i") {
+      if (!childrenMd.trim()) return "";
+      return `*${childrenMd}*`;
+    }
+    if (tag === "u") {
+      if (!childrenMd.trim()) return "";
+      return `<u>${childrenMd}</u>`;
+    }
+    if (tag === "s" || tag === "strike" || tag === "del") {
+      if (!childrenMd.trim()) return "";
+      return `~~${childrenMd}~~`;
+    }
+
+    if (tag === "img") {
+      const src = el.getAttribute("src") || "";
+      const alt = el.getAttribute("alt") || "";
+      return `\n\n![${alt}](${src})\n\n`;
+    }
+
+    if (tag === "li") {
+      const text = childrenMd.trim();
+      return text ? `\n* ${text}` : "";
+    }
+    if (tag === "ul" || tag === "ol") {
+      return `\n${childrenMd}\n\n`;
+    }
+    if (tag === "p") {
+      const text = childrenMd.trim();
+      return text ? `\n\n${text}\n\n` : "";
+    }
+    if (tag === "br") {
+      return "\n";
+    }
+    if (tag === "div") {
+      const text = childrenMd.trim();
+      return text ? `\n\n${text}\n\n` : "";
+    }
+
+    // Color span
+    if (tag === "span" || tag === "font") {
+      const color = el.style.color || el.getAttribute("color");
+      if (color) {
+        return `[color=${color}]${childrenMd}[/color]`;
+      }
+    }
+
+    return childrenMd;
+  }
+
+  const rawMd = Array.from(doc.body.childNodes).map(nodeToMd).join("");
+
+  // Clean up excessive empty lines
+  return rawMd
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/^\s+/, "")
+    .replace(/\s+$/, "");
+}
+
+// ---------------------------------------------------------------------------
+// MAIN COMPONENT: ProductArticleEditor
+// ---------------------------------------------------------------------------
 export function ProductArticleEditor({
   value,
   onChange,
   productName = "Sản phẩm Đồ Đồng Lộc Nam",
 }: ProductArticleEditorProps) {
-  const [activeTab, setActiveTab] = useState<"edit" | "preview" | "split">("edit");
+  // Tabs: "visual" (WYSIWYG - default), "code" (raw Markdown), "preview" (web preview), "split" (side-by-side)
+  const [activeTab, setActiveTab] = useState<"visual" | "code" | "preview" | "split">("visual");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showBoxPicker, setShowBoxPicker] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
 
-  // Video insertion form state
+  // Video modal form state
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
 
-  // Image insertion form state
+  // Image modal form state
   const [imageUrl, setImageUrl] = useState("");
   const [imageCaption, setImageCaption] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Custom Color State
-  const [customHexColor, setCustomHexColor] = useState("#ffd700");
+  const [customHexColor, setCustomHexColor] = useState("#b45309");
 
+  // DOM Refs
+  const visualEditorRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isUpdatingFromInternalRef = useRef(false);
 
-  // Helper to wrap selected text in textarea
+  // Sync value to visual editor when value changes externally (e.g. template inserted or product loaded)
+  useEffect(() => {
+    if (isUpdatingFromInternalRef.current) {
+      isUpdatingFromInternalRef.current = false;
+      return;
+    }
+    if (visualEditorRef.current) {
+      const newHtml = markdownToHtml(value);
+      if (visualEditorRef.current.innerHTML !== newHtml) {
+        visualEditorRef.current.innerHTML = newHtml;
+      }
+    }
+  }, [value, activeTab]);
+
+  // Handle Visual Editor Input (typing or pasting)
+  const handleVisualInput = useCallback(() => {
+    if (!visualEditorRef.current) return;
+    isUpdatingFromInternalRef.current = true;
+    const currentHtml = visualEditorRef.current.innerHTML;
+    const newMarkdown = htmlToMarkdown(currentHtml);
+    onChange(newMarkdown);
+  }, [onChange]);
+
+  // Execute formatting command in Visual Mode
+  const execVisualCmd = (command: string, arg: string | undefined = undefined) => {
+    if (activeTab === "visual" || activeTab === "split") {
+      visualEditorRef.current?.focus();
+      document.execCommand(command, false, arg);
+      handleVisualInput();
+    }
+  };
+
+  // Helper to wrap selected text in Textarea (Code mode)
   const wrapSelection = (before: string, after: string, defaultPlaceholder = "") => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -86,7 +443,7 @@ export function ProductArticleEditor({
     }, 10);
   };
 
-  // Insert text at cursor
+  // Insert text at cursor (Code mode)
   const insertAtCursor = (textToInsert: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -103,19 +460,85 @@ export function ProductArticleEditor({
     }, 10);
   };
 
-  // Insert Color
+  // Unified Formatting Handlers (Work for both Visual and Code mode)
+  const handleBold = () => {
+    if (activeTab === "visual" || activeTab === "split") {
+      execVisualCmd("bold");
+    } else {
+      wrapSelection("**", "**", "chữ in đậm");
+    }
+  };
+
+  const handleItalic = () => {
+    if (activeTab === "visual" || activeTab === "split") {
+      execVisualCmd("italic");
+    } else {
+      wrapSelection("*", "*", "chữ in nghiêng");
+    }
+  };
+
+  const handleUnderline = () => {
+    if (activeTab === "visual" || activeTab === "split") {
+      execVisualCmd("underline");
+    } else {
+      wrapSelection("<u>", "</u>", "chữ gạch chân");
+    }
+  };
+
+  const handleStrikethrough = () => {
+    if (activeTab === "visual" || activeTab === "split") {
+      execVisualCmd("strikeThrough");
+    } else {
+      wrapSelection("~~", "~~", "chữ gạch ngang");
+    }
+  };
+
+  const handleHeading3 = () => {
+    if (activeTab === "visual" || activeTab === "split") {
+      execVisualCmd("formatBlock", "<h3>");
+    } else {
+      insertAtCursor("\n\n### Tiêu Đề Mục (H3)\n");
+    }
+  };
+
+  const handleHeading2 = () => {
+    if (activeTab === "visual" || activeTab === "split") {
+      execVisualCmd("formatBlock", "<h2>");
+    } else {
+      insertAtCursor("\n\n## Tiêu Đề Lớn (H2)\n");
+    }
+  };
+
+  const handleList = () => {
+    if (activeTab === "visual" || activeTab === "split") {
+      execVisualCmd("insertUnorderedList");
+    } else {
+      insertAtCursor("\n* ");
+    }
+  };
+
   const applyColor = (hex: string) => {
-    wrapSelection(`[color=${hex}]`, `[/color]`, "văn bản màu sắc");
+    if (activeTab === "visual" || activeTab === "split") {
+      execVisualCmd("foreColor", hex);
+    } else {
+      wrapSelection(`[color=${hex}]`, `[/color]`, "văn bản màu sắc");
+    }
     setShowColorPicker(false);
   };
 
-  // Insert Callout Box
   const applyBox = (type: string, placeholder: string) => {
-    insertAtCursor(`\n\n[box=${type}]\n${placeholder}\n[/box]\n\n`);
+    if (activeTab === "visual" || activeTab === "split") {
+      const boxHtml = `<div data-box="${type}" class="my-4 p-4 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-950 font-medium shadow-sm">${placeholder}</div><p><br></p>`;
+      visualEditorRef.current?.focus();
+      document.execCommand("insertHTML", false, boxHtml);
+      handleVisualInput();
+    } else {
+      insertAtCursor(`\n\n[box=${type}]\n${placeholder}\n[/box]\n\n`);
+    }
     setShowBoxPicker(false);
   };
 
-  // Handle Video insertion
+  // Video insertion
   const handleInsertVideo = (e: React.FormEvent) => {
     e.preventDefault();
     if (!videoUrl.trim()) {
@@ -123,20 +546,30 @@ export function ProductArticleEditor({
       return;
     }
 
-    let code = "";
-    if (videoTitle.trim()) {
-      code = `\n\n[video title="${videoTitle.trim()}"]${videoUrl.trim()}[/video]\n\n`;
+    const title = videoTitle.trim() || "Video sản phẩm";
+    const url = videoUrl.trim();
+
+    if (activeTab === "visual" || activeTab === "split") {
+      const vHtml = `<div data-video="${url}" data-title="${title}" class="my-4 p-3 rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-900 font-semibold flex items-center gap-2 shadow-sm select-none">▶ [Video YouTube: ${title} - ${url}]</div><p><br></p>`;
+      visualEditorRef.current?.focus();
+      document.execCommand("insertHTML", false, vHtml);
+      handleVisualInput();
     } else {
-      code = `\n\n${videoUrl.trim()}\n\n`;
+      let code = "";
+      if (videoTitle.trim()) {
+        code = `\n\n[video title="${videoTitle.trim()}"]${url}[/video]\n\n`;
+      } else {
+        code = `\n\n${url}\n\n`;
+      }
+      insertAtCursor(code);
     }
 
-    insertAtCursor(code);
     setVideoUrl("");
     setVideoTitle("");
     setShowVideoModal(false);
   };
 
-  // Handle Image Upload
+  // Image Upload
   const handleUploadImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -163,7 +596,7 @@ export function ProductArticleEditor({
     }
   };
 
-  // Handle Image insertion
+  // Image Insertion
   const handleInsertImage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!imageUrl.trim()) {
@@ -172,9 +605,18 @@ export function ProductArticleEditor({
     }
 
     const caption = imageCaption.trim() || productName;
-    const code = `\n\n![${caption}](${imageUrl.trim()})\n\n`;
+    const url = imageUrl.trim();
 
-    insertAtCursor(code);
+    if (activeTab === "visual" || activeTab === "split") {
+      const imgHtml = `<div class="my-4 text-center"><img src="${url}" alt="${caption}" class="max-h-72 rounded-xl mx-auto shadow-md border border-slate-200 object-contain" /><p class="text-xs text-slate-500 italic mt-1.5">${caption}</p></div><p><br></p>`;
+      visualEditorRef.current?.focus();
+      document.execCommand("insertHTML", false, imgHtml);
+      handleVisualInput();
+    } else {
+      const code = `\n\n![${caption}](${url})\n\n`;
+      insertAtCursor(code);
+    }
+
     setImageUrl("");
     setImageCaption("");
     setShowImageModal(false);
@@ -185,9 +627,9 @@ export function ProductArticleEditor({
     const template = `### Giới Thiệu & Tinh Hoa Nghệ Thuật
 Tác phẩm **${productName}** được trực tiếp chế tác bởi các nghệ nhân lão luyện của thương hiệu **Đồ Đồng Lộc Nam** tại làng nghề đúc đồng truyền thống Ý Yên, Nam Định. Tác phẩm sở hữu đường nét tinh xảo, thần thái uy nghi và độ hoàn thiện bậc nhất.
 
-* [color=#ffd700]Chất liệu phôi chuẩn[/color]: Đúc từ đồng nguyên chất thanh khiết, mạ vàng 24K hoặc khảm ngũ sắc cao cấp.
-* [color=#ffd700]Quy trình thủ công[/color]: Trải qua 7 công đoạn đúc đồng cổ truyền nghiêm ngặt của nghệ nhân Ý Yên.
-* [color=#ffd700]Bảo vệ bề mặt[/color]: Phủ lớp bóng 2K chuyên dụng, chống oxy hóa, giữ độ sáng bóng vĩnh cửu.
+* [color=#b45309]Chất liệu phôi chuẩn[/color]: Đúc từ đồng nguyên chất thanh khiết, mạ vàng 24K hoặc khảm ngũ sắc cao cấp.
+* [color=#b45309]Quy trình thủ công[/color]: Trải qua 7 công đoạn đúc đồng cổ truyền nghiêm ngặt của nghệ nhân Ý Yên.
+* [color=#b45309]Bảo vệ bề mặt[/color]: Phủ lớp bóng 2K chuyên dụng, chống oxy hóa, giữ độ sáng bóng vĩnh cửu.
 
 ### Ý Nghĩa Phong Thủy & Giá Trị Tâm Linh
 [box=jade]
@@ -214,7 +656,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
 [/box]`;
 
     if (value.trim()) {
-      if (!confirm("Thao tác này sẽ thay thế hoặc chèn mẫu bài viết vào khung soạn thảo. Bạn có muốn tiếp tục?")) {
+      if (!confirm("Thao tác này sẽ thay thế khung bài viết hiện tại bằng Mẫu Chuẩn Lộc Nam. Bạn có muốn tiếp tục?")) {
         return;
       }
     }
@@ -223,45 +665,60 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
 
   return (
     <div
-      className={`flex flex-col bg-[#08101a] border border-[#1e344d] rounded-2xl overflow-hidden transition-all duration-300 ${
+      className={`flex flex-col bg-[#0b1320] border border-[#202f45] rounded-2xl overflow-hidden transition-all duration-300 shadow-xl ${
         isFullscreen
-          ? "fixed inset-0 z-[100] w-screen h-screen rounded-none p-4 sm:p-6 bg-[#060c14]/98 backdrop-blur-xl flex flex-col justify-between"
+          ? "fixed inset-0 z-[100] w-screen h-screen rounded-none p-4 sm:p-6 bg-[#08101a]/98 backdrop-blur-xl flex flex-col justify-between"
           : "w-full"
       }`}
     >
       {/* 1. TOP HEADER & VIEW MODE CONTROLS */}
-      <div className="p-3.5 bg-gradient-to-r from-[#0c1825] via-[#112235] to-[#0c1825] border-b border-[#1e344d] flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#ffd700]/10 border border-[#ffd700]/30 flex items-center justify-center text-[#ffd700]">
+      <div className="p-3.5 bg-gradient-to-r from-[#0d1726] via-[#142339] to-[#0d1726] border-b border-[#202f45] flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-[#ffd700]/15 border border-[#ffd700]/40 flex items-center justify-center text-[#ffd700]">
             <Edit3 className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-              <span>Biên Tập Bài Viết & Mô Tả Sản Phẩm</span>
-              <span className="text-[10px] bg-[#ffd700]/15 text-[#ffd700] px-2 py-0.5 rounded-full font-mono border border-[#ffd700]/30">
-                PRO EDITOR
+            <h4 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <span>Soạn Thảo Bài Viết & Mô Tả</span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-mono border border-emerald-500/30">
+                WYSIWYG TRỰC QUAN
               </span>
             </h4>
             <p className="text-[11px] text-gray-400">
-              Hỗ trợ định dạng màu sắc, đề mục, khung tông màu & video YouTube/MP4
+              Định dạng trực quan in đậm, in nghiêng, tiêu đề lớn & màu sắc trên nền trắng dễ nhìn
             </p>
           </div>
         </div>
 
-        {/* View Mode Tabs & Fullscreen Button */}
+        {/* View Mode Tabs: Trực quan (Visual), Mã (Code), Xem trước (Preview), Chia đôi (Split) */}
         <div className="flex items-center gap-2">
           <div className="flex items-center p-1 bg-[#060c14] border border-[#1e344d] rounded-xl">
             <button
               type="button"
-              onClick={() => setActiveTab("edit")}
+              onClick={() => setActiveTab("visual")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
-                activeTab === "edit"
-                  ? "bg-[#ffd700] text-black shadow"
+                activeTab === "visual"
+                  ? "bg-[#ffd700] text-black shadow font-extrabold"
                   : "text-gray-400 hover:text-white"
               }`}
+              title="Soạn thảo hiển thị trực quan (in đậm, in nghiêng, tiêu đề, nền trắng)"
             >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Soạn Thảo</span>
+              <Type className="w-3.5 h-3.5" />
+              <span>Trực Quan</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("code")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                activeTab === "code"
+                  ? "bg-[#ffd700] text-black shadow font-extrabold"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              title="Xem và chỉnh sửa mã Markdown / Văn bản gốc"
+            >
+              <Code className="w-3.5 h-3.5" />
+              <span>Văn Bản / Mã</span>
             </button>
 
             <button
@@ -269,9 +726,10 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               onClick={() => setActiveTab("preview")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                 activeTab === "preview"
-                  ? "bg-[#ffd700] text-black shadow"
+                  ? "bg-[#ffd700] text-black shadow font-extrabold"
                   : "text-gray-400 hover:text-white"
               }`}
+              title="Xem trước hiển thị thực tế trên website khách xem"
             >
               <Eye className="w-3.5 h-3.5" />
               <span>Xem Trước Web</span>
@@ -282,9 +740,10 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               onClick={() => setActiveTab("split")}
               className={`hidden md:flex px-3 py-1.5 rounded-lg text-xs font-bold items-center gap-1.5 transition-all ${
                 activeTab === "split"
-                  ? "bg-[#ffd700] text-black shadow"
+                  ? "bg-[#ffd700] text-black shadow font-extrabold"
                   : "text-gray-400 hover:text-white"
               }`}
+              title="Chia đôi: Soạn thảo bên trái, xem trước bên phải"
             >
               <Columns className="w-3.5 h-3.5" />
               <span>Chia Đôi</span>
@@ -306,7 +765,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           <button
             type="button"
             onClick={() => setIsFullscreen(!isFullscreen)}
-            title={isFullscreen ? "Thu nhỏ về cửa sổ modal" : "Mở rộng toàn màn hình để viết thoải mái"}
+            title={isFullscreen ? "Thu nhỏ về cửa sổ modal" : "Mở rộng toàn màn hình để viết bài thoải mái"}
             className="p-2 bg-[#142339] hover:bg-[#1f3657] text-white border border-[#263e60] rounded-xl text-xs font-bold flex items-center gap-1 transition-colors"
           >
             {isFullscreen ? (
@@ -319,71 +778,71 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
       </div>
 
       {/* 2. RICH FORMATTING TOOLBAR */}
-      {(activeTab === "edit" || activeTab === "split") && (
-        <div className="p-2 bg-[#09131f] border-b border-[#1e344d] flex flex-wrap items-center gap-1 text-xs">
+      {(activeTab === "visual" || activeTab === "code" || activeTab === "split") && (
+        <div className="p-2.5 bg-[#0e1726] border-b border-[#202f45] flex flex-wrap items-center gap-1 text-xs">
           {/* Headings */}
-          <div className="flex items-center gap-0.5 pr-2 border-r border-[#1e344d]">
+          <div className="flex items-center gap-0.5 pr-2 border-r border-[#202f45]">
             <button
               type="button"
-              onClick={() => insertAtCursor("\n\n### Tiêu Đề Mục (H3)\n")}
-              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#142339] font-bold text-xs flex items-center gap-1"
-              title="Đề mục chính Lộc Nam (### Tiêu đề)"
+              onClick={handleHeading3}
+              className="p-1.5 rounded-lg text-gray-200 hover:text-[#ffd700] hover:bg-[#16253b] font-bold text-xs flex items-center gap-1"
+              title="Đề mục chính Lộc Nam (H3)"
             >
               <Heading3 className="w-4 h-4" />
-              <span className="text-[10px]">Đề Mục H3</span>
+              <span className="text-[11px]">Đề Mục H3</span>
             </button>
 
             <button
               type="button"
-              onClick={() => insertAtCursor("\n\n## Tiêu Đề Lớn (H2)\n")}
-              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#142339] font-bold text-xs"
-              title="Tiêu đề lớn (##)"
+              onClick={handleHeading2}
+              className="p-1.5 rounded-lg text-gray-200 hover:text-[#ffd700] hover:bg-[#16253b] font-bold text-xs"
+              title="Tiêu đề lớn (H2)"
             >
               <Heading2 className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Inline Styles */}
-          <div className="flex items-center gap-0.5 pr-2 border-r border-[#1e344d]">
+          {/* Inline Styles (Bold, Italic, Underline, Strike) */}
+          <div className="flex items-center gap-0.5 pr-2 border-r border-[#202f45]">
             <button
               type="button"
-              onClick={() => wrapSelection("**", "**", "chữ in đậm")}
-              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#142339]"
-              title="In đậm (**chữ đậm**)"
+              onClick={handleBold}
+              className="p-1.5 rounded-lg text-gray-200 hover:text-[#ffd700] hover:bg-[#16253b]"
+              title="In đậm chữ trực tiếp (Bold)"
             >
               <Bold className="w-4 h-4" />
             </button>
 
             <button
               type="button"
-              onClick={() => wrapSelection("*", "*", "chữ in nghiêng")}
-              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#142339]"
-              title="In nghiêng (*chữ nghiêng*)"
+              onClick={handleItalic}
+              className="p-1.5 rounded-lg text-gray-200 hover:text-[#ffd700] hover:bg-[#16253b]"
+              title="In nghiêng chữ trực tiếp (Italic)"
             >
               <Italic className="w-4 h-4" />
             </button>
 
             <button
               type="button"
-              onClick={() => wrapSelection("<u>", "</u>", "chữ gạch chân")}
-              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#142339]"
-              title="Gạch chân (<u>gạch chân</u>)"
+              onClick={handleUnderline}
+              className="p-1.5 rounded-lg text-gray-200 hover:text-[#ffd700] hover:bg-[#16253b]"
+              title="Gạch chân chữ (Underline)"
             >
               <Underline className="w-4 h-4" />
             </button>
 
             <button
               type="button"
-              onClick={() => wrapSelection("~~", "~~", "chữ gạch ngang")}
-              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#142339]"
-              title="Gạch ngang (~~chữ~~)"
+              onClick={handleStrikethrough}
+              className="p-1.5 rounded-lg text-gray-200 hover:text-[#ffd700] hover:bg-[#16253b]"
+              title="Gạch ngang chữ"
             >
               <Strikethrough className="w-4 h-4" />
             </button>
           </div>
 
           {/* Color & Tone Palette */}
-          <div className="relative flex items-center pr-2 border-r border-[#1e344d]">
+          <div className="relative flex items-center pr-2 border-r border-[#202f45]">
             <button
               type="button"
               onClick={() => {
@@ -393,7 +852,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               className={`p-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors ${
                 showColorPicker
                   ? "bg-[#ffd700] text-black"
-                  : "text-[#ffd700] hover:bg-[#142339]"
+                  : "text-[#ffd700] hover:bg-[#16253b]"
               }`}
               title="Chọn màu sắc chữ & tông màu phong thủy"
             >
@@ -420,73 +879,73 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 <div className="grid grid-cols-2 gap-1.5">
                   <button
                     type="button"
-                    onClick={() => applyColor("#ffd700")}
-                    className="p-1.5 rounded-lg bg-[#ffd700]/10 hover:bg-[#ffd700]/25 text-[#ffd700] text-xs font-bold flex items-center gap-2 border border-[#ffd700]/30"
+                    onClick={() => applyColor("#b45309")}
+                    className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 text-amber-400 text-xs font-bold flex items-center gap-2 border border-amber-500/30"
                   >
-                    <span className="w-3 h-3 rounded-full bg-[#ffd700] shadow" />
+                    <span className="w-3 h-3 rounded-full bg-amber-500 shadow" />
                     <span>Vàng Hoàng Kim</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => applyColor("#f59e0b")}
-                    className="p-1.5 rounded-lg bg-[#f59e0b]/10 hover:bg-[#f59e0b]/25 text-[#f59e0b] text-xs font-bold flex items-center gap-2 border border-[#f59e0b]/30"
+                    onClick={() => applyColor("#d97706")}
+                    className="p-1.5 rounded-lg bg-amber-600/10 hover:bg-amber-600/25 text-amber-500 text-xs font-bold flex items-center gap-2 border border-amber-600/30"
                   >
-                    <span className="w-3 h-3 rounded-full bg-[#f59e0b] shadow" />
+                    <span className="w-3 h-3 rounded-full bg-[#d97706] shadow" />
                     <span>Vàng Đồng</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => applyColor("#d97706")}
-                    className="p-1.5 rounded-lg bg-[#d97706]/10 hover:bg-[#d97706]/25 text-[#d97706] text-xs font-bold flex items-center gap-2 border border-[#d97706]/30"
+                    onClick={() => applyColor("#92400e")}
+                    className="p-1.5 rounded-lg bg-[#92400e]/10 hover:bg-[#92400e]/25 text-[#f59e0b] text-xs font-bold flex items-center gap-2 border border-[#92400e]/30"
                   >
-                    <span className="w-3 h-3 rounded-full bg-[#d97706] shadow" />
+                    <span className="w-3 h-3 rounded-full bg-[#92400e] shadow" />
                     <span>Đồng Đỏ Cổ</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => applyColor("#10b981")}
-                    className="p-1.5 rounded-lg bg-[#10b981]/10 hover:bg-[#10b981]/25 text-[#10b981] text-xs font-bold flex items-center gap-2 border border-[#10b981]/30"
+                    onClick={() => applyColor("#059669")}
+                    className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 text-xs font-bold flex items-center gap-2 border border-emerald-500/30"
                   >
-                    <span className="w-3 h-3 rounded-full bg-[#10b981] shadow" />
+                    <span className="w-3 h-3 rounded-full bg-[#059669] shadow" />
                     <span>Xanh Ngọc Bích</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => applyColor("#0ea5e9")}
-                    className="p-1.5 rounded-lg bg-[#0ea5e9]/10 hover:bg-[#0ea5e9]/25 text-[#0ea5e9] text-xs font-bold flex items-center gap-2 border border-[#0ea5e9]/30"
+                    onClick={() => applyColor("#0284c7")}
+                    className="p-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/25 text-sky-400 text-xs font-bold flex items-center gap-2 border border-sky-500/30"
                   >
-                    <span className="w-3 h-3 rounded-full bg-[#0ea5e9] shadow" />
+                    <span className="w-3 h-3 rounded-full bg-[#0284c7] shadow" />
                     <span>Xanh Thiên Thanh</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => applyColor("#ef4444")}
-                    className="p-1.5 rounded-lg bg-[#ef4444]/10 hover:bg-[#ef4444]/25 text-[#ef4444] text-xs font-bold flex items-center gap-2 border border-[#ef4444]/30"
+                    onClick={() => applyColor("#dc2626")}
+                    className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 text-xs font-bold flex items-center gap-2 border border-rose-500/30"
                   >
-                    <span className="w-3 h-3 rounded-full bg-[#ef4444] shadow" />
+                    <span className="w-3 h-3 rounded-full bg-[#dc2626] shadow" />
                     <span>Đỏ Son May Mắn</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => applyColor("#ffffff")}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-2 border border-white/20"
+                    onClick={() => applyColor("#0f172a")}
+                    className="p-1.5 rounded-lg bg-slate-500/10 hover:bg-slate-500/25 text-slate-300 text-xs font-bold flex items-center gap-2 border border-slate-500/30"
                   >
-                    <span className="w-3 h-3 rounded-full bg-white shadow" />
-                    <span>Trắng Sáng</span>
+                    <span className="w-3 h-3 rounded-full bg-slate-900 border border-slate-400 shadow" />
+                    <span>Đen Huyền Vũ</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => applyColor("#94a3b8")}
-                    className="p-1.5 rounded-lg bg-[#94a3b8]/10 hover:bg-[#94a3b8]/20 text-[#94a3b8] text-xs font-bold flex items-center gap-2 border border-[#94a3b8]/30"
+                    onClick={() => applyColor("#475569")}
+                    className="p-1.5 rounded-lg bg-[#475569]/10 hover:bg-[#475569]/25 text-[#94a3b8] text-xs font-bold flex items-center gap-2 border border-[#475569]/30"
                   >
-                    <span className="w-3 h-3 rounded-full bg-[#94a3b8] shadow" />
+                    <span className="w-3 h-3 rounded-full bg-[#475569] shadow" />
                     <span>Xám Ghi Tinh Tế</span>
                   </button>
                 </div>
@@ -518,7 +977,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           </div>
 
           {/* Callout Boxes (Khung Tông Màu) */}
-          <div className="relative flex items-center pr-2 border-r border-[#1e344d]">
+          <div className="relative flex items-center pr-2 border-r border-[#202f45]">
             <button
               type="button"
               onClick={() => {
@@ -528,9 +987,9 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               className={`p-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors ${
                 showBoxPicker
                   ? "bg-[#38bdf8] text-black"
-                  : "text-[#38bdf8] hover:bg-[#142339]"
+                  : "text-[#38bdf8] hover:bg-[#16253b]"
               }`}
-              title="Chèn khung viền tông màu nổi bật"
+              title="Chèn khung viền tông màu phong thủy nổi bật"
             >
               <Layout className="w-4 h-4" />
               <span>Khung Tông Màu</span>
@@ -557,7 +1016,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   onClick={() =>
                     applyBox("gold", "Tác phẩm được đúc từ nguồn đồng chuẩn thanh khiết và dát vàng 24K thủ công tinh xảo.")
                   }
-                  className="w-full text-left p-2 rounded-lg bg-[#ffd700]/5 hover:bg-[#ffd700]/15 border border-[#ffd700]/40 text-[#ffd700] text-xs font-semibold"
+                  className="w-full text-left p-2 rounded-lg bg-[#ffd700]/10 hover:bg-[#ffd700]/20 border border-[#ffd700]/40 text-[#ffd700] text-xs font-semibold"
                 >
                   🟡 Khung Vàng Hoàng Kim (Nổi Bật)
                 </button>
@@ -567,7 +1026,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   onClick={() =>
                     applyBox("jade", "Tác phẩm mang ý nghĩa phong thủy chiêu tài tấn bảo, kích hoạt vượng khí mạnh mẽ cho gia chủ.")
                   }
-                  className="w-full text-left p-2 rounded-lg bg-[#10b981]/5 hover:bg-[#10b981]/15 border border-[#10b981]/40 text-[#10b981] text-xs font-semibold"
+                  className="w-full text-left p-2 rounded-lg bg-[#10b981]/10 hover:bg-[#10b981]/20 border border-[#10b981]/40 text-[#10b981] text-xs font-semibold"
                 >
                   🟢 Khung Phong Thủy Ngọc Bích
                 </button>
@@ -577,7 +1036,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   onClick={() =>
                     applyBox("red", "Đồ Đồng Lộc Nam cam kết bảo hành chất lượng đồng trọn đời và hỗ trợ đổi trả nếu lỗi.")
                   }
-                  className="w-full text-left p-2 rounded-lg bg-[#ef4444]/5 hover:bg-[#ef4444]/15 border border-[#ef4444]/40 text-[#ef4444] text-xs font-semibold"
+                  className="w-full text-left p-2 rounded-lg bg-[#ef4444]/10 hover:bg-[#ef4444]/20 border border-[#ef4444]/40 text-[#ef4444] text-xs font-semibold"
                 >
                   🔴 Khung Cam Kết & Bảo Hành Trọn Đời
                 </button>
@@ -587,7 +1046,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   onClick={() =>
                     applyBox("blue", "Thông số chế tác nguyên khối theo quy chuẩn thước Lỗ Ban phong thủy.")
                   }
-                  className="w-full text-left p-2 rounded-lg bg-[#0ea5e9]/5 hover:bg-[#0ea5e9]/15 border border-[#0ea5e9]/40 text-[#0ea5e9] text-xs font-semibold"
+                  className="w-full text-left p-2 rounded-lg bg-[#0ea5e9]/10 hover:bg-[#0ea5e9]/20 border border-[#0ea5e9]/40 text-[#0ea5e9] text-xs font-semibold"
                 >
                   🔵 Khung Thông Số & Kỹ Thuật
                 </button>
@@ -599,7 +1058,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           <button
             type="button"
             onClick={() => setShowVideoModal(true)}
-            className="p-1.5 rounded-lg text-[#f43f5e] hover:bg-[#142339] font-bold text-xs flex items-center gap-1.5"
+            className="p-1.5 rounded-lg text-[#f43f5e] hover:bg-[#16253b] font-bold text-xs flex items-center gap-1.5"
             title="Chèn video thực tế (YouTube, TikTok, Facebook, MP4)"
           >
             <Video className="w-4 h-4" />
@@ -610,7 +1069,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           <button
             type="button"
             onClick={() => setShowImageModal(true)}
-            className="p-1.5 rounded-lg text-[#34d399] hover:bg-[#142339] font-bold text-xs flex items-center gap-1.5"
+            className="p-1.5 rounded-lg text-[#34d399] hover:bg-[#16253b] font-bold text-xs flex items-center gap-1.5"
             title="Chèn hình ảnh hoặc tải ảnh từ máy tính"
           >
             <ImageIcon className="w-4 h-4" />
@@ -618,21 +1077,12 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           </button>
 
           {/* Lists */}
-          <div className="flex items-center gap-0.5 pl-2 border-l border-[#1e344d]">
+          <div className="flex items-center gap-0.5 pl-2 border-l border-[#202f45]">
             <button
               type="button"
-              onClick={() => insertAtCursor("\n* [color=#ffd700]Đặc điểm nổi bật[/color]: Mô tả chi tiết tính năng")}
-              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#142339]"
-              title="Danh sách gạch đầu dòng có tích xanh"
-            >
-              <CheckSquare className="w-4 h-4 text-[#dfb755]" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => insertAtCursor("\n- ")}
-              className="p-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-[#142339]"
-              title="Gạch đầu dòng thường (- )"
+              onClick={handleList}
+              className="p-1.5 rounded-lg text-gray-200 hover:text-white hover:bg-[#16253b]"
+              title="Danh sách gạch đầu dòng"
             >
               <List className="w-4 h-4" />
             </button>
@@ -642,26 +1092,71 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
 
       {/* 3. MAIN EDITOR WORKSPACE */}
       <div className={`relative flex-grow ${isFullscreen ? "min-h-0" : ""}`}>
-        {/* EDIT ONLY MODE */}
-        {activeTab === "edit" && (
-          <div className="p-3 sm:p-4 h-full flex flex-col">
+        {/* MODE 1: VISUAL (WYSIWYG) - DEFAULT WITH CRISP WHITE BACKGROUND */}
+        {activeTab === "visual" && (
+          <div className="p-3 sm:p-4 h-full flex flex-col bg-[#0c1524]">
+            <div className="mb-2 flex items-center justify-between text-[11px] text-gray-400">
+              <span className="flex items-center gap-1.5 font-medium text-amber-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Chế độ Soạn Thảo Trực Quan (Nền trắng, hiển thị trực tiếp chữ in đậm, in nghiêng, tiêu đề)
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveTab("code")}
+                className="text-gray-400 hover:text-[#ffd700] underline"
+              >
+                Chuyển sang chế độ xem Mã / Markdown
+              </button>
+            </div>
+
+            <div
+              ref={visualEditorRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={handleVisualInput}
+              onBlur={handleVisualInput}
+              className={`w-full bg-white text-slate-900 border border-slate-300 focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 text-sm sm:text-base font-sans leading-relaxed p-6 rounded-xl focus:outline-none overflow-y-auto shadow-inner ${
+                isFullscreen ? "h-full flex-grow" : "min-h-[440px] max-h-[700px]"
+              }`}
+              style={{ minHeight: isFullscreen ? "100%" : "440px" }}
+            />
+          </div>
+        )}
+
+        {/* MODE 2: CODE (RAW MARKDOWN) WITH HIGH CONTRAST WHITE BACKGROUND */}
+        {activeTab === "code" && (
+          <div className="p-3 sm:p-4 h-full flex flex-col bg-[#0c1524]">
+            <div className="mb-2 flex items-center justify-between text-[11px] text-gray-400">
+              <span className="flex items-center gap-1.5 font-medium text-gray-300">
+                <Code className="w-3.5 h-3.5 text-[#ffd700]" />
+                Chế độ Mã / Văn Bản Gốc (Dành cho việc chỉnh sửa trực tiếp các thẻ cú pháp)
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveTab("visual")}
+                className="text-[#ffd700] hover:underline font-bold"
+              >
+                Chuyển về Soạn Thảo Trực Quan
+              </button>
+            </div>
+
             <textarea
               ref={textareaRef}
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              placeholder="Nhập nội dung bài viết sản phẩm tại đây... Bạn có thể dùng toolbar phía trên để chèn video YouTube, màu sắc, khung nổi bật hoặc bấm nút 'Mẫu Chuẩn Lộc Nam' để điền sẵn khung bài viết chuyên nghiệp."
-              className={`w-full bg-[#060c14] border border-[#1a2c42] focus:border-[#ffd700] text-gray-100 text-xs sm:text-sm font-sans leading-relaxed p-4 rounded-xl focus:outline-none resize-y transition-colors ${
-                isFullscreen ? "h-full resize-none flex-grow" : "min-h-[420px]"
+              placeholder="Nhập nội dung bài viết sản phẩm tại đây..."
+              className={`w-full bg-white text-slate-900 border border-slate-300 focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 text-xs sm:text-sm font-mono leading-relaxed p-5 rounded-xl focus:outline-none resize-y transition-colors shadow-inner ${
+                isFullscreen ? "h-full resize-none flex-grow" : "min-h-[440px]"
               }`}
             />
           </div>
         )}
 
-        {/* PREVIEW ONLY MODE */}
+        {/* MODE 3: PREVIEW ONLY (WEB VIEW ON DARK LUXURY FRONTEND) */}
         {activeTab === "preview" && (
           <div
             className={`p-4 sm:p-6 bg-[#04080e] overflow-y-auto ${
-              isFullscreen ? "h-full" : "min-h-[420px] max-h-[600px]"
+              isFullscreen ? "h-full" : "min-h-[440px] max-h-[650px]"
             }`}
           >
             <div className="max-w-4xl mx-auto space-y-4">
@@ -683,39 +1178,40 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           </div>
         )}
 
-        {/* SPLIT SCREEN MODE (SIDE-BY-SIDE) */}
+        {/* MODE 4: SPLIT SCREEN (VISUAL ON LEFT, WEB PREVIEW ON RIGHT) */}
         {activeTab === "split" && (
           <div
-            className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 ${
-              isFullscreen ? "h-full" : "min-h-[420px]"
+            className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-[#0c1524] ${
+              isFullscreen ? "h-full" : "min-h-[440px]"
             }`}
           >
-            {/* Left: Editor */}
+            {/* Left: Visual Editor */}
             <div className="flex flex-col h-full">
-              <span className="text-[11px] font-bold uppercase text-gray-400 mb-2 flex items-center gap-1">
-                <Edit3 className="w-3.5 h-3.5 text-[#ffd700]" />
-                <span>Khung Soạn Thảo (Markdown & BBCode)</span>
+              <span className="text-[11px] font-bold uppercase text-gray-300 mb-2 flex items-center gap-1.5">
+                <Type className="w-3.5 h-3.5 text-[#ffd700]" />
+                <span>Soạn Thảo Trực Quan (Nền trắng)</span>
               </span>
-              <textarea
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                placeholder="Nhập nội dung bài viết..."
-                className={`w-full bg-[#060c14] border border-[#1a2c42] focus:border-[#ffd700] text-gray-100 text-xs sm:text-sm font-sans leading-relaxed p-4 rounded-xl focus:outline-none resize-none flex-grow ${
-                  isFullscreen ? "h-full" : "min-h-[400px]"
+              <div
+                ref={visualEditorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={handleVisualInput}
+                onBlur={handleVisualInput}
+                className={`w-full bg-white text-slate-900 border border-slate-300 focus:border-[#d4af37] text-xs sm:text-sm font-sans leading-relaxed p-4 rounded-xl focus:outline-none overflow-y-auto shadow-inner flex-grow ${
+                  isFullscreen ? "h-full" : "min-h-[420px]"
                 }`}
               />
             </div>
 
             {/* Right: Live Preview */}
-            <div className="flex flex-col h-full border-l border-[#1e344d]/60 pl-4 overflow-hidden">
-              <span className="text-[11px] font-bold uppercase text-gray-400 mb-2 flex items-center gap-1">
+            <div className="flex flex-col h-full border-l border-[#202f45] pl-4 overflow-hidden">
+              <span className="text-[11px] font-bold uppercase text-gray-300 mb-2 flex items-center gap-1.5">
                 <Eye className="w-3.5 h-3.5 text-[#38bdf8]" />
-                <span>Xem Trước Trực Tiếp Thời Gian Thực</span>
+                <span>Xem Trước Thời Gian Thực Trên Web</span>
               </span>
               <div
                 className={`overflow-y-auto bg-[#04080e] p-4 rounded-xl border border-[#1a2c42] flex-grow ${
-                  isFullscreen ? "h-full" : "max-h-[500px]"
+                  isFullscreen ? "h-full" : "max-h-[520px]"
                 }`}
               >
                 <ProductStructuredDescription
@@ -729,7 +1225,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
       </div>
 
       {/* 4. FOOTER STATUS BAR */}
-      <div className="px-4 py-2 bg-[#09131f] border-t border-[#1e344d] flex items-center justify-between text-[11px] text-gray-400">
+      <div className="px-4 py-2 bg-[#0c1420] border-t border-[#202f45] flex items-center justify-between text-[11px] text-gray-400">
         <div className="flex items-center gap-4">
           <span>
             Độ dài: <strong className="text-white">{value.length}</strong> ký tự
@@ -738,7 +1234,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
             Số dòng: <strong className="text-white">{value.split("\n").length}</strong>
           </span>
           <span className="hidden sm:inline text-[#ffd700]">
-            ✓ Tối ưu tốc độ tải ảnh (Lazy Load) & video (YouTube Facade)
+            ✓ Hiển thị trực tiếp in đậm, in nghiêng & màu sắc phong thủy
           </span>
         </div>
 

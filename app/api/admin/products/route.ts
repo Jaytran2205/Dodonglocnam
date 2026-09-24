@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const data = await req.json();
-    const { name, price, originalPrice, material, dimensions, weight, shortDescription, description, images, isFeatured, inStock, categoryId } = data;
+    const { name, price, originalPrice, material, dimensions, weight, shortDescription, description, images, isFeatured, inStock, categoryId, subCategoryId, categoryIds, subCategoryIds, tags } = data;
 
     if (!name || !categoryId) {
       return NextResponse.json({ success: false, message: "Tên sản phẩm và danh mục là bắt buộc." }, { status: 400 });
@@ -67,7 +67,11 @@ export async function POST(req: NextRequest) {
         images: typeof images === "string" ? images : JSON.stringify(images || ["/images/artisan-foundry.jpg"]),
         isFeatured: Boolean(isFeatured),
         inStock: inStock !== undefined ? Boolean(inStock) : true,
-        categoryId
+        categoryId,
+        subCategoryId: subCategoryId || null,
+        categoryIds: categoryIds ? (typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds)) : null,
+        subCategoryIds: subCategoryIds ? (typeof subCategoryIds === "string" ? subCategoryIds : JSON.stringify(subCategoryIds)) : null,
+        tags: tags || null
       }
     });
 
@@ -87,7 +91,7 @@ export async function PUT(req: NextRequest) {
 
   try {
     const data = await req.json();
-    const { id, name, price, originalPrice, material, dimensions, weight, shortDescription, description, images, isFeatured, inStock, categoryId } = data;
+    const { id, name, price, originalPrice, material, dimensions, weight, shortDescription, description, images, isFeatured, inStock, categoryId, subCategoryId, categoryIds, subCategoryIds, tags } = data;
 
     if (!id) {
       return NextResponse.json({ success: false, message: "Thiếu ID sản phẩm." }, { status: 400 });
@@ -107,7 +111,11 @@ export async function PUT(req: NextRequest) {
         images: typeof images === "string" ? images : JSON.stringify(images || []),
         isFeatured: Boolean(isFeatured),
         inStock: inStock !== undefined ? Boolean(inStock) : true,
-        categoryId
+        categoryId,
+        subCategoryId: subCategoryId || null,
+        categoryIds: categoryIds ? (typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds)) : null,
+        subCategoryIds: subCategoryIds ? (typeof subCategoryIds === "string" ? subCategoryIds : JSON.stringify(subCategoryIds)) : null,
+        tags: tags || null
       }
     });
 

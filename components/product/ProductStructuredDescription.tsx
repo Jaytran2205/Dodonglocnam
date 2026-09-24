@@ -166,7 +166,7 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
 
 // Inline Formatter supporting bold, italic, colors, underlines
 export function renderFormattedInline(text: string): React.ReactNode {
-  const regex = /(\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/color\]|\[(gold|bronze|jade|sky|red|white)\][\s\S]*?\[\/\2\]|\*\*[\s\S]*?\*\*|\*[\s\S]*?\*|<u>[\s\S]*?<\/u>|~~[\s\S]*?~~)/g;
+  const regex = /(\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/color\]|\[(gold|bronze|jade|sky|red|white)\][\s\S]*?\[\/\2\]|<span style="color:\s*([^"]+)">[\s\S]*?<\/span>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|<b>[\s\S]*?<\/b>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<i>[\s\S]*?<\/i>|<u>[\s\S]*?<\/u>|~~[\s\S]*?~~|<s>[\s\S]*?<\/s>|<del>[\s\S]*?<\/del>)/g;
 
   const parts = text.split(regex).filter(Boolean);
 
@@ -176,6 +176,18 @@ export function renderFormattedInline(text: string): React.ReactNode {
     if (colorMatch) {
       const colorVal = colorMatch[1];
       const content = colorMatch[2];
+      return (
+        <span key={i} style={{ color: colorVal }} className="font-semibold">
+          {renderFormattedInline(content)}
+        </span>
+      );
+    }
+
+    // HTML span color: <span style="color: #hex">content</span>
+    const spanColorMatch = part.match(/^<span style="color:\s*([^"]+)">([\s\S]*?)<\/span>$/i);
+    if (spanColorMatch) {
+      const colorVal = spanColorMatch[1];
+      const content = spanColorMatch[2];
       return (
         <span key={i} style={{ color: colorVal }} className="font-semibold">
           {renderFormattedInline(content)}
@@ -203,20 +215,38 @@ export function renderFormattedInline(text: string): React.ReactNode {
       );
     }
 
-    // Bold: **content**
-    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+    // Bold: **content** or <strong>content</strong> or <b>content</b>
+    if (
+      (part.startsWith("**") && part.endsWith("**") && part.length >= 4) ||
+      (part.startsWith("<strong>") && part.endsWith("</strong>")) ||
+      (part.startsWith("<b>") && part.endsWith("</b>"))
+    ) {
+      const inner = part.startsWith("**")
+        ? part.slice(2, -2)
+        : part.startsWith("<strong>")
+        ? part.slice(8, -9)
+        : part.slice(3, -4);
       return (
         <strong key={i} className="text-[#ffd700] font-bold">
-          {renderFormattedInline(part.slice(2, -2))}
+          {renderFormattedInline(inner)}
         </strong>
       );
     }
 
-    // Italic: *content*
-    if (part.startsWith("*") && part.endsWith("*") && part.length >= 2 && !part.startsWith("**")) {
+    // Italic: *content* or <em>content</em> or <i>content</i>
+    if (
+      (part.startsWith("*") && part.endsWith("*") && part.length >= 2 && !part.startsWith("**")) ||
+      (part.startsWith("<em>") && part.endsWith("</em>")) ||
+      (part.startsWith("<i>") && part.endsWith("</i>"))
+    ) {
+      const inner = part.startsWith("*")
+        ? part.slice(1, -1)
+        : part.startsWith("<em>")
+        ? part.slice(4, -5)
+        : part.slice(3, -4);
       return (
         <em key={i} className="text-[#f1f5f9] italic">
-          {renderFormattedInline(part.slice(1, -1))}
+          {renderFormattedInline(inner)}
         </em>
       );
     }
@@ -230,11 +260,20 @@ export function renderFormattedInline(text: string): React.ReactNode {
       );
     }
 
-    // Strikethrough: ~~content~~
-    if (part.startsWith("~~") && part.endsWith("~~") && part.length >= 4) {
+    // Strikethrough: ~~content~~ or <s>content</s> or <del>content</del>
+    if (
+      (part.startsWith("~~") && part.endsWith("~~") && part.length >= 4) ||
+      (part.startsWith("<s>") && part.endsWith("</s>")) ||
+      (part.startsWith("<del>") && part.endsWith("</del>"))
+    ) {
+      const inner = part.startsWith("~~")
+        ? part.slice(2, -2)
+        : part.startsWith("<s>")
+        ? part.slice(3, -4)
+        : part.slice(5, -6);
       return (
         <del key={i} className="line-through text-gray-500">
-          {renderFormattedInline(part.slice(2, -2))}
+          {renderFormattedInline(inner)}
         </del>
       );
     }

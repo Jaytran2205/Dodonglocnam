@@ -63,12 +63,20 @@ const getCachedCategoryProducts = cache(
       return prisma.product.findMany({
         where: isCrossCategory
           ? {
-              category: {
-                slug: { in: [categorySlug, "tuong-dong", "qua-tang-dong", "trong-dong"] },
-              },
+              OR: [
+                { category: { slug: { in: [categorySlug, "tuong-dong", "qua-tang-dong", "trong-dong"] } } },
+                { categoryIds: { contains: categorySlug } },
+                { tags: { contains: categorySlug } },
+              ],
             }
           : {
-              category: { slug: categorySlug },
+              OR: [
+                { category: { slug: categorySlug } },
+                { categoryIds: { contains: categorySlug } },
+                { subCategoryId: { contains: categorySlug } },
+                { subCategoryIds: { contains: categorySlug } },
+                { tags: { contains: categorySlug } },
+              ],
             },
         orderBy: { createdAt: "desc" },
         select: {
@@ -78,6 +86,10 @@ const getCachedCategoryProducts = cache(
           price: true,
           originalPrice: true,
           images: true,
+          subCategoryId: true,
+          subCategoryIds: true,
+          categoryIds: true,
+          tags: true,
           category: {
             select: { name: true, slug: true },
           },

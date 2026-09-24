@@ -31,6 +31,10 @@ export interface ListingProduct {
   images: string;
   material?: string | null;
   dimensions?: string | null;
+  subCategoryId?: string | null;
+  subCategoryIds?: string | null;
+  categoryIds?: string | null;
+  tags?: string | null;
   category: {
     name: string;
     slug: string;
@@ -146,8 +150,14 @@ export function CategoryProductListingView({
     let result = isCrossCategory
       ? [...products]
       : (mainCategory.slug === "qua-tang" || mainCategory.slug === "qua-tang-dong")
-      ? products.filter((p) => p.category.slug === "qua-tang" || p.category.slug === "qua-tang-dong")
-      : products.filter((p) => p.category.slug === mainCategory.slug);
+      ? products.filter((p) => p.category?.slug === "qua-tang" || p.category?.slug === "qua-tang-dong")
+      : products.filter((p) => {
+          if (p.category?.slug === mainCategory.slug) return true;
+          if (p.categoryIds && (p.categoryIds.includes(mainCategory.slug) || p.categoryIds.includes(mainCategory.name))) return true;
+          if (p.subCategoryIds && (p.subCategoryIds.includes(mainCategory.slug) || p.subCategoryIds.includes(mainCategory.name))) return true;
+          if (p.tags && p.tags.includes(mainCategory.name)) return true;
+          return false;
+        });
 
     // Gift folders isolation: ensure products from folder A never leak into folder B
     const giftFolderKeys = [
@@ -180,6 +190,8 @@ export function CategoryProductListingView({
         if (p.images && p.images.includes(activeSubCategory.id)) {
           return true;
         }
+        if (p.subCategoryId && p.subCategoryId.includes(activeSubCategory.id)) return true;
+        if (p.subCategoryIds && p.subCategoryIds.includes(activeSubCategory.id)) return true;
         // Fallback to keyword matching for older legacy products in DB
         const pName = p.name.toLowerCase();
         const pNameClean = removeVietnameseTones(pName);
@@ -199,8 +211,18 @@ export function CategoryProductListingView({
           return regex.test(pName) || regexClean.test(pNameClean);
         });
       });
-    } else if (activeKeywords.length > 0) {
+    } else if (activeKeywords.length > 0 || activeSubCategory) {
       result = result.filter((p) => {
+        // Direct multi-category match: if product was explicitly assigned to this subcategory or detail branch
+        const subIdTarget = activeDetailCategory?.id || activeSubCategory?.id;
+        const subNameTarget = activeDetailCategory?.name || activeSubCategory?.name;
+        if (subIdTarget) {
+          const inSubId = p.subCategoryId && p.subCategoryId.includes(subIdTarget);
+          const inSubIds = p.subCategoryIds && p.subCategoryIds.includes(subIdTarget);
+          const inTags = subNameTarget && p.tags && p.tags.toLowerCase().includes(subNameTarget.toLowerCase());
+          if (inSubId || inSubIds || inTags) return true;
+        }
+
         const pName = p.name.toLowerCase();
         const pNameClean = removeVietnameseTones(pName);
 

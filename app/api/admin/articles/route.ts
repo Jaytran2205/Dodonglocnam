@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { title, summary, content, thumbnail, category, isPublished } = await req.json();
+    const { title, summary, content, thumbnail, category, subCategoryId, categoryIds, subCategoryIds, tags, isPublished } = await req.json();
     if (!title || !content) {
       return NextResponse.json({ success: false, message: "Tiêu đề và nội dung là bắt buộc." }, { status: 400 });
     }
@@ -37,6 +37,10 @@ export async function POST(req: NextRequest) {
         content,
         thumbnail: thumbnail || "/images/artisan-foundry.jpg",
         category: category || "KIẾN THỨC ĐỒ ĐỒNG",
+        subCategoryId: subCategoryId || null,
+        categoryIds: categoryIds ? (typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds)) : null,
+        subCategoryIds: subCategoryIds ? (typeof subCategoryIds === "string" ? subCategoryIds : JSON.stringify(subCategoryIds)) : null,
+        tags: tags || null,
         isPublished: isPublished !== undefined ? Boolean(isPublished) : true
       }
     });
@@ -54,7 +58,7 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const { id, title, summary, content, thumbnail, category, isPublished } = await req.json();
+    const { id, title, summary, content, thumbnail, category, subCategoryId, categoryIds, subCategoryIds, tags, isPublished } = await req.json();
     if (!id || !title) {
       return NextResponse.json({ success: false, message: "Thiếu ID hoặc tiêu đề bài viết." }, { status: 400 });
     }
@@ -67,6 +71,10 @@ export async function PUT(req: NextRequest) {
         content,
         thumbnail,
         category,
+        subCategoryId: subCategoryId || null,
+        categoryIds: categoryIds ? (typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds)) : null,
+        subCategoryIds: subCategoryIds ? (typeof subCategoryIds === "string" ? subCategoryIds : JSON.stringify(subCategoryIds)) : null,
+        tags: tags || null,
         isPublished: isPublished !== undefined ? Boolean(isPublished) : true
       }
     });

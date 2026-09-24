@@ -195,7 +195,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const products = await prisma.product
     .findMany({
       where: {
-        category: { slug: categorySlug },
+        OR: [
+          { category: { slug: categorySlug } },
+          { categoryIds: { contains: categorySlug } },
+          { subCategoryId: { contains: categorySlug } },
+          { subCategoryIds: { contains: categorySlug } },
+          { tags: { contains: categorySlug } },
+        ],
       },
       orderBy: { createdAt: "desc" },
       select: {
@@ -205,6 +211,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         price: true,
         originalPrice: true,
         images: true,
+        subCategoryId: true,
+        subCategoryIds: true,
+        categoryIds: true,
+        tags: true,
         category: {
           select: { name: true, slug: true },
         },
