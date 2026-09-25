@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { signAdminToken } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity-logger";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -45,6 +46,28 @@ export async function POST(req: NextRequest) {
       name: user.name,
       role: user.role
     });
+
+    // Update lastLoginAt asynchronously
+    prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() }
+    }).catch(() => {});
+
+    // Log login activity
+    logActivity({
+      req,
+      session: {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      },
+      action: "LOGIN",
+      entity: "AUTH",
+      entityId: user.id,
+      entityName: user.name,
+      summary: `Đăng nhập hệ thống quản trị thành công (${user.name} - ${user.role})`
+    }).catch(() => {});
 
     const response = NextResponse.json({
       success: true,

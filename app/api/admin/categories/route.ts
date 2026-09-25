@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function GET() {
   const categories = await prisma.category.findMany({
@@ -40,6 +41,16 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    logActivity({
+      req,
+      session,
+      action: "CREATE",
+      entity: "CATEGORY",
+      entityId: category.id,
+      entityName: category.name,
+      summary: `Tạo danh mục mới: "${category.name}"`,
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, message: "Tạo danh mục thành công!", category });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: "Lỗi tạo danh mục." }, { status: 500 });
@@ -68,6 +79,16 @@ export async function PUT(req: NextRequest) {
       }
     });
 
+    logActivity({
+      req,
+      session,
+      action: "UPDATE",
+      entity: "CATEGORY",
+      entityId: category.id,
+      entityName: category.name,
+      summary: `Cập nhật danh mục: "${category.name}"`,
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, message: "Cập nhật danh mục thành công!", category });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: "Lỗi cập nhật danh mục." }, { status: 500 });
@@ -87,7 +108,21 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Thiếu ID danh mục." }, { status: 400 });
     }
 
+    const existing = await prisma.category.findUnique({ where: { id } });
     await prisma.category.delete({ where: { id } });
+
+    if (existing) {
+      logActivity({
+        req,
+        session,
+        action: "DELETE",
+        entity: "CATEGORY",
+        entityId: id,
+        entityName: existing.name,
+        summary: `Xóa danh mục: "${existing.name}"`,
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ success: true, message: "Đã xóa danh mục." });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: "Lỗi xóa danh mục." }, { status: 500 });

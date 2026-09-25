@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function GET(req: NextRequest) {
   const session = await getAdminSession(req);
@@ -77,6 +78,18 @@ export async function POST(req: NextRequest) {
     });
 
     try { revalidatePath("/", "layout"); } catch {}
+
+    logActivity({
+      req,
+      session,
+      action: "CREATE",
+      entity: "PRODUCT",
+      entityId: product.id,
+      entityName: product.name,
+      summary: `Tạo sản phẩm mới: "${product.name}"` + (product.price ? ` (${product.price.toLocaleString("vi-VN")}đ)` : ""),
+      details: { category: product.category?.name, inStock: product.inStock },
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, message: "Tạo sản phẩm thành công!", product });
   } catch (error: any) {
     console.error("Create Product Error:", error);
@@ -122,6 +135,18 @@ export async function PUT(req: NextRequest) {
     });
 
     try { revalidatePath("/", "layout"); } catch {}
+
+    logActivity({
+      req,
+      session,
+      action: "UPDATE",
+      entity: "PRODUCT",
+      entityId: product.id,
+      entityName: product.name,
+      summary: `Cập nhật sản phẩm: "${product.name}"` + (product.price ? ` (${product.price.toLocaleString("vi-VN")}đ)` : ""),
+      details: { inStock: product.inStock, isFeatured: product.isFeatured },
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, message: "Cập nhật sản phẩm thành công!", product });
   } catch (error: any) {
     console.error("Update Product Error:", error);
@@ -143,8 +168,20 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Thiếu ID sản phẩm." }, { status: 400 });
     }
 
+    const existing = await prisma.product.findUnique({ where: { id }, select: { name: true } });
     await prisma.product.delete({ where: { id } });
     try { revalidatePath("/", "layout"); } catch {}
+
+    logActivity({
+      req,
+      session,
+      action: "DELETE",
+      entity: "PRODUCT",
+      entityId: id,
+      entityName: existing?.name || id,
+      summary: `Xóa sản phẩm: "${existing?.name || id}" khỏi hệ thống`,
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, message: "Đã xóa sản phẩm." });
   } catch (error: any) {
     console.error("Delete Product Error:", error);

@@ -9,13 +9,19 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      String   @default("ADMIN") // ADMIN, STAFF
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  email       String   @unique
+  username    String?  @unique
+  password    String
+  name        String
+  role        String   @default("ADMIN") // SUPER_ADMIN, ADMIN, EDITOR, STAFF
+  permissions String?  // JSON string array e.g. ["products", "orders", "articles", "categories", "landing", "users", "logs"]
+  phone       String?
+  avatar      String?
+  isActive    Boolean  @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Category {
@@ -132,4 +138,26 @@ model Setting {
   group       String   @default("GENERAL") // GENERAL, CONTACT, BANNER, SEO
   description String?
   updatedAt   DateTime @updatedAt
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  userName    String?
+  userEmail   String?
+  userRole    String?
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, EXPORT, STATUS_CHANGE
+  entity      String   // PRODUCT, ARTICLE, CATEGORY, ORDER, SETTING, USER, SYSTEM
+  entityId    String?
+  entityName  String?
+  summary     String
+  details     String?  // JSON string or additional note
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userEmail])
+  @@index([entity])
+  @@index([action])
 }

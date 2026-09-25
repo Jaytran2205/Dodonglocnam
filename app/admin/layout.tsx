@@ -20,6 +20,7 @@ import {
   Sparkles,
   ChevronRight,
   ShieldCheck,
+  History,
   Globe,
   Plus
 } from "lucide-react";
@@ -79,6 +80,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/orders", label: "Quản Lý Đơn Hàng", icon: ShoppingCart, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null },
     { href: "/admin/articles", label: "Bài Viết Chuẩn SEO", icon: FileText },
     { href: "/admin/customers", label: "Khách Hàng & Liên Hệ", icon: Users },
+    { href: "/admin/users", label: "Tài Khoản & Phân Quyền", icon: ShieldCheck },
+    { href: "/admin/logs", label: "Lịch Sử Hoạt Động", icon: History },
   ];
 
   return (

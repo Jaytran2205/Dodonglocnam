@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,15 @@ export async function POST(req: NextRequest) {
         revalidatePath("/", "layout");
       } catch {}
 
+      logActivity({
+        req,
+        session,
+        action: "SETTINGS_CHANGE",
+        entity: "SETTING",
+        summary: `Cập nhật cấu hình website (${entries.length} thiết lập)`,
+        details: { keys: entries.map(([k]) => k) },
+      }).catch(() => {});
+
       return NextResponse.json({
         success: true,
         message: `Đã lưu thành công ${entries.length} mục cài đặt!`,
@@ -103,6 +113,15 @@ export async function POST(req: NextRequest) {
     try {
       revalidatePath("/", "layout");
     } catch {}
+
+    logActivity({
+      req,
+      session,
+      action: "SETTINGS_CHANGE",
+      entity: "SETTING",
+      summary: `Cập nhật giao diện & cài đặt website (${changedEntries.length} mục thay đổi)`,
+      details: { changedKeys: changedEntries.map(([k]) => k) },
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

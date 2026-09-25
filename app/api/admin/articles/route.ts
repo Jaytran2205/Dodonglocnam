@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function GET() {
   const articles = await prisma.article.findMany({
@@ -45,6 +46,17 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    logActivity({
+      req,
+      session,
+      action: "CREATE",
+      entity: "ARTICLE",
+      entityId: article.id,
+      entityName: article.title,
+      summary: `Tạo bài viết mới: "${article.title}"`,
+      details: { category: article.category, isPublished: article.isPublished },
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, message: "Tạo bài viết thành công!", article });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: "Lỗi tạo bài viết." }, { status: 500 });
@@ -79,6 +91,17 @@ export async function PUT(req: NextRequest) {
       }
     });
 
+    logActivity({
+      req,
+      session,
+      action: "UPDATE",
+      entity: "ARTICLE",
+      entityId: article.id,
+      entityName: article.title,
+      summary: `Cập nhật bài viết: "${article.title}"`,
+      details: { category: article.category, isPublished: article.isPublished },
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, message: "Cập nhật bài viết thành công!", article });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: "Lỗi cập nhật bài viết." }, { status: 500 });
@@ -98,7 +121,21 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Thiếu ID bài viết." }, { status: 400 });
     }
 
+    const existing = await prisma.article.findUnique({ where: { id } });
     await prisma.article.delete({ where: { id } });
+
+    if (existing) {
+      logActivity({
+        req,
+        session,
+        action: "DELETE",
+        entity: "ARTICLE",
+        entityId: id,
+        entityName: existing.title,
+        summary: `Xóa bài viết: "${existing.title}"`,
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ success: true, message: "Đã xóa bài viết." });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: "Lỗi xóa bài viết." }, { status: 500 });
