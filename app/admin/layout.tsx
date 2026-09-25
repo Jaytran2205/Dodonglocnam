@@ -23,6 +23,7 @@ import {
   Globe,
   Plus
 } from "lucide-react";
+import { ToastProvider } from "@/components/admin/AdminToast";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -290,7 +291,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Page Body */}
         <main className="flex-1 p-4 sm:p-8 overflow-y-auto max-w-[1600px] w-full mx-auto">
-          {children}
+          <ToastProvider>{children}</ToastProvider>
         </main>
       </div>
     </div>

@@ -17,6 +17,7 @@ import {
   Star,
 } from "lucide-react";
 import { MainCategoryData, SubCategoryItem, DetailCategoryItem } from "@/lib/subcategories-data";
+import { useToast } from "@/components/admin/AdminToast";
 
 export interface SelectedCategoryItem {
   id: string; // db category id or subcategory id
@@ -76,6 +77,7 @@ export function HierarchicalCategorySelector({
   onRefreshCatalog,
   title = "Danh mục sản phẩm",
 }: HierarchicalCategorySelectorProps) {
+  const { toastSuccess, toastError, toastWarning } = useToast();
   const [activeTab, setActiveTab] = useState<"all" | "popular">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({
@@ -512,9 +514,10 @@ export function HierarchicalCategorySelector({
           setNewCatName("");
           setShowAddForm(false);
           setAddSuccess(true);
+          toastSuccess(`Đã tạo thành công danh mục mới: "${data.category.name}"!`, "Tạo danh mục");
           setTimeout(() => setAddSuccess(false), 3000);
         } else {
-          alert(data.message || "Không thể tạo danh mục mới");
+          toastError(data.message || "Không thể tạo danh mục mới", "Lỗi tạo danh mục");
         }
       } else {
         // Create new Subcategory branch inside selected parent
@@ -562,14 +565,15 @@ export function HierarchicalCategorySelector({
             setNewCatName("");
             setShowAddForm(false);
             setAddSuccess(true);
+            toastSuccess(`Đã thêm nhánh con "${newSubItem.name}" vào danh mục "${parentMain.name}"!`, "Thêm nhánh thành công");
             setTimeout(() => setAddSuccess(false), 3000);
           } else {
-            alert(data.message || "Lỗi lưu nhánh danh mục");
+            toastError(data.message || "Lỗi lưu nhánh danh mục", "Lỗi tạo nhánh");
           }
         }
       }
     } catch (err: any) {
-      alert("Lỗi khi thêm danh mục: " + err.message);
+      toastError("Lỗi khi thêm danh mục: " + err.message, "Lỗi kết nối");
     } finally {
       setAddingCat(false);
     }
@@ -885,6 +889,8 @@ export function HierarchicalCategorySelector({
                     const subItem: SubCategoryItem = {
                       id: item.subId,
                       name: item.label,
+                      keyword: item.label.toLowerCase(),
+                      image: "/images/hero_golden_ship.jpg",
                     };
                     handleToggleSub(item.mainSlug, subItem);
                   }}

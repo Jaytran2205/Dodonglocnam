@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ProductArticleEditor } from "@/components/admin/ProductArticleEditor";
+import { useToast } from "@/components/admin/AdminToast";
 
 // Hierarchical Article Topics / Categories Structure
 const ARTICLE_CATEGORIES_TREE = [
@@ -71,9 +72,11 @@ const ARTICLE_CATEGORIES_TREE = [
 
 export default function AdminArticlesPage() {
   const [articles, setArticles] = useState<any[]>([]);
+  const { toastSuccess, toastError, toastWarning, confirm: showConfirm } = useToast();
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingArt, setEditingArt] = useState<any>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
   // Filter state
   const [search, setSearch] = useState("");
@@ -119,18 +122,19 @@ export default function AdminArticlesPage() {
       const data = await res.json();
       if (data.success && data.url) {
         setFormData((prev) => ({ ...prev, thumbnail: data.url }));
+        toastSuccess(`Đã tải ảnh bìa "${file.name}" lên thành công!`, "Tải ảnh");
       } else {
-        alert(data.message || "Tải ảnh thất bại");
+        toastError(data.message || "Tải ảnh thất bại", "Lỗi tải ảnh");
       }
     } catch {
-      alert("Lỗi tải ảnh");
+      toastError("Lỗi kết nối khi tải ảnh", "Lỗi mạng");
     } finally {
       setUploadingThumbnail(false);
     }
   };
 
-  const fetchArticles = async () => {
-    setLoading(true);
+  const fetchArticles = async (silent = false) => {
+    if (!silent && articles.length === 0) setLoading(true);
     try {
       const res = await fetch("/api/admin/articles");
       const data = await res.json();
@@ -147,6 +151,7 @@ export default function AdminArticlesPage() {
   }, []);
 
   const openCreate = () => {
+    setLastSavedAt(null);
     setEditingArt(null);
     setFormData({
       title: "",
@@ -161,6 +166,7 @@ export default function AdminArticlesPage() {
   };
 
   const openEdit = (art: any) => {
+    setLastSavedAt(null);
     setEditingArt(art);
     setFormData({
       title: art.title || "",
@@ -174,10 +180,16 @@ export default function AdminArticlesPage() {
     setModalOpen(true);
   };
 
-  const handleSave = async (e?: React.FormEvent, forcePublish?: boolean) => {
+  const handleSave = async (e?: React.FormEvent, forcePublish?: boolean, closeModalAfter = false) => {
     if (e) e.preventDefault();
-    if (!formData.title.trim()) return alert("Vui lòng nhập tiêu đề bài viết");
-    if (!formData.content.trim()) return alert("Vui lòng nhập nội dung bài viết");
+    if (!formData.title.trim()) {
+      toastWarning("Vui lòng nhập tiêu đề bài viết!", "Thiếu thông tin");
+      return;
+    }
+    if (!formData.content.trim()) {
+      toastWarning("Vui lòng nhập nội dung bài viết!", "Thiếu thông tin");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -193,32 +205,65 @@ export default function AdminArticlesPage() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (data.success) {
-        setModalOpen(false);
-        fetchArticles();
+      if (data.success && data.article) {
+        const savedArt = data.article;
+        const nowStr = new Date().toLocaleTimeString("vi-VN");
+        setLastSavedAt(nowStr);
+        setEditingArt(savedArt);
+
+        // Update in-memory state smoothly
+        setArticles((prev) => {
+          const idx = prev.findIndex((a) => a.id === savedArt.id);
+          if (idx >= 0) {
+            const next = [...prev];
+            next[idx] = { ...next[idx], ...savedArt };
+            return next;
+          }
+          return [savedArt, ...prev];
+        });
+
+        toastSuccess(
+          editingArt
+            ? `Bài viết "${savedArt.title}" đã được cập nhật thành công lúc ${nowStr}!`
+            : `Đã xuất bản bài viết mới "${savedArt.title}" thành công!`,
+          "Cập nhật thành công 🎉"
+        );
+
+        if (closeModalAfter) {
+          setModalOpen(false);
+        }
       } else {
-        alert(data.message || "Lỗi lưu bài viết");
+        toastError(data.message || "Lỗi lưu bài viết", "Lỗi lưu bài");
       }
-    } catch (e) {
-      alert("Lỗi kết nối");
+    } catch (e: any) {
+      toastError("Lỗi kết nối máy chủ: " + (e?.message || ""), "Lỗi hệ thống");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Bạn có chắc muốn xóa bài viết "${title}"?`)) return;
-    try {
-      const res = await fetch(`/api/admin/articles?id=${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (data.success) {
-        fetchArticles();
-      } else {
-        alert(data.message || "Lỗi xóa bài viết");
-      }
-    } catch (e) {
-      alert("Lỗi khi xóa");
-    }
+    showConfirm({
+      title: "Xác nhận xóa bài viết",
+      message: `Bạn có chắc chắn muốn xóa vĩnh viễn bài viết "${title}"? Hành động này không thể hoàn tác.`,
+      confirmText: "Xóa Bài Viết",
+      cancelText: "Hủy Bỏ",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/articles?id=${id}`, { method: "DELETE" });
+          const data = await res.json();
+          if (data.success) {
+            setArticles((prev) => prev.filter((a) => a.id !== id));
+            toastSuccess(`Đã xóa bài viết "${title}" thành công!`, "Đã xóa");
+          } else {
+            toastError(data.message || "Lỗi xóa bài viết", "Xóa thất bại");
+          }
+        } catch (e) {
+          toastError("Lỗi kết nối khi xóa bài viết", "Lỗi thao tác");
+        }
+      },
+    });
   };
 
   // Filtered articles list
@@ -260,7 +305,7 @@ export default function AdminArticlesPage() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchArticles}
+            onClick={() => fetchArticles()}
             className="p-2.5 bg-[#111c2e] hover:bg-[#152236] text-[#d4af37] border border-[#d4af37]/30 rounded-xl transition-all shadow"
             title="Tải lại"
           >
@@ -554,32 +599,56 @@ export default function AdminArticlesPage() {
                         </button>
                       </div>
 
-                      <div className="pt-2 border-t border-[#202f45] space-y-2">
+                      <div className="pt-2 border-t border-[#202f45] space-y-2.5">
+                        {lastSavedAt && (
+                          <div className="flex items-center justify-between text-[11px] px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                            <span className="flex items-center gap-1.5 font-medium">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                              Đã lưu gần nhất:
+                            </span>
+                            <span className="font-mono font-bold">{lastSavedAt}</span>
+                          </div>
+                        )}
+
+                        {/* Save and stay in modal */}
                         <button
                           type="button"
                           disabled={saving}
-                          onClick={() => handleSave(undefined, true)}
+                          onClick={() => handleSave(undefined, undefined, false)}
                           className="w-full py-2.5 bg-gradient-to-r from-[#d4af37] via-[#e5b869] to-[#d4af37] hover:brightness-110 text-[#070c14] font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                          title="Lưu các thay đổi và tiếp tục biên tập"
                         >
                           <Save className="w-4 h-4" />
                           <span>{saving ? "ĐANG LƯU..." : editingArt ? "LƯU THAY ĐỔI" : "ĐĂNG BÀI VIẾT"}</span>
                         </button>
 
+                        {/* Save and close modal */}
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => handleSave(undefined, undefined, true)}
+                          className="w-full py-2 bg-[#18283f] hover:bg-[#223756] text-[#d4af37] border border-[#d4af37]/30 hover:border-[#d4af37] rounded-xl font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
+                          title="Lưu tất cả thay đổi và trở về danh sách bài viết"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Lưu & Đóng Cửa Sổ</span>
+                        </button>
+
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            onClick={() => handleSave(undefined, false)}
+                            onClick={() => handleSave(undefined, false, false)}
                             disabled={saving}
                             className="flex-1 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 hover:text-white rounded-lg font-semibold text-xs transition-colors"
                           >
-                            Lưu Nháp
+                            Lưu Bản Nháp
                           </button>
                           <button
                             type="button"
                             onClick={() => setModalOpen(false)}
                             className="px-4 py-2 bg-[#1f2d42] hover:bg-[#2b3e5a] text-gray-400 hover:text-white rounded-lg font-semibold text-xs transition-colors"
                           >
-                            Hủy Bỏ
+                            Đóng
                           </button>
                         </div>
                       </div>

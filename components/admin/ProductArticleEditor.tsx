@@ -32,6 +32,7 @@ import {
   Type,
 } from "lucide-react";
 import { ProductStructuredDescription } from "@/components/product/ProductStructuredDescription";
+import { useToast } from "@/components/admin/AdminToast";
 
 interface ProductArticleEditorProps {
   value: string;
@@ -363,6 +364,7 @@ export function ProductArticleEditor({
   onChange,
   productName = "Sản phẩm Đồ Đồng Lộc Nam",
 }: ProductArticleEditorProps) {
+  const { toastSuccess, toastError, toastWarning, confirm: showConfirm } = useToast();
   // Tabs: "visual" (WYSIWYG - default), "code" (raw Markdown), "preview" (web preview), "split" (side-by-side)
   const [activeTab, setActiveTab] = useState<"visual" | "code" | "preview" | "split">("visual");
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -542,7 +544,7 @@ export function ProductArticleEditor({
   const handleInsertVideo = (e: React.FormEvent) => {
     e.preventDefault();
     if (!videoUrl.trim()) {
-      alert("Vui lòng nhập đường dẫn video (YouTube hoặc link MP4)");
+      toastWarning("Vui lòng nhập đường dẫn video (YouTube hoặc link MP4)", "Thiếu đường dẫn");
       return;
     }
 
@@ -564,6 +566,7 @@ export function ProductArticleEditor({
       insertAtCursor(code);
     }
 
+    toastSuccess("Đã chèn video vào bài viết thành công!", "Chèn video");
     setVideoUrl("");
     setVideoTitle("");
     setShowVideoModal(false);
@@ -586,11 +589,12 @@ export function ProductArticleEditor({
       const data = await res.json();
       if (data.success && data.url) {
         setImageUrl(data.url);
+        toastSuccess(`Đã tải ảnh "${file.name}" lên thành công!`, "Tải ảnh hoàn tất");
       } else {
-        alert(data.message || "Tải ảnh thất bại");
+        toastError(data.message || "Tải ảnh thất bại", "Tải ảnh thất bại");
       }
     } catch {
-      alert("Lỗi kết nối khi tải ảnh lên máy chủ");
+      toastError("Lỗi kết nối khi tải ảnh lên máy chủ", "Lỗi mạng");
     } finally {
       setUploadingImage(false);
     }
@@ -600,7 +604,7 @@ export function ProductArticleEditor({
   const handleInsertImage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!imageUrl.trim()) {
-      alert("Vui lòng nhập liên kết hình ảnh hoặc tải ảnh lên");
+      toastWarning("Vui lòng nhập liên kết hình ảnh hoặc tải ảnh lên", "Thiếu ảnh");
       return;
     }
 
@@ -617,6 +621,7 @@ export function ProductArticleEditor({
       insertAtCursor(code);
     }
 
+    toastSuccess("Đã chèn ảnh vào bài viết thành công!", "Chèn ảnh");
     setImageUrl("");
     setImageCaption("");
     setShowImageModal(false);
@@ -656,11 +661,21 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
 [/box]`;
 
     if (value.trim()) {
-      if (!confirm("Thao tác này sẽ thay thế khung bài viết hiện tại bằng Mẫu Chuẩn Lộc Nam. Bạn có muốn tiếp tục?")) {
-        return;
-      }
+      showConfirm({
+        title: "Chèn Mẫu Chuẩn Lộc Nam",
+        message: "Thao tác này sẽ thay thế nội dung bài viết hiện tại bằng khung Mẫu Chuẩn 5 phần phong thủy Lộc Nam. Bạn có muốn tiếp tục?",
+        confirmText: "Đồng Ý Thay Thế",
+        cancelText: "Hủy Bỏ",
+        type: "warning",
+        onConfirm: () => {
+          onChange(template);
+          toastSuccess("Đã chèn khung mẫu bài viết chuẩn phong thủy Lộc Nam!", "Mẫu bài viết");
+        },
+      });
+      return;
     }
     onChange(template);
+    toastSuccess("Đã chèn khung mẫu bài viết chuẩn phong thủy Lộc Nam!", "Mẫu bài viết");
   };
 
   return (

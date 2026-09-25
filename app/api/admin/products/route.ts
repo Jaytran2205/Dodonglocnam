@@ -72,7 +72,8 @@ export async function POST(req: NextRequest) {
         categoryIds: categoryIds ? (typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds)) : null,
         subCategoryIds: subCategoryIds ? (typeof subCategoryIds === "string" ? subCategoryIds : JSON.stringify(subCategoryIds)) : null,
         tags: tags || null
-      }
+      },
+      include: { category: true }
     });
 
     try { revalidatePath("/", "layout"); } catch {}
@@ -116,7 +117,8 @@ export async function PUT(req: NextRequest) {
         categoryIds: categoryIds ? (typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds)) : null,
         subCategoryIds: subCategoryIds ? (typeof subCategoryIds === "string" ? subCategoryIds : JSON.stringify(subCategoryIds)) : null,
         tags: tags || null
-      }
+      },
+      include: { category: true }
     });
 
     try { revalidatePath("/", "layout"); } catch {}

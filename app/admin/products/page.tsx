@@ -40,12 +40,15 @@ import { ProductTagsBox } from "@/components/admin/ProductTagsBox";
 import { ProductFaqBox } from "@/components/admin/ProductFaqBox";
 import { DEFAULT_HIERARCHICAL_CATEGORIES, MainCategoryData } from "@/lib/subcategories-data";
 import { formatPrice } from "@/lib/utils";
+import { useToast } from "@/components/admin/AdminToast";
 
 export default function AdminProductsPage() {
+  const { toastSuccess, toastError, toastWarning, toastInfo, confirm: showConfirm } = useToast();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [catalog, setCatalog] = useState<MainCategoryData[]>(DEFAULT_HIERARCHICAL_CATEGORIES);
   const [loading, setLoading] = useState(true);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
   // Filters State
   const [search, setSearch] = useState("");
@@ -113,7 +116,11 @@ export default function AdminProductsPage() {
         }
       } catch (_) {}
     } else {
-      setLoading(true);
+      // Only show full-screen loader if products list is currently empty
+      setProducts((current) => {
+        if (current.length === 0) setLoading(true);
+        return current;
+      });
     }
 
     try {
@@ -183,6 +190,7 @@ export default function AdminProductsPage() {
 
   // Open Create Modal
   const openCreateModal = () => {
+    setLastSavedAt(null);
     setEditingProduct(null);
     const initialCatId = categories[0]?.id || "";
     setFormData({
@@ -215,6 +223,7 @@ export default function AdminProductsPage() {
 
   // Open Edit Modal
   const openEditModal = (prod: any) => {
+    setLastSavedAt(null);
     setEditingProduct(prod);
 
     let parsedImgs: string[] = [];
@@ -338,21 +347,28 @@ export default function AdminProductsPage() {
         if (idx === 0) {
           setFormData((prev) => ({ ...prev, images: result.url }));
         }
+        toastSuccess(`Đã tải ảnh "${file.name}" lên thành công!`, "Tải ảnh hoàn tất");
       } else {
-        alert(result.message || "Lỗi tải ảnh lên");
+        toastError(result.message || "Lỗi tải ảnh lên", "Tải ảnh thất bại");
       }
-    } catch (err) {
-      alert("Lỗi tải ảnh lên máy chủ");
+    } catch (err: any) {
+      toastError("Lỗi tải ảnh lên máy chủ", "Lỗi mạng");
     } finally {
       setUploadingAngle(null);
     }
   };
 
   // Save Product (Create or Edit)
-  const handleSave = async (e?: React.FormEvent, forceStatus?: boolean) => {
+  const handleSave = async (e?: React.FormEvent, forceStatus?: boolean, closeModalAfter = false) => {
     if (e) e.preventDefault();
-    if (!formData.name.trim()) return alert("Vui lòng nhập tên sản phẩm");
-    if (!formData.categoryId) return alert("Vui lòng chọn danh mục sản phẩm");
+    if (!formData.name.trim()) {
+      toastWarning("Vui lòng nhập tên sản phẩm / tiêu đề bài viết!", "Thiếu thông tin");
+      return;
+    }
+    if (!formData.categoryId) {
+      toastWarning("Vui lòng chọn danh mục chính cho sản phẩm!", "Thiếu thông tin");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -385,58 +401,134 @@ export default function AdminProductsPage() {
       });
       const data = await res.json();
 
-      if (data.success) {
-        setModalOpen(false);
-        fetchProducts(true);
+      if (data.success && data.product) {
+        const savedProd = data.product;
+        const nowStr = new Date().toLocaleTimeString("vi-VN");
+        setLastSavedAt(nowStr);
+
+        // Update editingProduct state so subsequent clicks are treated as updates
+        setEditingProduct(savedProd);
+
+        // Update local products list immediately without reloading or flashing
+        setProducts((prev) => {
+          const idx = prev.findIndex((p) => p.id === savedProd.id);
+          if (idx >= 0) {
+            const next = [...prev];
+            next[idx] = { ...next[idx], ...savedProd };
+            return next;
+          }
+          return [savedProd, ...prev];
+        });
+
+        // Update sessionStorage cache quietly
+        try {
+          const cached = sessionStorage.getItem("locnam_admin_products_cache");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed.products)) {
+              const idx = parsed.products.findIndex((p: any) => p.id === savedProd.id);
+              if (idx >= 0) parsed.products[idx] = { ...parsed.products[idx], ...savedProd };
+              else parsed.products.unshift(savedProd);
+              sessionStorage.setItem("locnam_admin_products_cache", JSON.stringify(parsed));
+            }
+          }
+        } catch (_) {}
+
+        // Prominent toast notification
+        toastSuccess(
+          editingProduct
+            ? `Sản phẩm "${savedProd.name}" đã được cập nhật thành công lúc ${nowStr}!`
+            : `Đã xuất bản sản phẩm mới "${savedProd.name}" thành công!`,
+          "Cập nhật thành công 🎉"
+        );
+
+        if (closeModalAfter) {
+          setModalOpen(false);
+        }
       } else {
-        alert(data.message || "Lỗi lưu sản phẩm");
+        toastError(data.message || "Lỗi lưu sản phẩm", "Lưu thất bại");
       }
-    } catch (e) {
-      alert("Lỗi kết nối máy chủ");
+    } catch (e: any) {
+      toastError("Lỗi kết nối máy chủ: " + (e?.message || ""), "Lỗi hệ thống");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${name}"?`)) return;
-
-    try {
-      const res = await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (data.success) {
-        fetchProducts(true);
-      } else {
-        alert(data.message || "Lỗi xóa sản phẩm");
-      }
-    } catch (e) {
-      alert("Lỗi khi xóa");
-    }
+    showConfirm({
+      title: "Xác nhận xóa sản phẩm",
+      message: `Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${name}" khỏi cơ sở dữ liệu? Thao tác này không thể hoàn tác.`,
+      confirmText: "Xóa Sản Phẩm",
+      cancelText: "Hủy Bỏ",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
+          const data = await res.json();
+          if (data.success) {
+            setProducts((prev) => prev.filter((p) => p.id !== id));
+            // Update session cache
+            try {
+              const cached = sessionStorage.getItem("locnam_admin_products_cache");
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed.products)) {
+                  parsed.products = parsed.products.filter((p: any) => p.id !== id);
+                  sessionStorage.setItem("locnam_admin_products_cache", JSON.stringify(parsed));
+                }
+              }
+            } catch (_) {}
+            toastSuccess(`Đã xóa sản phẩm "${name}" thành công!`, "Đã xóa");
+          } else {
+            toastError(data.message || "Lỗi xóa sản phẩm", "Xóa thất bại");
+          }
+        } catch (e) {
+          toastError("Lỗi kết nối khi xóa sản phẩm", "Lỗi thao tác");
+        }
+      },
+    });
   };
 
   const toggleStock = async (prod: any) => {
+    const nextStatus = !prod.inStock;
+    setProducts((prev) =>
+      prev.map((p) => (p.id === prod.id ? { ...p, inStock: nextStatus } : p))
+    );
+    toastInfo(
+      `Đã chuyển "${prod.name}" sang trạng thái ${nextStatus ? "Còn hàng" : "Hết hàng"}`,
+      "Kho hàng"
+    );
     try {
       await fetch("/api/admin/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: prod.id, inStock: !prod.inStock }),
+        body: JSON.stringify({ id: prod.id, inStock: nextStatus }),
       });
-      fetchProducts();
     } catch (e) {
-      console.error(e);
+      toastError("Lỗi cập nhật trạng thái kho", "Lỗi hệ thống");
     }
   };
 
   const toggleFeatured = async (prod: any) => {
+    const nextFeatured = !prod.isFeatured;
+    setProducts((prev) =>
+      prev.map((p) => (p.id === prod.id ? { ...p, isFeatured: nextFeatured } : p))
+    );
+    toastSuccess(
+      nextFeatured
+        ? `Đã đánh dấu "${prod.name}" là sản phẩm nổi bật ⭐`
+        : `Đã bỏ đánh dấu nổi bật "${prod.name}"`,
+      "Sản phẩm nổi bật"
+    );
     try {
       await fetch("/api/admin/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: prod.id, isFeatured: !prod.isFeatured }),
+        body: JSON.stringify({ id: prod.id, isFeatured: nextFeatured }),
       });
-      fetchProducts();
     } catch (e) {
-      console.error(e);
+      toastError("Lỗi cập nhật sản phẩm nổi bật", "Lỗi hệ thống");
     }
   };
 
@@ -872,7 +964,7 @@ export default function AdminProductsPage() {
                             onClick={() => {
                               const fullUrl = `${window.location.origin}/san-pham/${activeCatSlug}/${editingProduct.slug}`;
                               navigator.clipboard.writeText(fullUrl);
-                              alert("Đã sao chép liên kết vào bộ nhớ tạm!");
+                              toastSuccess("Đã sao chép liên kết bài viết vào bộ nhớ tạm!", "Đã sao chép 📋");
                             }}
                             className="px-2.5 py-1 bg-[#152236] hover:bg-[#1d2f4a] text-[#d4af37] border border-[#d4af37]/30 rounded text-[11px] font-semibold flex items-center gap-1"
                           >
@@ -1112,32 +1204,58 @@ export default function AdminProductsPage() {
                       </div>
 
                       {/* Main Action Buttons */}
-                      <div className="pt-2 border-t border-[#202f45] space-y-2">
+                      <div className="pt-2 border-t border-[#202f45] space-y-2.5">
+                        {lastSavedAt && (
+                          <div className="flex items-center justify-between text-[11px] px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                            <span className="flex items-center gap-1.5 font-medium">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                              Đã lưu gần nhất:
+                            </span>
+                            <span className="font-mono font-bold">{lastSavedAt}</span>
+                          </div>
+                        )}
+
+                        {/* Button 1: Save and stay in modal */}
                         <button
                           type="button"
                           disabled={saving}
-                          onClick={() => handleSave(undefined, true)}
-                          className="w-full py-2.5 bg-gradient-to-r from-[#d4af37] via-[#e5b869] to-[#d4af37] hover:brightness-110 text-[#070c14] font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                          onClick={() => handleSave(undefined, undefined, false)}
+                          className="w-full py-2.5 bg-gradient-to-r from-[#d4af37] via-[#e5b869] to-[#d4af37] hover:brightness-110 text-[#070c14] font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.01]"
+                          title="Lưu các thay đổi và tiếp tục chỉnh sửa trên cửa sổ này"
                         >
                           <Save className="w-4 h-4" />
-                          <span>{saving ? "ĐANG LƯU..." : editingProduct ? "CẬP NHẬT SẢN PHẨM" : "XUẤT BẢN NGAY"}</span>
+                          <span>{saving ? "ĐANG LƯU THAY ĐỔI..." : editingProduct ? "CẬP NHẬT SẢN PHẨM" : "XUẤT BẢN SẢN PHẨM"}</span>
                         </button>
 
+                        {/* Button 2: Save and close modal */}
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => handleSave(undefined, undefined, true)}
+                          className="w-full py-2 bg-[#18283f] hover:bg-[#223756] text-[#d4af37] border border-[#d4af37]/30 hover:border-[#d4af37] rounded-xl font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
+                          title="Lưu tất cả thay đổi và đóng cửa sổ chỉnh sửa"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Lưu & Đóng Cửa Sổ</span>
+                        </button>
+
+                        {/* Button row 3: Quick drafts & Cancel */}
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            onClick={() => handleSave(undefined, false)}
+                            onClick={() => handleSave(undefined, false, false)}
                             disabled={saving}
                             className="flex-1 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 hover:text-white rounded-lg font-semibold text-xs transition-colors"
+                            title="Lưu và đặt trạng thái là Hết Hàng tạm thời"
                           >
-                            Lưu Bản Nháp
+                            Lưu Hết Hàng (Tạm)
                           </button>
                           <button
                             type="button"
                             onClick={() => setModalOpen(false)}
                             className="px-4 py-2 bg-[#1f2d42] hover:bg-[#2b3e5a] text-gray-400 hover:text-white rounded-lg font-semibold text-xs transition-colors"
                           >
-                            Hủy Bỏ
+                            Đóng
                           </button>
                         </div>
                       </div>
