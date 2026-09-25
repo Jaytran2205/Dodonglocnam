@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Sparkles,
   Award,
@@ -346,21 +346,79 @@ export function ProductStructuredDescription({
   description,
   productName,
 }: ProductStructuredDescriptionProps) {
-  if (!description || !description.trim()) {
-    return (
-      <div className="rounded-xl bg-[#070e17]/85 border border-[#1c2c3d] p-5">
-        <p className="text-xs sm:text-sm text-[#cbd5e1] leading-relaxed">
-          Tác phẩm <strong className="text-[#ffd700]">{productName}</strong> được trực tiếp chế tác bởi các nghệ nhân lão luyện của thương hiệu <strong className="text-[#ffd700]">Đồ Đồng Lộc Nam</strong> tại làng nghề đúc đồng truyền thống Ý Yên, Nam Định. Sản phẩm được đúc từ nguồn đồng chuẩn thanh khiết, trải qua đầy đủ quy trình nghiêm ngặt: tạo mẫu đắp đất, làm khuôn chịu nhiệt 2 lớp, nấu đồng ở nhiệt độ cao trên 1200 độ C, rót đồng nguyên khối, chạm trổ hoa văn tinh xảo thủ công và xử lý mạ vàng 24k hoặc phun bóng bảo vệ bề mặt chống oxy hóa vượt thời gian.
-        </p>
-      </div>
-    );
-  }
+  // Normalize and ensure full 5-section professional structure for all products
+  const formattedDescription = useMemo(() => {
+    if (!description || !description.trim()) {
+      return `### 1. Giới Thiệu Tác Phẩm & Cảm Quan Nghệ Thuật
+Tác phẩm **${productName}** được trực tiếp chế tác bởi các nghệ nhân lão luyện của thương hiệu **Đồ Đồng Lộc Nam** tại làng nghề đúc đồng truyền thống Ý Yên, Nam Định. Tác phẩm toát lên thần thái trang nghiêm, sang trọng và giá trị thẩm mỹ đỉnh cao với phom dáng cổ kính, đường nét uy nghi và hoa văn đục chạm tinh hoa sâu sắc.
+
+---
+
+### 2. Thông Số Quy Cách & Kỹ Thuật Chế Tác
+* **Tên tác phẩm:** ${productName}
+* **Chất liệu chế tác:** Đồng nguyên khối thanh khiết chuẩn tuổi Ý Yên
+* **Quy trình sản xuất:** Đúc thủ công liền khối, đục tỉa hoa văn thủ công, xử lý bề mặt kỹ lưỡng và phủ nano bảo vệ chống oxy hóa vượt thời gian.
+* **Xưởng sản xuất:** Đồ Đồng Lộc Nam - Nam Định
+
+---
+
+### 3. Ý Nghĩa Phong Thủy & Giá Trị Tâm Linh
+Đồ đồng mang hành Kim vững bền, giúp dung hòa ngũ hành không gian, thu hút sinh khí đất trời, giữ cho linh khí gia tiên luôn ấm cúng, phù hộ độ trì cho gia chủ bình an, vượng tài đắc lộc và hưng thịnh đời đời.
+
+---
+
+### 4. Vị Trí & Hướng Dẫn Bài Trí Chuẩn Phong Thủy
+* **Vị trí bài trí:** An vị tại vị trí trang trọng trong không gian phòng khách, phòng thờ hoặc phòng làm việc theo phong thủy phương vị tài lộc.
+* **Vệ sinh bảo quản:** Dùng khăn cotton mềm, khô ráo để lau bụi định kỳ. Tránh dùng chất tẩy rửa hóa học có tính axit mạnh.
+
+---
+
+### 5. Cam Kết Uy Tín Từ Thương Hiệu Đồ Đồng Lộc Nam
+1. **100% Đồng Chuẩn Thanh Khiết:** Cam kết đồng nguyên chất chuẩn làng nghề Ý Yên – Nam Định, bảo hành chất liệu phôi đồng trọn đời.
+2. **Kỹ Nghệ Thủ Công Tinh Hoa:** Mỗi tác phẩm là đứa con tinh thần được gọt giũa tỉ mỉ bởi các nghệ nhân giàu kinh nghiệm, đảm bảo tính độc bản và có hồn.
+3. **Giao Hàng & Kiểm Tra Tận Nơi:** Vận chuyển an toàn toàn quốc, quý khách được mở hàng kiểm tra ưng ý trước khi thanh toán.`;
+    }
+
+    if (!description.includes("###")) {
+      const introText = description.trim();
+      return `### 1. Giới Thiệu Tác Phẩm & Cảm Quan Nghệ Thuật
+${introText}
+
+---
+
+### 2. Thông Số Quy Cách & Kỹ Thuật Chế Tác
+* **Tên tác phẩm:** ${productName}
+* **Chất liệu chế tác:** Đồng nguyên khối thanh khiết chuẩn tuổi Ý Yên
+* **Quy trình sản xuất:** Đúc thủ công liền khối, đục tỉa hoa văn thủ công, xử lý bề mặt kỹ lưỡng và phủ nano bảo vệ chống oxy hóa vượt thời gian.
+* **Xưởng sản xuất:** Đồ Đồng Lộc Nam - Nam Định
+
+---
+
+### 3. Ý Nghĩa Phong Thủy & Giá Trị Tâm Linh
+Đồ đồng mang hành Kim vững bền, giúp dung hòa ngũ hành không gian, thu hút sinh khí đất trời, giữ cho linh khí gia tiên luôn ấm cúng, phù hộ độ trì cho gia chủ bình an, vượng tài đắc lộc và hưng thịnh đời đời.
+
+---
+
+### 4. Vị Trí & Hướng Dẫn Bài Trí Chuẩn Phong Thủy
+* **Vị trí bài trí:** An vị tại vị trí trang trọng trong không gian phòng khách, phòng thờ hoặc phòng làm việc theo phong thủy phương vị tài lộc.
+* **Vệ sinh bảo quản:** Dùng khăn cotton mềm, khô ráo để lau bụi định kỳ. Tránh dùng chất tẩy rửa hóa học có tính axit mạnh.
+
+---
+
+### 5. Cam Kết Uy Tín Từ Thương Hiệu Đồ Đồng Lộc Nam
+1. **100% Đồng Chuẩn Thanh Khiết:** Cam kết đồng nguyên chất chuẩn làng nghề Ý Yên – Nam Định, bảo hành chất liệu phôi đồng trọn đời.
+2. **Kỹ Nghệ Thủ Công Tinh Hoa:** Mỗi tác phẩm là đứa con tinh thần được gọt giũa tỉ mỉ bởi các nghệ nhân giàu kinh nghiệm, đảm bảo tính độc bản và có hồn.
+3. **Giao Hàng & Kiểm Tra Tận Nơi:** Vận chuyển an toàn toàn quốc, quý khách được mở hàng kiểm tra ưng ý trước khi thanh toán.`;
+    }
+
+    return description;
+  }, [description, productName]);
 
   // Parse sections based on "###" headers
-  const rawSections = description.split(/(?=###\s+)/g).filter(Boolean);
+  const rawSections = formattedDescription.split(/(?=###\s+)/g).filter(Boolean);
 
-  if (rawSections.length <= 1 && !description.includes("###")) {
-    const paragraphs = description.split(/\n\s*\n|\n(?=[*-]\s)/g).filter((p) => p.trim());
+  if (rawSections.length <= 1 && !formattedDescription.includes("###")) {
+    const paragraphs = formattedDescription.split(/\n\s*\n|\n(?=[*-]\s)/g).filter((p) => p.trim());
     return (
       <div className="space-y-4 text-xs sm:text-sm text-[#cbd5e1] leading-relaxed">
         {paragraphs.map((p, idx) => {

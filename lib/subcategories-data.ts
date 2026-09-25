@@ -45,14 +45,24 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
       { id: "am-nuoc", name: "Ấm nước", keyword: "ấm nước", image: "/images/do-tho-cung/am-nuoc.jpg" },
       {
         id: "chuong-chieng-dong",
-        aliases: ["chuong-tho", "chieng-khanh", "dai-hong-chung", "chuong-tho-nho-dai-hong-chung", "chieng-khanh-chuong-bat"],
-        name: "Chuông Chiêng Đồng",
+        aliases: [
+          "chuong-tho",
+          "chieng-khanh",
+          "dai-hong-chung",
+          "chuong-tho-nho-dai-hong-chung",
+          "chieng-khanh-chuong-bat",
+          "chuong-dong",
+          "chieng-dong",
+          "khanh-dong"
+        ],
+        name: "Chuông thờ nhỏ - Đại hồng chung - Chiêng - Khánh - Chuông bát",
         keyword: "chuông,chiêng,khánh,chuông bát,chuông thờ,đại hồng chung,chuông đồng,chiêng đồng,khánh đồng",
         image: "/images/do-tho-cung/chuong-tho.jpg",
         children: [
-          { id: "chieng-dong", name: "Chiêng Đồng", keyword: "chiêng,chiêng đồng,chieng dong", image: "/images/do-tho-cung/chieng-khanh.jpg" },
-          { id: "chuong-dong", name: "Chuông Đồng", keyword: "chuông,chuông đồng,chuong dong,chuông thờ", image: "/images/do-tho-cung/chuong-tho.jpg" },
-          { id: "khanh-dong", name: "Khánh Đồng", keyword: "khánh,khánh đồng,khanh dong", image: "/images/do-tho-cung/chieng-khanh.jpg" },
+          { id: "chuong-dong", aliases: ["chuong-tho", "chuong-tho-nho-dai-hong-chung"], name: "Chuông Đồng", keyword: "chuông đồng,chuông thờ,chuong dong,chuong tho,chuông thờ nhỏ", image: "/images/do-tho-cung/chuong-tho.jpg" },
+          { id: "chieng-dong", aliases: ["chieng-khanh"], name: "Chiêng Đồng", keyword: "chiêng,chiêng đồng,chieng dong", image: "/images/do-tho-cung/chieng-khanh.jpg" },
+          { id: "khanh-dong", aliases: ["khanh-dong-tho"], name: "Khánh Đồng", keyword: "khánh,khánh đồng,khanh dong", image: "/images/do-tho-cung/chieng-khanh.jpg" },
+          { id: "chuong-bat", aliases: ["chuong-bat-dong"], name: "Chuông Bát", keyword: "chuông bát,chuong bat,bát chuông", image: "/images/do-tho-cung/chuong-tho.jpg" },
           { id: "dai-hong-chung", name: "Đại Hồng Chung", keyword: "đại hồng chung,chuông chùa,đúc chuông", image: "/images/do-tho-cung/dai-hong-chung.jpg" },
         ],
       },
@@ -157,7 +167,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
       {
         id: "tuong-than-thanh",
         name: "Tượng thần - thánh",
-        keyword: "cửu trùng thiên,mẫu cửu trùng thiên,bà chúa sơn trang,sơn trang,quản gia,tượng quản gia,mẫu cửu trùng,mau cuu trung thien,ba chua son trang,quan gia",
+        keyword: "cửu trùng thiên,mẫu cửu trùng thiên,bà chúa sơn trang,sơn trang,mẫu cửu trùng,mau cuu trung thien,ba chua son trang,thánh mẫu,thần tài thổ địa,thần tài,ông hoàng bảy,ông hoàng mười,đức thánh trần",
         image: "/images/products/tuong-than-thanh/tuong-mau-cuu-trung-thien-duc-bang-dong-dat-vang-24k/img_01.jpg",
       },
       {

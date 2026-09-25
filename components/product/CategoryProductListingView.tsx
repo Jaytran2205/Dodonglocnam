@@ -290,11 +290,21 @@ export function CategoryProductListingView({
           return false;
         }
 
-        // Special exclusion: Tượng Thần - Thánh must NOT include Quan Công, Trần Hưng Đạo, Thần Tài Voi/Ngựa
+        // Special exclusion: Tượng Thần - Thánh must NOT include Quan Công, Trần Hưng Đạo, Thần Tài Voi/Ngựa, Quản gia
         const isThanThanhView =
           activeDetailCategory?.id === "tuong-than-thanh" ||
           activeSubCategory?.id === "tuong-than-thanh";
-        if (isThanThanhView && (pName.includes("quan công") || pName.includes("quan vân trường") || pName.includes("trần hưng đạo") || pName.includes("trần quốc tuấn") || pName.includes("voi") || pName.includes("ngựa thần tài"))) {
+        if (
+          isThanThanhView &&
+          (pName.includes("quan công") ||
+            pName.includes("quan vân trường") ||
+            pName.includes("trần hưng đạo") ||
+            pName.includes("trần quốc tuấn") ||
+            pName.includes("voi") ||
+            pName.includes("ngựa thần tài") ||
+            pName.includes("quản gia") ||
+            pNameClean.includes("quan gia"))
+        ) {
           return false;
         }
 
