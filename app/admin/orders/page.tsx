@@ -23,8 +23,10 @@ import {
   FileSpreadsheet,
   Sparkles
 } from "lucide-react";
+import { useToast } from "@/components/admin/AdminToast";
 
 export default function AdminOrdersPage() {
+  const { toastSuccess, toastError, toastInfo, confirm: showConfirm } = useToast();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -62,24 +64,34 @@ export default function AdminOrdersPage() {
         if (selectedOrder && selectedOrder.id === id) {
           setSelectedOrder({ ...selectedOrder, status: newStatus });
         }
+        toastSuccess(`Đã cập nhật đơn hàng sang trạng thái ${newStatus}!`, "Cập nhật thành công");
       }
     } catch (e) {
-      alert("Lỗi cập nhật trạng thái đơn hàng");
+      toastError("Lỗi cập nhật trạng thái đơn hàng", "Lỗi thao tác");
     }
   };
 
   const handleDelete = async (id: string, code: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa đơn hàng #${code}?`)) return;
-    try {
-      const res = await fetch(`/api/admin/orders?id=${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (data.success) {
-        fetchOrders();
-        if (selectedOrder?.id === id) setSelectedOrder(null);
-      }
-    } catch (e) {
-      alert("Lỗi khi xóa đơn hàng");
-    }
+    showConfirm({
+      title: "Xác nhận xóa đơn hàng",
+      message: `Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng #${code}? Thao tác này không thể hoàn tác.`,
+      confirmText: "Xóa Đơn Hàng",
+      cancelText: "Hủy Bỏ",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/orders?id=${id}`, { method: "DELETE" });
+          const data = await res.json();
+          if (data.success) {
+            fetchOrders();
+            if (selectedOrder?.id === id) setSelectedOrder(null);
+            toastSuccess(`Đã xóa đơn hàng #${code} thành công!`, "Đã xóa");
+          }
+        } catch (e) {
+          toastError("Lỗi khi xóa đơn hàng", "Lỗi thao tác");
+        }
+      },
+    });
   };
 
   const exportCSV = () => {

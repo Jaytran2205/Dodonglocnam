@@ -23,8 +23,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DEFAULT_HIERARCHICAL_CATEGORIES, MainCategoryData, SubCategoryItem } from "@/lib/subcategories-data";
+import { useToast } from "@/components/admin/AdminToast";
 
 export default function AdminCategoriesPage() {
+  const { toastSuccess, toastError, toastWarning, confirm: showConfirm } = useToast();
   // Navigation Tab
   const [activeTab, setActiveTab] = useState<"main" | "subcategories">("subcategories");
 
@@ -120,7 +122,7 @@ export default function AdminCategoriesPage() {
 
   const handleSaveMain = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name) return alert("Vui lòng nhập tên danh mục");
+    if (!formData.name) return toastWarning("Vui lòng nhập tên danh mục!", "Thiếu thông tin");
 
     setSavingMain(true);
     try {
@@ -133,34 +135,39 @@ export default function AdminCategoriesPage() {
       if (data.success) {
         setModalOpen(false);
         fetchCategories();
+        toastSuccess(editingCat ? `Đã cập nhật danh mục "${formData.name}"!` : `Đã tạo danh mục mới "${formData.name}"!`, "Thành công 🎉");
       } else {
-        alert(data.message || "Lỗi lưu danh mục");
+        toastError(data.message || "Lỗi lưu danh mục", "Lỗi lưu");
       }
     } catch (e) {
-      alert("Lỗi kết nối máy chủ");
+      toastError("Lỗi kết nối máy chủ", "Lỗi mạng");
     } finally {
       setSavingMain(false);
     }
   };
 
   const handleDeleteMain = async (id: string, name: string) => {
-    if (
-      !confirm(
-        `Bạn có chắc muốn xóa danh mục "${name}"? Các sản phẩm thuộc danh mục này có thể bị ảnh hưởng.`
-      )
-    )
-      return;
-    try {
-      const res = await fetch(`/api/admin/categories?id=${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (data.success) {
-        fetchCategories();
-      } else {
-        alert(data.message || "Lỗi xóa danh mục");
-      }
-    } catch (e) {
-      alert("Lỗi khi xóa");
-    }
+    showConfirm({
+      title: "Xác nhận xóa danh mục",
+      message: `Bạn có chắc muốn xóa danh mục "${name}"? Các sản phẩm thuộc danh mục này có thể bị ảnh hưởng.`,
+      confirmText: "Xóa Danh Mục",
+      cancelText: "Hủy Bỏ",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/categories?id=${id}`, { method: "DELETE" });
+          const data = await res.json();
+          if (data.success) {
+            fetchCategories();
+            toastSuccess(`Đã xóa danh mục "${name}" thành công!`, "Đã xóa");
+          } else {
+            toastError(data.message || "Lỗi xóa danh mục", "Xóa thất bại");
+          }
+        } catch (e) {
+          toastError("Lỗi kết nối máy chủ khi xóa", "Lỗi mạng");
+        }
+      },
+    });
   };
 
   // Handlers for Subcategories (Tab 2)
@@ -206,11 +213,12 @@ export default function AdminCategoriesPage() {
       const data = await res.json();
       if (data.success && data.url) {
         handleUpdateCategoryBanner(data.url);
+        toastSuccess("Đã cập nhật ảnh banner danh mục!", "Tải ảnh thành công");
       } else {
-        alert(data.message || "Tải ảnh thất bại");
+        toastError(data.message || "Tải ảnh thất bại", "Lỗi tải ảnh");
       }
     } catch {
-      alert("Lỗi tải ảnh lên máy chủ");
+      toastError("Lỗi tải ảnh lên máy chủ", "Lỗi mạng");
     } finally {
       setUploadingSubImage(false);
       e.target.value = "";
@@ -257,16 +265,25 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDeleteSub = (subId: string, subName: string) => {
-    if (!confirm(`Bạn có chắc muốn xóa thẻ con "${subName}"?`)) return;
-    setCatalog((prev) =>
-      prev.map((cat) => {
-        if (cat.slug !== selectedMainSlug) return cat;
-        return {
-          ...cat,
-          subCategories: cat.subCategories.filter((s) => s.id !== subId),
-        };
-      })
-    );
+    showConfirm({
+      title: "Xác nhận xóa thẻ con",
+      message: `Bạn có chắc muốn xóa thẻ nhánh con "${subName}" khỏi danh mục hiện tại?`,
+      confirmText: "Xóa Thẻ Con",
+      cancelText: "Hủy Bỏ",
+      type: "danger",
+      onConfirm: () => {
+        setCatalog((prev) =>
+          prev.map((cat) => {
+            if (cat.slug !== selectedMainSlug) return cat;
+            return {
+              ...cat,
+              subCategories: cat.subCategories.filter((s) => s.id !== subId),
+            };
+          })
+        );
+        toastSuccess(`Đã xóa thẻ con "${subName}"!`, "Đã xóa");
+      },
+    });
   };
 
   const handleUploadImageForSub = async (
@@ -292,11 +309,12 @@ export default function AdminCategoriesPage() {
         } else {
           setNewSubData((prev) => ({ ...prev, image: data.url }));
         }
+        toastSuccess(`Đã tải ảnh "${file.name}" lên thành công!`, "Tải ảnh");
       } else {
-        alert(data.message || "Tải ảnh thất bại");
+        toastError(data.message || "Tải ảnh thất bại", "Lỗi tải ảnh");
       }
     } catch (err) {
-      alert("Lỗi tải ảnh lên máy chủ");
+      toastError("Lỗi tải ảnh lên máy chủ", "Lỗi mạng");
     } finally {
       setUploadingSubImage(false);
       e.target.value = "";
@@ -306,7 +324,7 @@ export default function AdminCategoriesPage() {
   const handleAddSub = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubData.name.trim()) {
-      return alert("Vui lòng nhập tên thẻ con!");
+      return toastWarning("Vui lòng nhập tên thẻ con!", "Thiếu thông tin");
     }
 
     const newId =
@@ -337,6 +355,7 @@ export default function AdminCategoriesPage() {
     );
 
     setSubModalOpen(false);
+    toastSuccess(`Đã thêm thẻ nhánh "${newItem.name}" thành công!`, "Thêm thẻ nhánh");
     setNewSubData({
       name: "",
       keyword: "",
@@ -356,25 +375,30 @@ export default function AdminCategoriesPage() {
       const data = await res.json();
       if (data.success) {
         setSubSaveSuccess(true);
+        toastSuccess("Đã lưu toàn bộ cấu hình cây danh mục nhánh thành công!", "Cập nhật thành công 🎉");
         setTimeout(() => setSubSaveSuccess(false), 4000);
       } else {
-        alert(data.message || "Lỗi lưu cấu hình thẻ con");
+        toastError(data.message || "Lỗi lưu cấu hình thẻ con", "Lỗi lưu");
       }
     } catch (e: any) {
-      alert("Lỗi kết nối khi lưu: " + e.message);
+      toastError("Lỗi kết nối khi lưu: " + e.message, "Lỗi mạng");
     } finally {
       setSavingSub(false);
     }
   };
 
   const handleResetToDefault = () => {
-    if (
-      !confirm(
-        "Bạn có chắc muốn khôi phục toàn bộ danh sách thẻ con về mặc định ban đầu? Các thay đổi chưa lưu sẽ bị hủy."
-      )
-    )
-      return;
-    setCatalog(DEFAULT_HIERARCHICAL_CATEGORIES);
+    showConfirm({
+      title: "Xác nhận khôi phục mặc định",
+      message: "Bạn có chắc muốn khôi phục toàn bộ danh sách thẻ con về mặc định ban đầu? Các thay đổi chưa lưu sẽ bị hủy.",
+      confirmText: "Khôi Phục Mặc Định",
+      cancelText: "Hủy Bỏ",
+      type: "warning",
+      onConfirm: () => {
+        setCatalog(DEFAULT_HIERARCHICAL_CATEGORIES);
+        toastSuccess("Đã khôi phục cây danh mục về cấu trúc mặc định Lộc Nam!", "Khôi phục thành công");
+      },
+    });
   };
 
   return (

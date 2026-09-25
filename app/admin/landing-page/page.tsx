@@ -22,8 +22,10 @@ import {
   Award,
   Upload,
 } from "lucide-react";
+import { useToast } from "@/components/admin/AdminToast";
 
 export default function AdminLandingPageManager() {
+  const { toastSuccess, toastError, toastWarning, confirm: showConfirm } = useToast();
   const [settings, setSettings] = useState<any>({
     site_name: "Đồ Đồng Lộc Nam - Quà Tặng Tinh Hoa, Nâng Tầm Giá Trị",
     slogan: "Quà tặng tinh hoa - Nâng tầm giá trị",
@@ -280,14 +282,23 @@ export default function AdminLandingPageManager() {
 
   const handleDeleteBanner = (index: number) => {
     if (sliderBanners.length <= 1) {
-      alert("Cần giữ lại ít nhất 1 banner trong hệ thống!");
+      toastWarning("Cần giữ lại ít nhất 1 banner trong hệ thống!", "Không thể xóa");
       return;
     }
-    if (!confirm("Bạn có chắc chắn muốn xóa banner này?")) return;
-    setSliderBanners((prev) => {
-      const updated = prev.filter((_, idx) => idx !== index);
-      handleChange("home_slider_banners", JSON.stringify(updated));
-      return updated;
+    showConfirm({
+      title: "Xác nhận xóa banner",
+      message: "Bạn có chắc chắn muốn xóa banner này khỏi hệ thống trang chủ?",
+      confirmText: "Xóa Banner",
+      cancelText: "Hủy Bỏ",
+      type: "danger",
+      onConfirm: () => {
+        setSliderBanners((prev) => {
+          const updated = prev.filter((_, idx) => idx !== index);
+          handleChange("home_slider_banners", JSON.stringify(updated));
+          return updated;
+        });
+        toastSuccess("Đã xóa banner khỏi danh sách!", "Đã xóa");
+      },
     });
   };
 
@@ -320,11 +331,12 @@ export default function AdminLandingPageManager() {
       const data = await res.json();
       if (data.success && data.url) {
         handleUpdateBanner(index, "image", data.url);
+        toastSuccess(`Đã tải ảnh banner "${file.name}" lên thành công!`, "Tải ảnh");
       } else {
-        alert(data.message || "Tải ảnh thất bại");
+        toastError(data.message || "Tải ảnh thất bại", "Lỗi tải ảnh");
       }
     } catch {
-      alert("Lỗi tải ảnh lên máy chủ");
+      toastError("Lỗi tải ảnh lên máy chủ", "Lỗi mạng");
     } finally {
       setUploadingKey(null);
     }
@@ -342,11 +354,12 @@ export default function AdminLandingPageManager() {
       const data = await res.json();
       if (data.success && data.url) {
         handleChange(key, data.url);
+        toastSuccess(`Đã tải ảnh "${file.name}" lên thành công!`, "Tải ảnh");
       } else {
-        alert(data.message || "Tải ảnh thất bại");
+        toastError(data.message || "Tải ảnh thất bại", "Lỗi tải ảnh");
       }
     } catch {
-      alert("Lỗi tải ảnh lên máy chủ");
+      toastError("Lỗi tải ảnh lên máy chủ", "Lỗi mạng");
     } finally {
       setUploadingKey(null);
     }
@@ -405,12 +418,13 @@ export default function AdminLandingPageManager() {
       if (data.success) {
         setModifiedKeys(new Set());
         setSavedSuccess(true);
+        toastSuccess("Đã lưu toàn bộ cài đặt giao diện trang chủ thành công!", "Cập nhật thành công 🎉");
         setTimeout(() => setSavedSuccess(false), 4000);
       } else {
-        alert(data.message || "Lỗi lưu cài đặt");
+        toastError(data.message || "Lỗi lưu cài đặt", "Lưu thất bại");
       }
     } catch (e) {
-      alert("Lỗi kết nối máy chủ");
+      toastError("Lỗi kết nối máy chủ khi lưu", "Lỗi mạng");
     } finally {
       setSaving(false);
     }
