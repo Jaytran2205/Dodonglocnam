@@ -13,9 +13,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const isCallerSuperAdmin = isHiddenSuperAdmin(session.email) || isHiddenSuperAdmin(session.name);
+    const isCallerSuperAdmin =
+      isHiddenSuperAdmin(session.email) ||
+      isHiddenSuperAdmin(session.name) ||
+      ((session as any).username && isHiddenSuperAdmin((session as any).username));
 
-    // If caller is NOT jaytran225, hide jaytran225 completely
+    // If caller is NOT jaytran225, strictly exclude jaytran225 at DB query level
     const where: any = {};
     if (!isCallerSuperAdmin) {
       where.NOT = [
@@ -24,7 +27,7 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const users = await prisma.user.findMany({
+    let users = await prisma.user.findMany({
       where,
       select: {
         id: true,
@@ -42,6 +45,17 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { createdAt: "asc" },
     });
+
+    // 100% Ironclad Memory Filter:
+    // If the caller is NOT jaytran225, unconditionally remove any matching account from the array
+    if (!isCallerSuperAdmin) {
+      users = users.filter(
+        (u) =>
+          !isHiddenSuperAdmin(u.email) &&
+          !isHiddenSuperAdmin(u.name) &&
+          !isHiddenSuperAdmin(u.username)
+      );
+    }
 
     return NextResponse.json({
       success: true,

