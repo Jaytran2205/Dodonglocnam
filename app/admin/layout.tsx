@@ -37,20 +37,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
-    if (isLoginPage) return;
-
-    if (!adminUser) {
-      fetch("/api/admin/auth/me")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setAdminUser(data.user);
-          } else {
-            router.push("/admin/login");
-          }
-        })
-        .catch(() => router.push("/admin/login"));
+    if (isLoginPage) {
+      setAdminUser(null);
+      return;
     }
+
+    // Always fetch latest authenticated user session
+    fetch("/api/admin/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setAdminUser(data.user);
+        } else {
+          window.location.href = "/admin/login";
+        }
+      })
+      .catch(() => {
+        window.location.href = "/admin/login";
+      });
 
     // Fetch pending orders count for badge once
     fetch("/api/admin/orders?status=PENDING")
@@ -61,15 +65,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       })
       .catch(() => {});
-  }, [isLoginPage, router]);
+  }, [pathname, isLoginPage]);
 
   if (isLoginPage) {
     return <>{children}</>;
   }
 
   const handleLogout = async () => {
-    await fetch("/api/admin/auth/logout", { method: "POST" });
-    router.push("/admin/login");
+    try {
+      await fetch("/api/admin/auth/logout", { method: "POST" });
+    } catch {}
+    setAdminUser(null);
+    window.location.href = "/admin/login";
   };
 
   const navItems = [

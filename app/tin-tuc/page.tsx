@@ -8,6 +8,10 @@ import { FloatingContact } from "@/components/common/FloatingContact";
 import { articlesData } from "./articlesData";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { Calendar, Clock, ChevronRight, BookOpen, Sparkles } from "lucide-react";
+import prisma from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Tin Tức & Cẩm Nang Đồ Đồng Phong Thủy | Đồ Đồng Lộc Nam",
@@ -51,7 +55,51 @@ export const metadata: Metadata = {
   },
 };
 
-export default function TinTucPage() {
+export default async function TinTucPage() {
+  let allArticles: Array<{
+    slug: string;
+    title: string;
+    summary: string;
+    category: string;
+    date: string;
+    image: string;
+    readTime: string;
+    keywords: string[];
+  }> = [];
+
+  try {
+    const dbArticles = await prisma.article.findMany({
+      where: { isPublished: true },
+      orderBy: { publishedAt: "desc" },
+    });
+
+    const mappedDb = dbArticles.map((a) => {
+      const keywords = a.tags
+        ? a.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : ["đồ đồng lộc nam", "tin tức"];
+      return {
+        slug: a.slug,
+        title: a.title,
+        summary: a.summary || "",
+        category: a.category || "KIẾN THỨC ĐỒ ĐỒNG",
+        date: new Date(a.publishedAt || a.createdAt).toLocaleDateString("vi-VN"),
+        image: a.thumbnail || "/images/do-tho-cung.jpg",
+        readTime: "5 phút đọc",
+        keywords,
+      };
+    });
+
+    const dbSlugs = new Set(mappedDb.map((a) => a.slug));
+    const extraStatic = articlesData.filter((a) => !dbSlugs.has(a.slug));
+    allArticles = [...mappedDb, ...extraStatic];
+  } catch (e) {
+    allArticles = articlesData;
+  }
+
+  if (allArticles.length === 0) {
+    allArticles = articlesData;
+  }
+
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#fbf9f5] text-[#1a1a1a]">
       {/* Breadcrumb Schema for Google */}
@@ -94,16 +142,16 @@ export default function TinTucPage() {
         </div>
 
         {/* Featured Top Article */}
-        {articlesData.length > 0 && (
+        {allArticles.length > 0 && (
           <div className="mb-10">
             <Link
-              href={`/tin-tuc/${articlesData[0].slug}`}
+              href={`/tin-tuc/${allArticles[0].slug}`}
               className="group grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white rounded-2xl border border-[#e2d5bd] overflow-hidden shadow-sm hover:border-[#b8860b] hover:shadow-md transition-all p-6"
             >
               <div className="lg:col-span-6 aspect-[16/10] overflow-hidden rounded-xl bg-[#0c1825] border border-[#e2d5bd] relative">
                 <img
-                  src={articlesData[0].image}
-                  alt={articlesData[0].title}
+                  src={allArticles[0].image}
+                  alt={allArticles[0].title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <span className="absolute top-3 left-3 bg-[#0c1825] text-[#d4af37] text-[10px] font-bold uppercase px-2.5 py-1 rounded border border-[#c59b4e]/50">
@@ -115,24 +163,24 @@ export default function TinTucPage() {
                   <div className="flex items-center gap-4 text-xs text-[#6b7280]">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-[#b8860b]" />
-                      <span>{articlesData[0].date}</span>
+                      <span>{allArticles[0].date}</span>
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-[#b8860b]" />
-                      <span>{articlesData[0].readTime}</span>
+                      <span>{allArticles[0].readTime}</span>
                     </span>
                   </div>
                   <h2 className="font-serif font-bold text-xl sm:text-2xl group-hover:text-[#b8860b] transition-colors leading-snug text-[#0c1825]">
-                    {articlesData[0].title}
+                    {allArticles[0].title}
                   </h2>
                   <p className="text-xs sm:text-sm text-[#4b5563] leading-relaxed font-light">
-                    {articlesData[0].summary}
+                    {allArticles[0].summary}
                   </p>
                 </div>
 
                 <div className="pt-4 flex items-center justify-between border-t border-gray-100 mt-4">
                   <div className="flex flex-wrap gap-1.5">
-                    {articlesData[0].keywords.slice(0, 3).map((kw, i) => (
+                    {allArticles[0].keywords.slice(0, 3).map((kw, i) => (
                       <span key={i} className="text-[10px] bg-[#fbf9f5] border border-[#e2d5bd] px-2 py-0.5 rounded text-[#6b7280]">
                         #{kw}
                       </span>
@@ -150,7 +198,7 @@ export default function TinTucPage() {
 
         {/* Articles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {articlesData.slice(1).map((article) => (
+          {allArticles.slice(1).map((article) => (
             <Link
               key={article.slug}
               href={`/tin-tuc/${article.slug}`}
@@ -170,7 +218,7 @@ export default function TinTucPage() {
 
                 <div className="flex items-center gap-3 text-[11px] text-[#6b7280] mb-1.5">
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-[#b8860b]" />
+                    <Calendar className="w-3.5 h-3.5 text-[#b8860b]" />
                     <span>{article.date}</span>
                   </span>
                   <span>•</span>
@@ -181,19 +229,18 @@ export default function TinTucPage() {
                   {article.title}
                 </h3>
 
-                <p className="text-xs text-[#4b5563] line-clamp-3 leading-relaxed font-light">
+                <p className="text-xs text-[#4b5563] line-clamp-3 leading-relaxed font-light mb-4">
                   {article.summary}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-gray-100 mt-3 flex items-center justify-between text-[#b8860b] text-xs font-serif font-semibold">
-                <span className="flex items-center gap-1 text-[11px] text-[#6b7280]">
-                  <Sparkles className="w-3 h-3 text-[#d4af37]" />
-                  <span>Đồ Đồng Lộc Nam</span>
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-between mt-auto">
+                <span className="text-[10px] text-[#b8860b] uppercase font-bold tracking-wider">
+                  {article.category}
                 </span>
-                <span className="inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                <span className="inline-flex items-center text-xs font-serif font-semibold text-[#0c1825] group-hover:text-[#b8860b] transition-colors">
                   <span>Chi tiết</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                 </span>
               </div>
             </Link>
@@ -203,7 +250,7 @@ export default function TinTucPage() {
 
       <LocNamPartners />
       <ModernFooter />
-      <FloatingContact hotline="0846 699 997" zalo="0846699997" />
+      <FloatingContact hotline="0836 122 222" hotline2="0846 699 997" zalo="0846699997" />
     </div>
   );
 }

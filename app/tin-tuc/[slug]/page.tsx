@@ -6,9 +6,13 @@ import { Metadata } from "next";
 import { ModernHeader } from "@/components/common/ModernHeader";
 import { ModernFooter } from "@/components/common/ModernFooter";
 import { FloatingContact } from "@/components/common/FloatingContact";
-import { articlesData } from "../articlesData";
+import { articlesData, Article } from "../articlesData";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/JsonLd";
 import { Calendar, Clock, ChevronRight, Phone, MessageCircle, BookOpen, Tag } from "lucide-react";
+import prisma from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{
@@ -17,9 +21,19 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return articlesData.map((a) => ({
-    slug: a.slug,
-  }));
+  const staticSlugs = articlesData.map((a) => ({ slug: a.slug }));
+  try {
+    const dbArticles = await prisma.article.findMany({
+      where: { isPublished: true },
+      select: { slug: true },
+    });
+    const dbSlugs = dbArticles.map((a) => ({ slug: a.slug }));
+    const allSlugs = [...staticSlugs, ...dbSlugs];
+    const uniqueSlugs = Array.from(new Set(allSlugs.map((s) => s.slug))).map((slug) => ({ slug }));
+    return uniqueSlugs;
+  } catch {
+    return staticSlugs;
+  }
 }
 
 function formatIsoDate(dateStr: string) {
@@ -31,9 +45,110 @@ function formatIsoDate(dateStr: string) {
   return "2026-08-27T08:00:00+07:00";
 }
 
+interface NormalizedArticle {
+  id?: string;
+  slug: string;
+  title: string;
+  summary: string;
+  category: string;
+  date: string;
+  author: string;
+  image: string;
+  readTime: string;
+  keywords: string[];
+  content: string[] | string;
+  isHtml?: boolean;
+}
+
+async function getArticle(slug: string): Promise<NormalizedArticle | null> {
+  const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
+
+  // 1. Try finding in Database
+  try {
+    const dbArt = await prisma.article.findFirst({
+      where: {
+        OR: [
+          { slug: cleanSlug },
+          { slug: { equals: cleanSlug, mode: "insensitive" } },
+        ],
+      },
+    });
+
+    if (dbArt) {
+      const rawContent = dbArt.content || "";
+      const isHtml = /<\/?[a-z][\s\S]*>/i.test(rawContent);
+
+      let contentData: string[] | string = rawContent;
+      if (!isHtml) {
+        if (rawContent.startsWith("[") && rawContent.endsWith("]")) {
+          try {
+            const parsed = JSON.parse(rawContent);
+            if (Array.isArray(parsed)) contentData = parsed;
+          } catch {
+            contentData = rawContent.split(/\r?\n\r?\n/).map((s) => s.trim()).filter(Boolean);
+          }
+        } else {
+          contentData = rawContent.split(/\r?\n\r?\n/).map((s) => s.trim()).filter(Boolean);
+        }
+      }
+
+      let keywords: string[] = [];
+      if (dbArt.tags) {
+        keywords = dbArt.tags.split(",").map((t) => t.trim()).filter(Boolean);
+      }
+      if (keywords.length === 0) {
+        keywords = ["đồ đồng lộc nam", "kiến thức đồ đồng", "phong thủy thờ cúng"];
+      }
+
+      const formattedDate = new Date(dbArt.publishedAt || dbArt.createdAt).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+
+      return {
+        id: dbArt.id,
+        slug: dbArt.slug,
+        title: dbArt.title,
+        summary: dbArt.summary || "",
+        category: dbArt.category || "KIẾN THỨC ĐỒ ĐỒNG",
+        date: formattedDate,
+        author: "Nghệ Nhân Lộc Nam",
+        image: dbArt.thumbnail || "/images/do-tho-cung.jpg",
+        readTime: "5 phút đọc",
+        keywords,
+        content: contentData,
+        isHtml,
+      };
+    }
+  } catch (error) {
+    console.error("Database fetch error for article:", error);
+  }
+
+  // 2. Fallback to static articlesData
+  const staticArt = articlesData.find((a) => a.slug.toLowerCase() === cleanSlug);
+  if (staticArt) {
+    return {
+      slug: staticArt.slug,
+      title: staticArt.title,
+      summary: staticArt.summary,
+      category: staticArt.category,
+      date: staticArt.date,
+      author: staticArt.author,
+      image: staticArt.image,
+      readTime: staticArt.readTime,
+      keywords: staticArt.keywords,
+      content: staticArt.content,
+      isHtml: false,
+    };
+  }
+
+  return null;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = articlesData.find((a) => a.slug === slug);
+  const article = await getArticle(slug);
   if (!article) return { title: "Không tìm thấy bài viết | Đồ Đồng Lộc Nam" };
 
   const url = `https://www.quatanglocnam.com/tin-tuc/${article.slug}`;
@@ -73,10 +188,37 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticleDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const article = articlesData.find((a) => a.slug === slug);
+  const article = await getArticle(slug);
   if (!article) notFound();
 
-  const related = articlesData.filter((a) => a.slug !== slug).slice(0, 3);
+  // Related articles from DB and static list
+  let related: Array<{ slug: string; title: string; image: string }> = [];
+  try {
+    const dbRelated = await prisma.article.findMany({
+      where: {
+        isPublished: true,
+        slug: { not: article.slug },
+      },
+      take: 3,
+      orderBy: { publishedAt: "desc" },
+      select: { slug: true, title: true, thumbnail: true },
+    });
+    if (dbRelated.length > 0) {
+      related = dbRelated.map((r) => ({
+        slug: r.slug,
+        title: r.title,
+        image: r.thumbnail || "/images/do-tho-cung.jpg",
+      }));
+    }
+  } catch {}
+
+  if (related.length === 0) {
+    related = articlesData
+      .filter((a) => a.slug !== article.slug)
+      .slice(0, 3)
+      .map((a) => ({ slug: a.slug, title: a.title, image: a.image }));
+  }
+
   const articleUrl = `https://www.quatanglocnam.com/tin-tuc/${article.slug}`;
 
   return (
@@ -118,14 +260,14 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                   "@type": "PostalAddress",
                   "addressLocality": "Ý Yên",
                   "addressRegion": "Nam Định",
-                  "addressCountry": "VN"
-                }
+                  "addressCountry": "VN",
+                },
               },
               "hasOccupation": {
                 "@type": "Occupation",
                 "name": "Nghệ nhân đúc đồng",
-                "experienceRequirements": "40 năm kinh nghiệm"
-              }
+                "experienceRequirements": "40 năm kinh nghiệm",
+              },
             }),
           }}
         />
@@ -173,102 +315,117 @@ export default async function ArticleDetailPage({ params }: PageProps) {
           </h1>
 
           {/* Summary Box */}
-          <div className="bg-[#fbf9f5] p-4 rounded-xl border-l-4 border-[#b8860b] mb-6 text-xs sm:text-sm text-[#4b5563] italic leading-relaxed">
-            {article.summary}
-          </div>
+          {article.summary && (
+            <div className="bg-[#fbf9f5] p-4 rounded-xl border-l-4 border-[#b8860b] mb-6 text-xs sm:text-sm text-[#4b5563] italic leading-relaxed">
+              {article.summary}
+            </div>
+          )}
 
           {/* Featured Image */}
-          <div className="aspect-[16/9] max-h-[440px] rounded-xl overflow-hidden bg-[#0c1825] border border-[#e2d5bd] mb-6 shadow-sm flex items-center justify-center">
-            <img
-              src={article.image}
-              alt={article.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
+          {article.image && (
+            <div className="aspect-[16/9] max-h-[440px] rounded-xl overflow-hidden bg-[#0c1825] border border-[#e2d5bd] mb-6 shadow-sm flex items-center justify-center">
+              <img
+                src={article.image}
+                alt={article.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
 
           {/* Article Body */}
-          <div className="space-y-4 text-xs sm:text-sm text-[#374151] leading-relaxed">
-            {article.content.map((paragraph, index) => {
-              if (paragraph.startsWith("## ")) {
-                return (
-                  <h2 key={index} className="font-serif font-bold text-lg sm:text-xl text-[#0c1825] pt-6 pb-2 border-b border-[#e2d5bd] text-primary">
-                    {paragraph.replace("## ", "")}
-                  </h2>
-                );
-              }
-              if (paragraph.startsWith("### ")) {
-                return (
-                  <h3 key={index} className="font-serif font-bold text-base sm:text-lg text-[#b8860b] pt-4 pb-1">
-                    {paragraph.replace("### ", "")}
-                  </h3>
-                );
-              }
-              if (paragraph.startsWith("#### ")) {
-                return (
-                  <h4 key={index} className="font-bold text-sm sm:text-base text-[#0c1825] pt-2">
-                    {paragraph.replace("#### ", "")}
-                  </h4>
-                );
-              }
-              if (paragraph.startsWith("![") && paragraph.includes("](") && paragraph.endsWith(")")) {
-                const match = paragraph.match(/^!\[(.*?)\]\((.*?)\)$/);
-                if (match) {
-                  const [, alt, src] = match;
+          {article.isHtml ? (
+            <div
+              className="prose prose-amber max-w-none space-y-4 text-xs sm:text-sm text-[#374151] leading-relaxed [&_h2]:font-serif [&_h2]:font-bold [&_h2]:text-xl [&_h2]:text-[#0c1825] [&_h2]:pt-6 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-[#e2d5bd] [&_h3]:font-serif [&_h3]:font-bold [&_h3]:text-lg [&_h3]:text-[#b8860b] [&_img]:rounded-xl [&_img]:mx-auto [&_img]:border [&_img]:border-[#e2d5bd] [&_ul]:list-disc [&_ul]:pl-5 [&_p]:leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: article.content as string }}
+            />
+          ) : Array.isArray(article.content) ? (
+            <div className="space-y-4 text-xs sm:text-sm text-[#374151] leading-relaxed">
+              {article.content.map((paragraph, index) => {
+                if (paragraph.startsWith("## ")) {
                   return (
-                    <figure key={index} className="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-[#fbf9f5] shadow-sm max-w-2xl mx-auto">
-                      <div className="p-2 sm:p-4 flex items-center justify-center bg-white/60">
-                        <img
-                          src={src}
-                          alt={alt}
-                          loading="lazy"
-                          className="max-w-full max-h-[560px] w-auto h-auto object-contain rounded-lg shadow-sm"
-                        />
-                      </div>
-                      {alt && (
-                        <figcaption className="p-3.5 text-center text-xs sm:text-sm text-[#5a4a32] italic bg-[#fbf9f5] border-t border-[#e2d5bd]/60 font-serif">
-                          {alt}
-                        </figcaption>
-                      )}
-                    </figure>
+                    <h2 key={index} className="font-serif font-bold text-lg sm:text-xl text-[#0c1825] pt-6 pb-2 border-b border-[#e2d5bd] text-primary">
+                      {paragraph.replace("## ", "")}
+                    </h2>
                   );
                 }
-              }
-              if (paragraph.startsWith("> ")) {
+                if (paragraph.startsWith("### ")) {
+                  return (
+                    <h3 key={index} className="font-serif font-bold text-base sm:text-lg text-[#b8860b] pt-4 pb-1">
+                      {paragraph.replace("### ", "")}
+                    </h3>
+                  );
+                }
+                if (paragraph.startsWith("#### ")) {
+                  return (
+                    <h4 key={index} className="font-bold text-sm sm:text-base text-[#0c1825] pt-2">
+                      {paragraph.replace("#### ", "")}
+                    </h4>
+                  );
+                }
+                if (paragraph.startsWith("![") && paragraph.includes("](") && paragraph.endsWith(")")) {
+                  const match = paragraph.match(/^!\[(.*?)\]\((.*?)\)$/);
+                  if (match) {
+                    const [, alt, src] = match;
+                    return (
+                      <figure key={index} className="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-[#fbf9f5] shadow-sm max-w-2xl mx-auto">
+                        <div className="p-2 sm:p-4 flex items-center justify-center bg-white/60">
+                          <img
+                            src={src}
+                            alt={alt}
+                            loading="lazy"
+                            className="max-w-full max-h-[560px] w-auto h-auto object-contain rounded-lg shadow-sm"
+                          />
+                        </div>
+                        {alt && (
+                          <figcaption className="p-3.5 text-center text-xs sm:text-sm text-[#5a4a32] italic bg-[#fbf9f5] border-t border-[#e2d5bd]/60 font-serif">
+                            {alt}
+                          </figcaption>
+                        )}
+                      </figure>
+                    );
+                  }
+                }
+                if (paragraph.startsWith("> ")) {
+                  return (
+                    <div key={index} className="p-4 my-3 bg-[#fbf9f5] border-l-4 border-[#b8860b] rounded-r-xl text-[#4b5563] text-xs sm:text-sm italic leading-relaxed">
+                      {paragraph.replace("> ", "")}
+                    </div>
+                  );
+                }
+                if (paragraph.startsWith("- ")) {
+                  return (
+                    <div key={index} className="flex items-start gap-2 pl-2">
+                      <span className="text-[#b8860b] font-bold mt-0.5">•</span>
+                      <span>{paragraph.replace("- ", "")}</span>
+                    </div>
+                  );
+                }
                 return (
-                  <div key={index} className="p-4 my-3 bg-[#fbf9f5] border-l-4 border-[#b8860b] rounded-r-xl text-[#4b5563] text-xs sm:text-sm italic leading-relaxed">
-                    {paragraph.replace("> ", "")}
-                  </div>
+                  <p key={index} className="leading-relaxed">
+                    {paragraph}
+                  </p>
                 );
-              }
-              if (paragraph.startsWith("- ")) {
-                return (
-                  <div key={index} className="flex items-start gap-2 pl-2">
-                    <span className="text-[#b8860b] font-bold mt-0.5">•</span>
-                    <span>{paragraph.replace("- ", "")}</span>
-                  </div>
-                );
-              }
-              return (
-                <p key={index} className="leading-relaxed">
-                  {paragraph}
-                </p>
-              );
-            })}
-          </div>
+              })}
+            </div>
+          ) : (
+            <p className="leading-relaxed whitespace-pre-line">{String(article.content)}</p>
+          )}
 
           {/* Keywords & Tags */}
-          <div className="mt-8 pt-6 border-t border-gray-100 flex items-center gap-2 flex-wrap text-xs">
-            <Tag className="w-3.5 h-3.5 text-[#b8860b]" />
-            <span className="font-medium text-[#0c1825]">Từ khóa:</span>
-            {article.keywords.map((kw, i) => (
-              <span
-                key={i}
-                className="bg-[#fbf9f5] border border-[#e2d5bd] text-[#4b5563] px-2.5 py-1 rounded-md text-[11px] hover:border-[#b8860b] transition-colors"
-              >
-                #{kw}
-              </span>
-            ))}
-          </div>
+          {article.keywords.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-gray-100 flex items-center gap-2 flex-wrap text-xs">
+              <Tag className="w-3.5 h-3.5 text-[#b8860b]" />
+              <span className="font-medium text-[#0c1825]">Từ khóa:</span>
+              {article.keywords.map((kw, i) => (
+                <span
+                  key={i}
+                  className="bg-[#fbf9f5] border border-[#e2d5bd] text-[#4b5563] px-2.5 py-1 rounded-md text-[11px] hover:border-[#b8860b] transition-colors"
+                >
+                  #{kw}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Direct CTA Box */}
           <div className="mt-8 p-6 bg-[#0c1825] rounded-xl border border-[#c59b4e]/40 text-white shadow-md">

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ProductArticleEditor } from "@/components/admin/ProductArticleEditor";
+import { ArticleSeoAnalyzer } from "@/components/admin/ArticleSeoAnalyzer";
 import { useToast } from "@/components/admin/AdminToast";
 
 // Hierarchical Article Topics / Categories Structure
@@ -567,6 +568,33 @@ export default function AdminArticlesPage() {
                       />
                     </div>
                   </div>
+
+                  {/* Real-time SEO Scoring & Suggestions Box */}
+                  <ArticleSeoAnalyzer
+                    title={formData.title}
+                    summary={formData.summary}
+                    content={formData.content}
+                    thumbnail={formData.thumbnail}
+                    slug={editingArt?.slug || ""}
+                    category={formData.category}
+                    onApplyOutline={(outline) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        content: prev.content ? `${prev.content}\n\n${outline}` : outline,
+                      }));
+                      toastSuccess("Đã chèn khung dàn ý chuẩn SEO vào bài viết!", "Gợi ý SEO");
+                    }}
+                    onSetFocusKeyword={(kw) => {
+                      setFormData((prev) => {
+                        const tags = (prev.tags || "").split(",").map((t) => t.trim()).filter(Boolean);
+                        if (!tags.includes(kw)) {
+                          tags.push(kw);
+                        }
+                        return { ...prev, tags: tags.join(", ") };
+                      });
+                      toastSuccess(`Đã thêm từ khóa SEO "${kw}" vào danh sách thẻ bài viết!`, "Từ khóa SEO");
+                    }}
+                  />
                 </div>
 
                 {/* RIGHT COLUMN: SIDEBAR BOXES (4 COLS) */}
