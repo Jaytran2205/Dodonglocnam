@@ -102,32 +102,7 @@ const getCachedCategoryProducts = cache(
 );
 
 export async function generateStaticParams() {
-  const paramsList: { category: string; slug: string[] }[] = [];
-
-  DEFAULT_HIERARCHICAL_CATEGORIES.forEach((cat) => {
-    cat.subCategories.forEach((sub) => {
-      paramsList.push({ category: cat.slug, slug: [sub.id] });
-      paramsList.push({ category: cat.slug, slug: [sub.id, "tat-ca"] });
-      if (sub.aliases) {
-        sub.aliases.forEach((a) => {
-          paramsList.push({ category: cat.slug, slug: [a] });
-          paramsList.push({ category: cat.slug, slug: [a, "tat-ca"] });
-        });
-      }
-      if (sub.children) {
-        sub.children.forEach((child) => {
-          paramsList.push({ category: cat.slug, slug: [sub.id, child.id] });
-          if (child.aliases) {
-            child.aliases.forEach((ca) => {
-              paramsList.push({ category: cat.slug, slug: [sub.id, ca] });
-            });
-          }
-        });
-      }
-    });
-  });
-
-  return paramsList;
+  return [];
 }
 
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
