@@ -100,7 +100,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
       { id: "tranh-tu-quy", name: "Tranh Tứ Quý", keyword: "tứ quý,tu quy", image: "/images/locnam_real/locnam_tranh_tu_quy.jpg" },
       { id: "tranh-ca-chep", aliases: ["tranh-cuu-ngu", "tranh-ly-ngu"], name: "Tranh Cá Chép - Cửu Ngư Quần Hội", keyword: "cá chép,lý ngư vọng nguyệt,cửu ngư,cửu ngư quần hội,ly ngu,cuu ngu,hoa sen", image: "/images/locnam_real/locnam_tranh_ca_chep.jpg" },
       { id: "tranh-bach-hac", name: "Tranh Bách Hạc Quần Tùng", keyword: "bách hạc,tùng hạc", image: "/images/belux/belux_tranh_bach_hac.jpg" },
-      { id: "tranh-chua-mot-cot", name: "Tranh Chùa Một Cột", keyword: "chùa một cột", image: "/images/locnam_real/locnam_qua_thay_co.jpg" },
+      { id: "tranh-chua-mot-cot", name: "Tranh Chùa Một Cột", keyword: "chùa một cột", image: "/images/belux/belux_tranh_chua_mot_cot.jpg" },
       { id: "tranh-khue-van-cac", name: "Tranh Khuê Văn Các", keyword: "khuê văn các", image: "/images/locnam_real/locnam_qua_thay_co.jpg" },
       { id: "tranh-chu-bang-dong", name: "Tranh Chữ Bằng Đồng", keyword: "tranh chữ,chữ phúc,chữ lộc,chữ thọ,chữ tâm,chữ nhẫn,chữ đức,chữ an,chu phuc,chu loc,chu tho,chu nhan,thư pháp", image: "/images/locnam_real/locnam_hoanh_phi.jpg" },
       {
