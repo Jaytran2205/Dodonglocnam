@@ -20,17 +20,22 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    await fs.mkdir(uploadsDir, { recursive: true });
-
     const originalExt = path.extname(file.name) || ".jpg";
     const cleanExt = originalExt.toLowerCase();
-    const safeName = `sp-${Date.now()}-${Math.random().toString(36).charAt(2)}${Math.random().toString(36).slice(2, 6)}${cleanExt}`;
-    const filePath = path.join(uploadsDir, safeName);
+    const isVideo = file.type?.startsWith("video/") || [".mp4", ".webm", ".mov", ".ogg", ".avi", ".mkv"].includes(cleanExt);
+    
+    const targetDir = isVideo
+      ? path.join(process.cwd(), "public", "uploads", "videos")
+      : path.join(process.cwd(), "public", "uploads");
+    await fs.mkdir(targetDir, { recursive: true });
+
+    const prefix = isVideo ? "video" : "sp";
+    const safeName = `${prefix}-${Date.now()}-${Math.random().toString(36).charAt(2)}${Math.random().toString(36).slice(2, 6)}${cleanExt}`;
+    const filePath = path.join(targetDir, safeName);
 
     await fs.writeFile(filePath, buffer);
 
-    const publicUrl = `/uploads/${safeName}`;
+    const publicUrl = isVideo ? `/uploads/videos/${safeName}` : `/uploads/${safeName}`;
 
     return NextResponse.json({
       success: true,

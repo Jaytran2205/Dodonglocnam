@@ -23,6 +23,12 @@ import {
   Sparkles,
   Link as LinkIcon,
   Upload,
+  UploadCloud,
+  CheckCircle2,
+  AlertCircle,
+  Film,
+  FileVideo,
+  Loader2,
   X,
   Plus,
   Play,
@@ -151,14 +157,31 @@ export function markdownToHtml(md: string): string {
       continue;
     }
 
-    // Video tag: [video title="..."]URL[/video] or [video=URL] or raw YouTube
+    // Video tag: [video title="..."]URL[/video] or [video=URL] or raw YouTube or uploaded video
     const videoMatch = trimmed.match(/^\[video(?:=([^\]\s]+)|\s+title="([^"]+)")?\](?:([^\[]+)\[\/video\])?$/i);
     if (videoMatch) {
       flushList();
       const vUrl = (videoMatch[1] || videoMatch[3] || "").trim();
       const vTitle = videoMatch[2] || "Video sản phẩm";
+      const isDirectVideo = !vUrl.includes("youtube.com") && !vUrl.includes("youtu.be");
       htmlBlocks.push(
-        `<div data-video="${vUrl}" data-title="${vTitle}" class="my-4 p-3 rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-900 font-semibold flex items-center gap-2 shadow-sm cursor-pointer select-none">▶ [Video YouTube: ${vTitle} - ${vUrl}]</div>`
+        `<div data-video="${vUrl}" data-title="${vTitle}" class="my-5 p-3 rounded-2xl border-2 border-rose-500/40 bg-[#0c1825] text-white shadow-xl select-none">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-rose-500/30 text-rose-400 font-bold text-xs uppercase tracking-wider">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              <span>${isDirectVideo ? "Video Tải Lên" : "Video YouTube"}: ${vTitle}</span>
+            </div>
+            <span class="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">${vUrl}</span>
+          </div>
+          ${isDirectVideo ? `
+            <div class="aspect-video w-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
+              <video src="${vUrl}" controls playsinline preload="metadata" class="w-full h-full object-contain"></video>
+            </div>
+          ` : `
+            <div class="p-3 bg-rose-950/40 rounded-xl text-xs text-rose-200 font-medium">▶ [Video YouTube: ${vTitle} - ${vUrl}]</div>
+          `}
+          ${vTitle ? `<p class="text-center text-xs text-rose-200/80 italic mt-2">${vTitle}</p>` : ""}
+        </div>`
       );
       continue;
     }
@@ -170,6 +193,27 @@ export function markdownToHtml(md: string): string {
       flushList();
       htmlBlocks.push(
         `<div data-video="${trimmed}" class="my-4 p-3 rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-900 font-semibold flex items-center gap-2 shadow-sm cursor-pointer select-none">▶ [Video YouTube: ${trimmed}]</div>`
+      );
+      continue;
+    }
+    if (
+      trimmed.startsWith("/uploads/videos/") ||
+      /\.(mp4|webm|ogg|mov|mkv|avi)(\?.*)?$/i.test(trimmed)
+    ) {
+      flushList();
+      htmlBlocks.push(
+        `<div data-video="${trimmed}" data-title="Video tải lên" class="my-5 p-3 rounded-2xl border-2 border-rose-500/40 bg-[#0c1825] text-white shadow-xl select-none">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-rose-500/30 text-rose-400 font-bold text-xs uppercase tracking-wider">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              <span>Video Tải Lên</span>
+            </div>
+            <span class="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">${trimmed}</span>
+          </div>
+          <div class="aspect-video w-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
+            <video src="${trimmed}" controls playsinline preload="metadata" class="w-full h-full object-contain"></video>
+          </div>
+        </div>`
       );
       continue;
     }
@@ -374,8 +418,14 @@ export function ProductArticleEditor({
   const [showImageModal, setShowImageModal] = useState(false);
 
   // Video modal form state
+  const [videoTab, setVideoTab] = useState<"upload" | "link">("upload");
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoFileMeta, setVideoFileMeta] = useState<{ name: string; size: string } | null>(null);
+  const [isDragOverVideo, setIsDragOverVideo] = useState(false);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
 
   // Image modal form state
   const [imageUrl, setImageUrl] = useState("");
@@ -540,19 +590,114 @@ export function ProductArticleEditor({
     setShowBoxPicker(false);
   };
 
+  // Video upload handler with progress tracking
+  const handleUploadVideoFile = (file: File) => {
+    if (!file) return;
+
+    const validExts = [".mp4", ".webm", ".mov", ".ogg", ".avi", ".mkv", ".m4v"];
+    const ext = ("." + file.name.split(".").pop()).toLowerCase();
+    const isVideoType = file.type.startsWith("video/") || validExts.includes(ext);
+
+    if (!isVideoType) {
+      toastWarning("Vui lòng chọn tệp video hợp lệ (MP4, WebM, MOV, OGG, AVI, MKV).", "Định dạng không hợp lệ");
+      return;
+    }
+
+    const MAX_SIZE = 250 * 1024 * 1024; // 250MB
+    if (file.size > MAX_SIZE) {
+      toastWarning("Dung lượng video vượt quá 250MB. Vui lòng nén video hoặc chọn tệp nhỏ hơn.", "Tệp quá lớn");
+      return;
+    }
+
+    const formatSize = (bytes: number) => {
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+      return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    };
+
+    setUploadingVideo(true);
+    setVideoUploadProgress(0);
+    setVideoFileMeta({ name: file.name, size: formatSize(file.size) });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/admin/upload-video", true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setVideoUploadProgress(percent);
+      }
+    };
+
+    xhr.onload = () => {
+      setUploadingVideo(false);
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300 && data.success && data.url) {
+          setVideoUrl(data.url);
+          if (!videoTitle.trim()) {
+            const cleanTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ");
+            setVideoTitle(cleanTitle);
+          }
+          toastSuccess(`Đã tải video "${file.name}" lên thành công!`, "Tải video hoàn tất");
+        } else {
+          toastError(data.message || "Tải video lên máy chủ thất bại.", "Lỗi tải video");
+        }
+      } catch {
+        toastError("Không thể xử lý phản hồi từ máy chủ.", "Lỗi tải video");
+      }
+    };
+
+    xhr.onerror = () => {
+      setUploadingVideo(false);
+      toastError("Lỗi kết nối khi tải video lên máy chủ.", "Lỗi mạng");
+    };
+
+    xhr.send(formData);
+  };
+
+  const handleVideoDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOverVideo(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleUploadVideoFile(file);
+    }
+  };
+
   // Video insertion
   const handleInsertVideo = (e: React.FormEvent) => {
     e.preventDefault();
     if (!videoUrl.trim()) {
-      toastWarning("Vui lòng nhập đường dẫn video (YouTube hoặc link MP4)", "Thiếu đường dẫn");
+      toastWarning("Vui lòng tải lên tệp video hoặc nhập đường dẫn video.", "Chưa có video");
       return;
     }
 
-    const title = videoTitle.trim() || "Video sản phẩm";
+    const title = videoTitle.trim() || "Video thực tế sản phẩm";
     const url = videoUrl.trim();
 
     if (activeTab === "visual" || activeTab === "split") {
-      const vHtml = `<div data-video="${url}" data-title="${title}" class="my-4 p-3 rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-900 font-semibold flex items-center gap-2 shadow-sm select-none">▶ [Video YouTube: ${title} - ${url}]</div><p><br></p>`;
+      const isDirectVideo = !url.includes("youtube.com") && !url.includes("youtu.be");
+      const vHtml = `<div data-video="${url}" data-title="${title}" class="my-5 p-3 rounded-2xl border-2 border-rose-500/40 bg-[#0c1825] text-white shadow-xl select-none">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-rose-500/30 text-rose-400 font-bold text-xs uppercase tracking-wider">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            <span>${isDirectVideo ? "Video Đã Tải Lên" : "Video YouTube"}: ${title}</span>
+          </div>
+          <span class="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">${url}</span>
+        </div>
+        ${isDirectVideo ? `
+          <div class="aspect-video w-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
+            <video src="${url}" controls playsinline preload="metadata" class="w-full h-full object-contain"></video>
+          </div>
+        ` : `
+          <div class="p-3 bg-rose-950/40 rounded-xl text-xs text-rose-200 font-medium">▶ [Video YouTube: ${title} - ${url}]</div>
+        `}
+        ${title ? `<p class="text-center text-xs text-rose-200/80 italic mt-2">${title}</p>` : ""}
+      </div><p><br></p>`;
+
       visualEditorRef.current?.focus();
       document.execCommand("insertHTML", false, vHtml);
       handleVisualInput();
@@ -561,7 +706,7 @@ export function ProductArticleEditor({
       if (videoTitle.trim()) {
         code = `\n\n[video title="${videoTitle.trim()}"]${url}[/video]\n\n`;
       } else {
-        code = `\n\n${url}\n\n`;
+        code = `\n\n[video]${url}[/video]\n\n`;
       }
       insertAtCursor(code);
     }
@@ -569,6 +714,8 @@ export function ProductArticleEditor({
     toastSuccess("Đã chèn video vào bài viết thành công!", "Chèn video");
     setVideoUrl("");
     setVideoTitle("");
+    setVideoFileMeta(null);
+    setVideoUploadProgress(0);
     setShowVideoModal(false);
   };
 
@@ -1265,71 +1412,264 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* MODAL CHÈN VIDEO */}
+      {/* MODAL CHÈN / TẢI VIDEO LÊN */}
       {/* ------------------------------------------------------------- */}
       {showVideoModal && (
-        <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#0c1825] border-2 border-[#f43f5e]/50 rounded-2xl p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-xl bg-[#0c1825] border-2 border-rose-500/50 rounded-2xl p-6 shadow-2xl space-y-5 my-8">
+            {/* Header */}
             <div className="flex items-center justify-between border-b border-[#1e344d] pb-3">
-              <h3 className="font-serif font-bold text-base text-[#f43f5e] uppercase tracking-wide flex items-center gap-2">
-                <Video className="w-5 h-5 text-[#f43f5e]" />
-                <span>Chèn Video Thực Tế Vào Bài Viết</span>
-              </h3>
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400">
+                  <Film className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-base text-rose-400 uppercase tracking-wide">
+                    Đăng Video Thực Tế Vào Bài Viết
+                  </h3>
+                  <p className="text-[11px] text-gray-400">
+                    Tải trực tiếp video từ máy tính hoặc chèn đường dẫn YouTube
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowVideoModal(false)}
-                className="text-gray-400 hover:text-white"
+                onClick={() => {
+                  setShowVideoModal(false);
+                  setVideoFileMeta(null);
+                  setVideoUploadProgress(0);
+                }}
+                className="w-8 h-8 rounded-lg bg-[#152236] hover:bg-[#1d2f4a] text-gray-400 hover:text-white flex items-center justify-center transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Mode Tabs */}
+            <div className="flex rounded-xl bg-[#070e17] p-1 border border-[#1e344d]">
+              <button
+                type="button"
+                onClick={() => setVideoTab("upload")}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                  videoTab === "upload"
+                    ? "bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-md shadow-rose-900/40"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                <UploadCloud className="w-4 h-4" />
+                <span>Tải Video Từ Máy Tính</span>
+                <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/40 font-mono">
+                  Ưu tiên
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setVideoTab("link")}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                  videoTab === "link"
+                    ? "bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-md shadow-rose-900/40"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                <span>Hoặc Nhập Link Video</span>
               </button>
             </div>
 
             <form onSubmit={handleInsertVideo} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white block uppercase">
-                  Đường dẫn liên kết Video (URL) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/... hoặc file .mp4"
-                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#f43f5e] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none font-mono"
-                />
-                <p className="text-[11px] text-gray-400">
-                  Hệ thống tự động tối ưu hóa tốc độ tải (YouTube Lite Facade) - không làm chậm web!
-                </p>
-              </div>
+              {/* TAB 1: UPLOAD VIDEO TỪ MÁY TÍNH */}
+              {videoTab === "upload" && (
+                <div className="space-y-3">
+                  <input
+                    ref={videoFileInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime,video/ogg,video/x-msvideo,.mp4,.webm,.mov,.avi,.mkv"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUploadVideoFile(file);
+                    }}
+                    disabled={uploadingVideo}
+                  />
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white block uppercase">
-                  Tiêu Đề / Chú Thích Video (Tùy Chọn)
+                  {/* DROPZONE / UPLOADING / PREVIEW STATE */}
+                  {uploadingVideo ? (
+                    /* Uploading progress card */
+                    <div className="p-6 rounded-2xl bg-[#070e17] border-2 border-rose-500/50 shadow-inner flex flex-col items-center justify-center gap-3 text-center">
+                      <div className="relative w-14 h-14 flex items-center justify-center">
+                        <Loader2 className="w-12 h-12 text-rose-500 animate-spin" />
+                        <FileVideo className="w-6 h-6 text-rose-300 absolute" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-white">
+                          Đang tải lên: <span className="text-rose-400">{videoFileMeta?.name}</span>
+                        </p>
+                        <p className="text-[11px] text-gray-400">
+                          {videoFileMeta?.size} • Máy chủ đang xử lý và lưu trữ video...
+                        </p>
+                      </div>
+                      {/* Real-time Progress Bar */}
+                      <div className="w-full bg-[#152236] rounded-full h-3 overflow-hidden border border-[#1e344d]">
+                        <div
+                          className="bg-gradient-to-r from-rose-600 via-rose-500 to-amber-400 h-full transition-all duration-200 rounded-full"
+                          style={{ width: `${videoUploadProgress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-mono font-bold text-rose-400">
+                        {videoUploadProgress}% Hoàn tất
+                      </span>
+                    </div>
+                  ) : videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be") ? (
+                    /* Video Uploaded Preview Card */
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Video Đã Sẵn Sàng</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (videoFileInputRef.current) {
+                              videoFileInputRef.current.value = "";
+                              videoFileInputRef.current.click();
+                            }
+                          }}
+                          className="text-rose-400 hover:text-rose-300 underline text-xs font-semibold"
+                        >
+                          Chọn tệp video khác
+                        </button>
+                      </div>
+
+                      {/* Video Player Preview */}
+                      <div className="aspect-video w-full rounded-xl overflow-hidden bg-black border border-rose-500/40 shadow-lg relative flex items-center justify-center">
+                        <video
+                          src={videoUrl}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-[#070e17] border border-[#1e344d] flex items-center justify-between text-[11px] text-gray-300 font-mono">
+                        <div className="truncate pr-2">
+                          <span className="text-gray-500 mr-1">File:</span>
+                          <span className="text-white">{videoFileMeta?.name || videoUrl.split("/").pop()}</span>
+                          {videoFileMeta?.size && (
+                            <span className="text-gray-400 ml-2">({videoFileMeta.size})</span>
+                          )}
+                        </div>
+                        <span className="text-emerald-400 shrink-0 font-sans font-bold text-[10px] bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                          Đã lưu máy chủ
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Empty Dropzone Area */
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragOverVideo(true);
+                      }}
+                      onDragLeave={() => setIsDragOverVideo(false)}
+                      onDrop={handleVideoDrop}
+                      onClick={() => videoFileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-3 group ${
+                        isDragOverVideo
+                          ? "border-rose-400 bg-rose-500/10 scale-[1.01]"
+                          : "border-[#203752] hover:border-rose-500/70 bg-[#070e17] hover:bg-[#0b1726]"
+                      }`}
+                    >
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-950 to-rose-900/50 border border-rose-500/40 flex items-center justify-center text-rose-400 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(244,63,94,0.35)] transition-all">
+                        <UploadCloud className="w-8 h-8" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-white group-hover:text-rose-300 transition-colors">
+                          Bấm vào đây để chọn video từ máy tính
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          hoặc kéo & thả tệp video vào khung này
+                        </p>
+                      </div>
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#152236] border border-[#1e344d] text-[11px] text-gray-300">
+                        <Film className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Hỗ trợ MP4, WebM, MOV, AVI, MKV (Tối đa 250MB)</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="mt-1 px-4 py-2 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-900/30 transition-all pointer-events-none"
+                      >
+                        Chọn Tệp Video Ngay
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 2: NHẬP LINK NGOÀI / YOUTUBE */}
+              {videoTab === "link" && (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-white block uppercase">
+                    Đường dẫn liên kết Video (YouTube hoặc link MP4) *
+                  </label>
+                  <input
+                    type="text"
+                    value={videoUrl}
+                    onChange={(e) => {
+                      setVideoUrl(e.target.value);
+                      setVideoFileMeta(null);
+                    }}
+                    placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/... hoặc https://.../video.mp4"
+                    className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-rose-500 text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none font-mono"
+                  />
+                  <p className="text-[11px] text-gray-400">
+                    Hệ thống tự động nhúng YouTube siêu tốc (Lite Facade - không làm chậm web).
+                  </p>
+                </div>
+              )}
+
+              {/* TIÊU ĐỀ / CHÚ THÍCH VIDEO */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-xs font-bold text-white block uppercase flex items-center justify-between">
+                  <span>Tiêu Đề / Chú Thích Video (Hiển thị dưới video)</span>
+                  <span className="text-[10px] text-gray-400 lowercase font-normal">Tùy chọn</span>
                 </label>
                 <input
                   type="text"
                   value={videoTitle}
                   onChange={(e) => setVideoTitle(e.target.value)}
-                  placeholder="Ví dụ: Quy trình đúc đồng và mạ vàng 24k trực tiếp tại xưởng"
-                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#f43f5e] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none"
+                  placeholder="Ví dụ: Quy trình đúc tượng đồng đỏ nguyên khối và mạ vàng 24k trực tiếp tại xưởng Lộc Nam"
+                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-rose-500 text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none"
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowVideoModal(false)}
-                  className="px-4 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 rounded-xl text-xs font-bold"
-                >
-                  Hủy Bỏ
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-[#f43f5e] hover:bg-[#e11d48] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Chèn Video Ngay</span>
-                </button>
+              {/* ACTION BUTTONS */}
+              <div className="pt-3 border-t border-[#1e344d] flex items-center justify-between">
+                <span className="text-[11px] text-gray-400">
+                  {videoUrl ? "✓ Đã sẵn sàng chèn video" : "Chọn video để tiếp tục"}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowVideoModal(false);
+                      setVideoFileMeta(null);
+                      setVideoUploadProgress(0);
+                    }}
+                    className="px-4 py-2.5 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 rounded-xl text-xs font-bold transition-colors"
+                  >
+                    Hủy Bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!videoUrl.trim() || uploadingVideo}
+                    className="px-6 py-2.5 bg-gradient-to-r from-rose-600 via-rose-500 to-rose-600 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-rose-900/40 transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Chèn Video Vào Bài Viết</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>

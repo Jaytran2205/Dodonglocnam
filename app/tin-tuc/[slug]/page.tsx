@@ -385,6 +385,51 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                     );
                   }
                 }
+                // Check Video Tag: [video title="..."]url[/video] or raw URL
+                const videoMatch = paragraph.match(/^\[video(?:=([^\]\s]+)|\s+title="([^"]+)")?\](?:([^\[]+)\[\/video\])?$/i);
+                if (videoMatch || paragraph.startsWith("/uploads/videos/") || /\.(mp4|webm|mov|ogg|mkv|avi)(\?.*)?$/i.test(paragraph) || paragraph.includes("youtube.com") || paragraph.includes("youtu.be")) {
+                  const vUrl = videoMatch ? (videoMatch[1] || videoMatch[3] || "").trim() : paragraph.trim();
+                  const vTitle = videoMatch ? videoMatch[2] : undefined;
+                  const ytMatch = vUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                  const ytId = ytMatch ? ytMatch[1] : null;
+
+                  if (ytId) {
+                    return (
+                      <div key={index} className="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-lg max-w-3xl mx-auto aspect-video">
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/${ytId}`}
+                          title={vTitle || "Video bài viết Đồ Đồng Lộc Nam"}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                        />
+                      </div>
+                    );
+                  }
+
+                  if (vUrl.startsWith("http") || vUrl.startsWith("/")) {
+                    return (
+                      <div key={index} className="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-lg max-w-3xl mx-auto">
+                        <div className="aspect-video w-full flex items-center justify-center">
+                          <video
+                            src={vUrl}
+                            controls
+                            playsInline
+                            preload="metadata"
+                            className="w-full h-full object-contain"
+                          >
+                            Trình duyệt của bạn không hỗ trợ video HTML5.
+                          </video>
+                        </div>
+                        {vTitle && (
+                          <div className="p-3 text-center text-xs sm:text-sm text-[#5a4a32] italic bg-[#fbf9f5] border-t border-[#e2d5bd]/60 font-serif">
+                            {vTitle}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                }
                 if (paragraph.startsWith("> ")) {
                   return (
                     <div key={index} className="p-4 my-3 bg-[#fbf9f5] border-l-4 border-[#b8860b] rounded-r-xl text-[#4b5563] text-xs sm:text-sm italic leading-relaxed">

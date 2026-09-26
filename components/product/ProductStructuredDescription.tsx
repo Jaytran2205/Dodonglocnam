@@ -50,8 +50,12 @@ function parseVideoTag(text: string): { url: string; title?: string } | null {
     return { url: trimmed };
   }
 
-  // Raw MP4/WebM URL
-  if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(trimmed)) {
+  // Raw MP4/WebM/MOV URL or local uploaded video
+  if (
+    trimmed.startsWith("/uploads/videos/") ||
+    trimmed.startsWith("/uploads/") ||
+    /\.(mp4|webm|ogg|mov|mkv|avi|m4v)(\?.*)?$/i.test(trimmed)
+  ) {
     return { url: trimmed };
   }
 
@@ -145,12 +149,12 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
 
   // Native HTML5 Video
   return (
-    <div className="my-5 w-full">
-      <div className="aspect-video w-full rounded-2xl overflow-hidden border border-[#1e344d] bg-black shadow-2xl">
+    <div className="my-6 w-full max-w-4xl mx-auto">
+      <div className="aspect-video w-full rounded-2xl overflow-hidden border border-[#ffd700]/30 bg-black shadow-2xl relative group">
         <video
           src={url}
           controls
-          preload="none"
+          preload="metadata"
           playsInline
           className="w-full h-full object-contain"
         >
@@ -158,7 +162,9 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
         </video>
       </div>
       {title && (
-        <p className="text-center text-xs text-[#94a3b8] italic mt-2">{title}</p>
+        <p className="text-center text-xs sm:text-sm text-[#ffd700] font-serif italic mt-2.5">
+          {title}
+        </p>
       )}
     </div>
   );
