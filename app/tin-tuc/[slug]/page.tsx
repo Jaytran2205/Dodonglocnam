@@ -109,9 +109,9 @@ function parseShortcodesInHtml(content: string): string {
     }
   );
 
-  // 2. Also replace standalone video URL on a single line
+  // 2. Also replace standalone video URL wrapped in <p>...</p> only
   res = res.replace(
-    /(?:<p>)?(\/api\/videos\/[^\s<"]+\.(?:mp4|webm|mov|ogg|mkv|avi)(?:\?[^\s<"]*)?)(?:<\/p>)?/gi,
+    /<p>\s*(\/api\/videos\/[^\s<"]+\.(?:mp4|webm|mov|ogg|mkv|avi)(?:\?[^\s<"]*)?)\s*<\/p>/gi,
     (m, vUrl) => {
       return `
         <div class="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-xl max-w-3xl mx-auto not-prose">
