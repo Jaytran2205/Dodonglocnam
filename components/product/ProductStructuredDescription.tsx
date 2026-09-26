@@ -14,6 +14,7 @@ import {
   Layers,
   ChevronRight,
 } from "lucide-react";
+import { ArticleVideoPlayer, isRawFilename } from "@/components/common/ArticleVideoPlayer";
 
 interface ProductStructuredDescriptionProps {
   description?: string | null;
@@ -103,6 +104,8 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
       );
     }
 
+    const showCaption = Boolean(title && !isRawFilename(title));
+
     return (
       <div className="my-5 w-full">
         <div
@@ -112,7 +115,7 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
           {/* Lazy loaded thumbnail */}
           <img
             src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
-            alt={title || "Xem video thực tế tác phẩm"}
+            alt={showCaption ? title : "Xem video thực tế tác phẩm"}
             loading="lazy"
             decoding="async"
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-95"
@@ -128,7 +131,7 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
             </div>
             <div className="text-center px-4">
               <span className="inline-block text-xs sm:text-sm font-bold uppercase tracking-wider text-[#ffd700] drop-shadow-md bg-black/60 px-4 py-1.5 rounded-full border border-[#ffd700]/30 backdrop-blur-sm">
-                {title || "Xem Video Thực Tế Tác Phẩm"}
+                {showCaption ? title : "Xem Video Thực Tế Tác Phẩm"}
               </span>
             </div>
           </div>
@@ -139,7 +142,7 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
             <span>HD Video</span>
           </div>
         </div>
-        {title && (
+        {showCaption && (
           <p className="text-center text-xs text-[#94a3b8] italic mt-2">
             {title}
           </p>
@@ -149,26 +152,7 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
   }
 
   // Native HTML5 Video
-  return (
-    <div className="my-6 w-full max-w-4xl mx-auto">
-      <div className="aspect-video w-full rounded-2xl overflow-hidden border border-[#ffd700]/30 bg-black shadow-2xl relative group">
-        <video
-          src={url}
-          controls
-          preload="metadata"
-          playsInline
-          className="w-full h-full object-contain"
-        >
-          Trình duyệt của bạn không hỗ trợ phát video HTML5.
-        </video>
-      </div>
-      {title && (
-        <p className="text-center text-xs sm:text-sm text-[#ffd700] font-serif italic mt-2.5">
-          {title}
-        </p>
-      )}
-    </div>
-  );
+  return <ArticleVideoPlayer url={url} title={title} />;
 }
 
 // Inline Formatter supporting bold, italic, colors, underlines

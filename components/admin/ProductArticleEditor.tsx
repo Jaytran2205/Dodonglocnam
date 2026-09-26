@@ -164,14 +164,14 @@ export function markdownToHtml(md: string): string {
     if (videoMatch) {
       flushList();
       const vUrl = (videoMatch[1] || videoMatch[3] || "").trim();
-      const vTitle = videoMatch[2] || "Video sản phẩm";
+      const vTitle = videoMatch[2] ? videoMatch[2].trim() : "";
       const isDirectVideo = !vUrl.includes("youtube.com") && !vUrl.includes("youtu.be");
       htmlBlocks.push(
         `<div data-video="${vUrl}" data-title="${vTitle}" class="my-5 p-3 rounded-2xl border-2 border-rose-500/40 bg-[#0c1825] text-white shadow-xl select-none">
           <div class="flex items-center justify-between pb-2 mb-2 border-b border-rose-500/30 text-rose-400 font-bold text-xs uppercase tracking-wider">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-              <span>${isDirectVideo ? "Video Tải Lên" : "Video YouTube"}: ${vTitle}</span>
+              <span>${isDirectVideo ? "Video Tải Lên" : "Video YouTube"}${vTitle ? `: ${vTitle}` : ""}</span>
             </div>
             <span class="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">${vUrl}</span>
           </div>
@@ -180,7 +180,7 @@ export function markdownToHtml(md: string): string {
               <video src="${vUrl}" controls playsinline preload="metadata" class="w-full h-full object-contain"></video>
             </div>
           ` : `
-            <div class="p-3 bg-rose-950/40 rounded-xl text-xs text-rose-200 font-medium">▶ [Video YouTube: ${vTitle} - ${vUrl}]</div>
+            <div class="p-3 bg-rose-950/40 rounded-xl text-xs text-rose-200 font-medium">▶ [Video YouTube${vTitle ? `: ${vTitle}` : ""} - ${vUrl}]</div>
           `}
           ${vTitle ? `<p class="text-center text-xs text-rose-200/80 italic mt-2">${vTitle}</p>` : ""}
         </div>`
@@ -731,10 +731,6 @@ export function ProductArticleEditor({
         setVideoUploadProgress(100);
         setVideoUploadStatus("Hoàn tất!");
         setVideoUrl(completeData.url);
-        if (!videoTitle.trim()) {
-          const cleanTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ");
-          setVideoTitle(cleanTitle);
-        }
         toastSuccess(`Đã tải video "${file.name}" lên thành công!`, "Tải video hoàn tất");
         fetchGalleryVideos();
       } else {
@@ -795,8 +791,10 @@ export function ProductArticleEditor({
 
   // Direct select from existing video gallery
   const handleSelectFromGallery = (video: any) => {
-    const title = video.filename.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ");
-    const videoMarkdown = `\n\n[video title="${title}"]${video.url}[/video]\n\n`;
+    const title = videoTitle.trim();
+    const videoMarkdown = title
+      ? `\n\n[video title="${title}"]${video.url}[/video]\n\n`
+      : `\n\n[video]${video.url}[/video]\n\n`;
 
     const textarea = textareaRef.current;
     if (textarea && (activeTab === "code" || activeTab === "split")) {
@@ -1773,9 +1771,10 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                         .map((v) => (
                           <div
                             key={v.id}
-                            className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                            onClick={() => setVideoUrl(v.url)}
+                            className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
                               videoUrl === v.url
-                                ? "bg-rose-950/40 border-rose-500"
+                                ? "bg-rose-950/40 border-rose-500 ring-1 ring-rose-500"
                                 : "bg-[#070e17] border-[#1e344d] hover:border-rose-500/50"
                             }`}
                           >
@@ -1795,7 +1794,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                                 <span>{new Date(v.createdAt).toLocaleDateString("vi-VN")}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                               <button
                                 type="button"
                                 onClick={() => handleSelectFromGallery(v)}
@@ -1837,14 +1836,14 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               {/* TIÊU ĐỀ / CHÚ THÍCH VIDEO */}
               <div className="space-y-1.5 pt-1">
                 <label className="text-xs font-bold text-white block uppercase flex items-center justify-between">
-                  <span>Tiêu Đề / Chú Thích Video (Hiển thị dưới video)</span>
-                  <span className="text-[10px] text-gray-400 lowercase font-normal">Tùy chọn</span>
+                  <span>Tiêu Đề / Chú Thích Video (Tự đặt tiêu đề)</span>
+                  <span className="text-[10px] text-amber-400 font-semibold">Tùy chọn - Để trống nếu không muốn hiện chữ dưới video</span>
                 </label>
                 <input
                   type="text"
                   value={videoTitle}
                   onChange={(e) => setVideoTitle(e.target.value)}
-                  placeholder="Ví dụ: Quy trình đúc tượng đồng đỏ nguyên khối và mạ vàng 24k trực tiếp tại xưởng Lộc Nam"
+                  placeholder="Nhập tiêu đề nếu muốn hiển thị chữ giải thích dưới video, hoặc để trống..."
                   className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-rose-500 text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none"
                 />
               </div>

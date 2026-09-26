@@ -10,6 +10,7 @@ import { articlesData, Article } from "../articlesData";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/JsonLd";
 import { Calendar, Clock, ChevronRight, Phone, MessageCircle, BookOpen, Tag } from "lucide-react";
 import prisma from "@/lib/prisma";
+import { ArticleVideoPlayer, isRawFilename } from "@/components/common/ArticleVideoPlayer";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
@@ -75,35 +76,52 @@ function parseShortcodesInHtml(content: string): string {
       const ytMatch = vUrl.match(
         /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([a-zA-Z0-9_-]{11})/i
       );
+      const isRaw = isRawFilename(vTitle);
+      const showCaption = Boolean(vTitle && !isRaw);
+
       if (ytMatch && ytMatch[1]) {
         return `
           <div class="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-xl max-w-3xl mx-auto aspect-video not-prose">
             <iframe
               src="https://www.youtube-nocookie.com/embed/${ytMatch[1]}"
-              title="${vTitle || "Video bài viết Đồ Đồng Lộc Nam"}"
+              title="${showCaption ? vTitle : "Video bài viết Đồ Đồng Lộc Nam"}"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowfullscreen
               class="w-full h-full border-0"
             ></iframe>
           </div>
-          ${vTitle ? `<p class="text-center text-xs sm:text-sm text-[#5a4a32] italic -mt-4 mb-6 font-serif">${vTitle}</p>` : ""}
+          ${showCaption ? `<p class="text-center text-xs sm:text-sm text-[#5a4a32] italic -mt-4 mb-6 font-serif">${vTitle}</p>` : ""}
         `;
       }
 
+      const videoSrc = vUrl.includes("#t=") ? vUrl : `${vUrl}#t=0.1`;
+
       return `
-        <div class="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-xl max-w-3xl mx-auto not-prose">
-          <div class="aspect-video w-full flex items-center justify-center bg-black">
+        <div class="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-[#0c1825] shadow-xl max-w-3xl mx-auto not-prose">
+          <div class="relative group/vid aspect-video w-full flex items-center justify-center bg-black overflow-hidden select-none">
             <video
-              src="${vUrl}"
+              src="${videoSrc}"
               controls
               playsinline
               preload="metadata"
-              class="w-full h-full object-contain"
+              class="w-full h-full object-contain cursor-pointer"
+              onclick="if(this.paused){this.play();}else{this.pause();}"
+              onplay="this.nextElementSibling?.classList.add('hidden')"
+              onpause="this.nextElementSibling?.classList.remove('hidden')"
             >
               Trình duyệt của bạn không hỗ trợ phát thẻ video HTML5.
             </video>
+            <button
+              type="button"
+              class="locnam-center-play absolute inset-0 m-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-[#dfb755] to-[#ffd700] text-[#0c1420] flex items-center justify-center shadow-[0_0_35px_rgba(255,215,0,0.7)] hover:scale-110 active:scale-95 transition-all duration-300 border-2 border-white z-10 cursor-pointer pointer-events-auto"
+              onclick="const v=this.previousElementSibling;if(v){v.play();this.classList.add('hidden');}"
+              aria-label="Phát video"
+              title="Bấm để phát video"
+            >
+              <svg class="w-8 h-8 sm:w-9 sm:h-9 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
           </div>
-          ${vTitle ? `<p class="text-center text-xs sm:text-sm text-[#5a4a32] italic p-3 bg-[#fbf9f5] border-t border-[#e2d5bd]/60 font-serif">${vTitle}</p>` : ""}
+          ${showCaption ? `<p class="text-center text-xs sm:text-sm text-[#5a4a32] italic p-3 bg-[#fbf9f5] border-t border-[#e2d5bd]/60 font-serif">${vTitle}</p>` : ""}
         </div>
       `;
     }
@@ -113,18 +131,31 @@ function parseShortcodesInHtml(content: string): string {
   res = res.replace(
     /<p>\s*(\/api\/videos\/[^\s<"]+\.(?:mp4|webm|mov|ogg|mkv|avi)(?:\?[^\s<"]*)?)\s*<\/p>/gi,
     (m, vUrl) => {
+      const videoSrc = vUrl.includes("#t=") ? vUrl : `${vUrl}#t=0.1`;
       return `
-        <div class="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-xl max-w-3xl mx-auto not-prose">
-          <div class="aspect-video w-full flex items-center justify-center bg-black">
+        <div class="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-[#0c1825] shadow-xl max-w-3xl mx-auto not-prose">
+          <div class="relative group/vid aspect-video w-full flex items-center justify-center bg-black overflow-hidden select-none">
             <video
-              src="${vUrl}"
+              src="${videoSrc}"
               controls
               playsinline
               preload="metadata"
-              class="w-full h-full object-contain"
+              class="w-full h-full object-contain cursor-pointer"
+              onclick="if(this.paused){this.play();}else{this.pause();}"
+              onplay="this.nextElementSibling?.classList.add('hidden')"
+              onpause="this.nextElementSibling?.classList.remove('hidden')"
             >
               Trình duyệt của bạn không hỗ trợ phát thẻ video HTML5.
             </video>
+            <button
+              type="button"
+              class="locnam-center-play absolute inset-0 m-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-[#dfb755] to-[#ffd700] text-[#0c1420] flex items-center justify-center shadow-[0_0_35px_rgba(255,215,0,0.7)] hover:scale-110 active:scale-95 transition-all duration-300 border-2 border-white z-10 cursor-pointer pointer-events-auto"
+              onclick="const v=this.previousElementSibling;if(v){v.play();this.classList.add('hidden');}"
+              aria-label="Phát video"
+              title="Bấm để phát video"
+            >
+              <svg class="w-8 h-8 sm:w-9 sm:h-9 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
           </div>
         </div>
       `;
@@ -498,24 +529,11 @@ export default async function ArticleDetailPage({ params }: PageProps) {
 
                   if (vUrl.startsWith("http") || vUrl.startsWith("/")) {
                     return (
-                      <div key={index} className="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-lg max-w-3xl mx-auto">
-                        <div className="aspect-video w-full flex items-center justify-center">
-                          <video
-                            src={vUrl}
-                            controls
-                            playsInline
-                            preload="metadata"
-                            className="w-full h-full object-contain"
-                          >
-                            Trình duyệt của bạn không hỗ trợ video HTML5.
-                          </video>
-                        </div>
-                        {vTitle && (
-                          <div className="p-3 text-center text-xs sm:text-sm text-[#5a4a32] italic bg-[#fbf9f5] border-t border-[#e2d5bd]/60 font-serif">
-                            {vTitle}
-                          </div>
-                        )}
-                      </div>
+                      <ArticleVideoPlayer
+                        key={index}
+                        url={vUrl}
+                        title={vTitle}
+                      />
                     );
                   }
                 }
