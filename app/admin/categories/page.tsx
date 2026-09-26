@@ -20,9 +20,18 @@ import {
   Image as ImageIcon,
   RotateCcw,
   Loader2,
+  ChevronDown,
+  ChevronUp,
+  FolderTree,
+  CornerDownRight,
 } from "lucide-react";
 import Link from "next/link";
-import { DEFAULT_HIERARCHICAL_CATEGORIES, MainCategoryData, SubCategoryItem } from "@/lib/subcategories-data";
+import {
+  DEFAULT_HIERARCHICAL_CATEGORIES,
+  MainCategoryData,
+  SubCategoryItem,
+  DetailCategoryItem,
+} from "@/lib/subcategories-data";
 import { useToast } from "@/components/admin/AdminToast";
 
 export default function AdminCategoriesPage() {
@@ -51,7 +60,7 @@ export default function AdminCategoriesPage() {
   const [savingSub, setSavingSub] = useState(false);
   const [subSaveSuccess, setSubSaveSuccess] = useState(false);
 
-  // Modal create new subcategory
+  // Modal create new parent subcategory
   const [subModalOpen, setSubModalOpen] = useState(false);
   const [uploadingSubImage, setUploadingSubImage] = useState(false);
   const [newSubData, setNewSubData] = useState({
@@ -59,6 +68,18 @@ export default function AdminCategoriesPage() {
     keyword: "",
     image: "/images/locnam_real/locnam_tranh_thuan_buom.jpg",
   });
+
+  // Modal create new child (leaf) subcategory
+  const [childModalOpen, setChildModalOpen] = useState(false);
+  const [targetParentSubId, setTargetParentSubId] = useState<string>("");
+  const [targetParentSubName, setTargetParentSubName] = useState<string>("");
+  const [uploadingChildImage, setUploadingChildImage] = useState(false);
+  const [newChildData, setNewChildData] = useState({
+    name: "",
+    keyword: "",
+    image: "/images/hero_golden_ship.jpg",
+  });
+  const [expandedSubIds, setExpandedSubIds] = useState<Record<string, boolean>>({});
 
   // Modal edit single subcategory
   const [editingSubIndex, setEditingSubIndex] = useState<number | null>(null);
@@ -181,9 +202,13 @@ export default function AdminCategoriesPage() {
   const filteredSubCategories = useMemo(() => {
     if (!subSearch.trim()) return currentCategoryData.subCategories;
     const q = subSearch.toLowerCase().trim();
-    return currentCategoryData.subCategories.filter(
-      (s) => s.name.toLowerCase().includes(q) || s.keyword.toLowerCase().includes(q)
-    );
+    return currentCategoryData.subCategories.filter((s) => {
+      const matchParent = s.name.toLowerCase().includes(q) || s.keyword.toLowerCase().includes(q);
+      const matchChild = s.children?.some(
+        (c) => c.name.toLowerCase().includes(q) || c.keyword.toLowerCase().includes(q)
+      );
+      return matchParent || matchChild;
+    });
   }, [currentCategoryData, subSearch]);
 
   const handleUpdateCategoryBanner = (newBannerUrl: string) => {
@@ -284,6 +309,182 @@ export default function AdminCategoriesPage() {
         toastSuccess(`Đã xóa thẻ con "${subName}"!`, "Đã xóa");
       },
     });
+  };
+
+  // --- CHILD CATEGORY HANDLERS (CẤP CON / CẤP CUỐI) ---
+  const toggleExpandSub = (subId: string) => {
+    setExpandedSubIds((prev) => ({
+      ...prev,
+      [subId]: prev[subId] === undefined ? false : !prev[subId],
+    }));
+  };
+
+  const handleUpdateChildField = (
+    subId: string,
+    childId: string,
+    field: "name" | "keyword" | "image",
+    value: string
+  ) => {
+    setCatalog((prev) =>
+      prev.map((cat) => {
+        if (cat.slug !== selectedMainSlug) return cat;
+        return {
+          ...cat,
+          subCategories: cat.subCategories.map((sub) => {
+            if (sub.id !== subId) return sub;
+            const updatedChildren = (sub.children || []).map((ch) =>
+              ch.id === childId ? { ...ch, [field]: value } : ch
+            );
+            return { ...sub, children: updatedChildren };
+          }),
+        };
+      })
+    );
+  };
+
+  const handleMoveChild = (subId: string, childId: string, direction: "up" | "down") => {
+    setCatalog((prev) =>
+      prev.map((cat) => {
+        if (cat.slug !== selectedMainSlug) return cat;
+        return {
+          ...cat,
+          subCategories: cat.subCategories.map((sub) => {
+            if (sub.id !== subId || !sub.children) return sub;
+            const list = [...sub.children];
+            const idx = list.findIndex((c) => c.id === childId);
+            if (idx === -1) return sub;
+            if (direction === "up" && idx > 0) {
+              const temp = list[idx - 1];
+              list[idx - 1] = list[idx];
+              list[idx] = temp;
+            } else if (direction === "down" && idx < list.length - 1) {
+              const temp = list[idx + 1];
+              list[idx + 1] = list[idx];
+              list[idx] = temp;
+            }
+            return { ...sub, children: list };
+          }),
+        };
+      })
+    );
+  };
+
+  const handleDeleteChild = (subId: string, childId: string, childName: string) => {
+    showConfirm({
+      title: "Xác nhận xóa thẻ con cấp cuối",
+      message: `Bạn có chắc muốn xóa thẻ con cấp cuối "${childName}"?`,
+      confirmText: "Xóa Thẻ Con",
+      cancelText: "Hủy Bỏ",
+      type: "danger",
+      onConfirm: () => {
+        setCatalog((prev) =>
+          prev.map((cat) => {
+            if (cat.slug !== selectedMainSlug) return cat;
+            return {
+              ...cat,
+              subCategories: cat.subCategories.map((sub) => {
+                if (sub.id !== subId || !sub.children) return sub;
+                return {
+                  ...sub,
+                  children: sub.children.filter((c) => c.id !== childId),
+                };
+              }),
+            };
+          })
+        );
+        toastSuccess(`Đã xóa thẻ con "${childName}"!`, "Đã xóa");
+      },
+    });
+  };
+
+  const handleOpenAddChildModal = (subId: string, subName: string) => {
+    setTargetParentSubId(subId);
+    setTargetParentSubName(subName);
+    setNewChildData({
+      name: "",
+      keyword: "",
+      image: "/images/hero_golden_ship.jpg",
+    });
+    setChildModalOpen(true);
+  };
+
+  const handleAddChildSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newChildData.name.trim()) {
+      return toastWarning("Vui lòng nhập tên thẻ con cấp cuối!", "Thiếu thông tin");
+    }
+
+    const newId =
+      "child-" +
+      newChildData.name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "-") +
+      "-" +
+      Date.now().toString().slice(-4);
+
+    const newChild: DetailCategoryItem = {
+      id: newId,
+      name: newChildData.name.trim(),
+      keyword: newChildData.keyword.trim() || newChildData.name.trim(),
+      image: newChildData.image.trim() || "/images/hero_golden_ship.jpg",
+    };
+
+    setCatalog((prev) =>
+      prev.map((cat) => {
+        if (cat.slug !== selectedMainSlug) return cat;
+        return {
+          ...cat,
+          subCategories: cat.subCategories.map((sub) => {
+            if (sub.id !== targetParentSubId) return sub;
+            return {
+              ...sub,
+              children: [...(sub.children || []), newChild],
+            };
+          }),
+        };
+      })
+    );
+
+    setChildModalOpen(false);
+    toastSuccess(`Đã thêm thẻ con cấp cuối "${newChild.name}" thành công!`, "Thêm thẻ con");
+  };
+
+  const handleUploadImageForChild = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    subId: string,
+    childId?: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingChildImage(true);
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: uploadForm,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        if (childId) {
+          handleUpdateChildField(subId, childId, "image", data.url);
+        } else {
+          setNewChildData((prev) => ({ ...prev, image: data.url }));
+        }
+        toastSuccess(`Đã tải ảnh "${file.name}" cho thẻ con thành công!`, "Tải ảnh");
+      } else {
+        toastError(data.message || "Tải ảnh thất bại", "Lỗi tải ảnh");
+      }
+    } catch {
+      toastError("Lỗi tải ảnh lên máy chủ", "Lỗi mạng");
+    } finally {
+      setUploadingChildImage(false);
+      e.target.value = "";
+    }
   };
 
   const handleUploadImageForSub = async (
@@ -765,6 +966,170 @@ export default function AdminCategoriesPage() {
                         </span>
                       </div>
                     </div>
+
+                    {/* HIERARCHICAL CHILD CARDS: "THẺ CON CẤP CUỐI" */}
+                    <div className="border-t-2 border-[#1f2d42] bg-[#070e17] p-3.5 space-y-3">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleExpandSub(sub.id)}
+                            className="flex items-center gap-1.5 text-xs font-serif font-black uppercase text-[#ffd700] hover:text-white transition-colors"
+                          >
+                            <FolderTree className="w-3.5 h-3.5 text-[#ffd700]" />
+                            <span>Thẻ Con Cấp Cuối ({sub.children?.length || 0})</span>
+                            {expandedSubIds[sub.id] === false ? (
+                              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                            ) : (
+                              <ChevronUp className="w-3.5 h-3.5 text-gray-400" />
+                            )}
+                          </button>
+                          {sub.children && sub.children.length > 0 && (
+                            <span className="text-[9px] bg-[#ffd700]/15 text-[#ffd700] px-2 py-0.5 rounded-full font-bold border border-[#ffd700]/30 uppercase">
+                              Lưới Cấp 2
+                            </span>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAddChildModal(sub.id, sub.name)}
+                          className="px-2.5 py-1 bg-[#1e2d42] hover:bg-[#ffd700] text-gray-200 hover:text-black rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 border border-gray-700 shadow-sm"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>+ Thêm Thẻ Con Cấp Cuối</span>
+                        </button>
+                      </div>
+
+                      {/* Expanded Child List */}
+                      {expandedSubIds[sub.id] !== false && (
+                        <>
+                          {sub.children && sub.children.length > 0 ? (
+                            <div className="space-y-3 pt-1">
+                              {sub.children.map((child, cIdx) => (
+                                <div
+                                  key={child.id}
+                                  className="bg-[#0c1420] border border-[#2a3d58] hover:border-[#ffd700]/60 rounded-xl p-3 space-y-2.5 shadow-md transition-all relative group/child"
+                                >
+                                  {/* Child Upper Bar: Index & Move & Delete */}
+                                  <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[#1f2d42]">
+                                    <div className="flex items-center gap-1.5">
+                                      <CornerDownRight className="w-3 h-3 text-[#ffd700]" />
+                                      <span className="font-mono text-[10px] font-bold text-[#ffd700] bg-[#111c2e] px-1.5 py-0.5 rounded border border-[#ffd700]/30">
+                                        #{idx + 1}.{cIdx + 1}
+                                      </span>
+                                      <span className="text-[11px] font-bold text-white truncate max-w-[140px]">
+                                        {child.name}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMoveChild(sub.id, child.id, "up")}
+                                        disabled={cIdx === 0}
+                                        className="p-1 text-gray-400 hover:text-white hover:bg-[#1f2d42] rounded disabled:opacity-30"
+                                        title="Di chuyển lên"
+                                      >
+                                        <ArrowUp className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMoveChild(sub.id, child.id, "down")}
+                                        disabled={cIdx === sub.children!.length - 1}
+                                        className="p-1 text-gray-400 hover:text-white hover:bg-[#1f2d42] rounded disabled:opacity-30"
+                                        title="Di chuyển xuống"
+                                      >
+                                        <ArrowDown className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteChild(sub.id, child.id, child.name)}
+                                        className="p-1 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded ml-1"
+                                        title="Xóa thẻ con này"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Child Image & Inputs Row */}
+                                  <div className="grid grid-cols-12 gap-2.5 items-center">
+                                    {/* Child Image Preview with Upload */}
+                                    <div className="col-span-4 aspect-[4/3] rounded-lg overflow-hidden bg-[#050c14] border border-[#1f2d42] relative group/img flex items-center justify-center">
+                                      <img
+                                        src={child.image || "/images/hero_golden_ship.jpg"}
+                                        alt={child.name}
+                                        className="w-full h-full object-contain"
+                                      />
+                                      <label className="absolute inset-0 bg-black/70 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center text-white cursor-pointer transition-opacity">
+                                        <Upload className="w-4 h-4 text-[#ffd700] mb-0.5" />
+                                        <span className="text-[9px] font-bold">Đổi ảnh</span>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={(e) => handleUploadImageForChild(e, sub.id, child.id)}
+                                        />
+                                      </label>
+                                    </div>
+
+                                    {/* Child Inputs */}
+                                    <div className="col-span-8 space-y-1.5">
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                                          Tên Thẻ Con Cấp Cuối:
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={child.name}
+                                          onChange={(e) =>
+                                            handleUpdateChildField(sub.id, child.id, "name", e.target.value)
+                                          }
+                                          className="w-full bg-[#111c2e] border border-[#2a3d58] focus:border-[#ffd700] text-white font-bold text-[11px] px-2 py-1 rounded focus:outline-none"
+                                        />
+                                      </div>
+
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                                          Từ Khóa Lọc (Keyword):
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={child.keyword}
+                                          onChange={(e) =>
+                                            handleUpdateChildField(sub.id, child.id, "keyword", e.target.value)
+                                          }
+                                          placeholder="Từ khóa..."
+                                          className="w-full bg-[#111c2e] border border-[#2a3d58] focus:border-[#ffd700] text-gray-300 text-[10px] px-2 py-1 rounded focus:outline-none"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Child Image URL Input */}
+                                  <div>
+                                    <input
+                                      type="text"
+                                      value={child.image}
+                                      onChange={(e) =>
+                                        handleUpdateChildField(sub.id, child.id, "image", e.target.value)
+                                      }
+                                      placeholder="/images/..."
+                                      className="w-full bg-[#070c14] border border-[#1f2d42] text-[#94a3b8] text-[9px] px-2 py-0.5 rounded focus:outline-none font-mono"
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-2.5 px-3 bg-[#0a121e] rounded-xl border border-dashed border-[#1f2d42] text-[10px] text-gray-400">
+                              Đây là thẻ đơn trực tiếp. Bấm &quot;+ Thêm Thẻ Con Cấp Cuối&quot; để phân nhánh thẻ này.
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1024,6 +1389,119 @@ export default function AdminCategoriesPage() {
                   className="px-5 py-2 bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#070c14] font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg"
                 >
                   Thêm Thẻ Ngay
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: THÊM THẺ CON CẤP CUỐI (ADD CHILD / LEAF SUBCATEGORY MODAL)         */}
+      {/* ========================================================================= */}
+      {childModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md bg-[#0c1420] border-2 border-[#ffd700] rounded-2xl shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-5 bg-gradient-to-r from-[#111c2e] to-[#0c1420] border-b border-[#ffd700]/30 flex items-center justify-between">
+              <div>
+                <h3 className="font-serif font-extrabold text-base text-[#ffd700] uppercase">
+                  THÊM THẺ CON CẤP CUỐI
+                </h3>
+                <p className="text-[11px] text-[#94a3b8] mt-0.5">
+                  Thuộc nhánh: <strong className="text-white">{targetParentSubName}</strong> ({currentCategoryData.name})
+                </p>
+              </div>
+              <button
+                onClick={() => setChildModalOpen(false)}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-[#152236]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddChildSubmit} className="p-5 space-y-4 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-bold text-white block uppercase">
+                  Tên Thẻ Con Cấp Cuối * (Ví dụ: Tượng Bác Võ Nguyên Giáp, Tượng Chuột, v.v.)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newChildData.name}
+                  onChange={(e) => setNewChildData({ ...newChildData, name: e.target.value })}
+                  placeholder="Nhập tên thẻ con..."
+                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#ffd700] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-white block uppercase">
+                  Từ Khóa Lọc Sản Phẩm (Keyword) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newChildData.keyword}
+                  onChange={(e) => setNewChildData({ ...newChildData, keyword: e.target.value })}
+                  placeholder="Ví dụ: võ nguyên giáp, bác giáp..."
+                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#ffd700] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none"
+                />
+              </div>
+
+              {/* Child Image Preview & Upload */}
+              <div className="space-y-1.5">
+                <label className="font-bold text-white block uppercase">
+                  Ảnh Đại Diện Thẻ Con (4:3)
+                </label>
+
+                <div className="aspect-[4/3] rounded-xl overflow-hidden bg-[#070c14] border border-[#1f2d42] relative flex items-center justify-center p-2">
+                  <img
+                    src={newChildData.image || "/images/hero_golden_ship.jpg"}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                  />
+                  {uploadingChildImage && (
+                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center text-[#ffd700] text-xs font-bold gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Đang tải ảnh lên...</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newChildData.image}
+                    onChange={(e) => setNewChildData({ ...newChildData, image: e.target.value })}
+                    placeholder="/images/..."
+                    className="flex-1 bg-[#111c2e] border border-[#1f2d42] focus:border-[#ffd700] text-white text-[11px] px-3 py-2 rounded-xl focus:outline-none font-mono"
+                  />
+                  <label className="px-3.5 py-2 bg-[#1f2d42] hover:bg-[#ffd700] text-white hover:text-black rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1 shrink-0 transition-colors">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Tải ảnh</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleUploadImageForChild(e, targetParentSubId)}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#1f2d42] flex justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setChildModalOpen(false)}
+                  className="px-4 py-2 bg-[#152236] hover:bg-[#1c2c42] text-white font-bold rounded-xl"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-gradient-to-r from-[#ffd700] to-[#e5b869] text-black font-extrabold uppercase rounded-xl shadow-lg hover:brightness-110 active:scale-95"
+                >
+                  Thêm Thẻ Con
                 </button>
               </div>
             </form>

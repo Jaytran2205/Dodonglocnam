@@ -292,7 +292,9 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         categorySlug === "qua-tang" ||
         categorySlug === "qua-tang-dong" ||
         subCategory.id === "linh-vat-12-con-giap" ||
-        subCategory.id === "trong-dong-qua-tang";
+        subCategory.id === "trong-dong-qua-tang" ||
+        subCategory.id === "tranh-khue-van-cac" ||
+        subCategory.id === "tranh-chua-mot-cot";
 
       const allProducts = await getCachedCategoryProducts(categorySlug, isCrossCategory);
 
@@ -348,7 +350,9 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         categorySlug === "qua-tang" ||
         categorySlug === "qua-tang-dong" ||
         subCategory.id === "linh-vat-12-con-giap" ||
-        subCategory.id === "trong-dong-qua-tang";
+        subCategory.id === "trong-dong-qua-tang" ||
+        subCategory.id === "tranh-khue-van-cac" ||
+        subCategory.id === "tranh-chua-mot-cot";
 
       const allProducts = await getCachedCategoryProducts(categorySlug, isCrossCategory);
 

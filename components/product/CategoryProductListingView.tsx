@@ -145,7 +145,9 @@ export function CategoryProductListingView({
   const filteredProducts = useMemo(() => {
     const isCrossCategory =
       activeSubCategory?.id === "linh-vat-12-con-giap" ||
-      activeSubCategory?.id === "trong-dong-qua-tang";
+      activeSubCategory?.id === "trong-dong-qua-tang" ||
+      activeSubCategory?.id === "tranh-khue-van-cac" ||
+      activeSubCategory?.id === "tranh-chua-mot-cot";
 
     let result = isCrossCategory
       ? [...products]

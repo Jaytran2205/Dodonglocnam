@@ -101,7 +101,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
       { id: "tranh-ca-chep", aliases: ["tranh-cuu-ngu", "tranh-ly-ngu"], name: "Tranh Cá Chép - Cửu Ngư Quần Hội", keyword: "cá chép,lý ngư vọng nguyệt,cửu ngư,cửu ngư quần hội,ly ngu,cuu ngu,hoa sen", image: "/images/locnam_real/locnam_tranh_ca_chep.jpg" },
       { id: "tranh-bach-hac", name: "Tranh Bách Hạc Quần Tùng", keyword: "bách hạc,tùng hạc", image: "/images/belux/belux_tranh_bach_hac.jpg" },
       { id: "tranh-chua-mot-cot", name: "Tranh Chùa Một Cột", keyword: "chùa một cột", image: "/images/belux/belux_tranh_chua_mot_cot.jpg" },
-      { id: "tranh-khue-van-cac", name: "Tranh Khuê Văn Các", keyword: "khuê văn các", image: "/images/locnam_real/locnam_qua_thay_co.jpg" },
+      { id: "tranh-khue-van-cac", name: "Tranh Khuê Văn Các", keyword: "khuê văn các", image: "/images/products/qua-tang-luu-niem/tranh-khue-van-cac_chinh.jpg" },
       { id: "tranh-chu-bang-dong", name: "Tranh Chữ Bằng Đồng", keyword: "tranh chữ,chữ phúc,chữ lộc,chữ thọ,chữ tâm,chữ nhẫn,chữ đức,chữ an,chu phuc,chu loc,chu tho,chu nhan,thư pháp", image: "/images/locnam_real/locnam_hoanh_phi.jpg" },
       {
         id: "tranh-danh-nhan",
@@ -157,11 +157,11 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
         keyword: "danh nhân,trần hưng đạo,trần quốc tuấn,bác hồ,bác giáp,võ nguyên giáp,quan công,quan vân trường,gia cát lượng,khổng minh,nguyễn trãi,phùng quang thanh,tướng quân,lê đại đao,danh nhan,tran hung dao,tran quoc tuan,nguyen trai",
         image: "/images/tuong-dong/tuong-danh-nhan.jpg",
         children: [
-          { id: "tuong-tran-hung-dao", aliases: ["tuong-tran-quoc-tuan", "tran-quoc-tuan", "duc-thanh-tran"], name: "Tượng đồng Trần Hưng Đạo - Trần Quốc Tuấn", keyword: "trần hưng đạo,trần quốc tuấn,tran hung dao,tran quoc tuan,đức thánh trần,duc thanh tran", image: "/images/locnam_real/locnam_tran_hung_dao.jpg?v=clean_grid_v5" },
-          { id: "tuong-bac-ho", name: "Tượng Bác Hồ", keyword: "bác hồ,bac ho", image: "/images/locnam_real/locnam_bac_ho.jpg?v=clean_grid_v5" },
-          { id: "tuong-vo-nguyen-giap", name: "Tượng Bác Võ Nguyên Giáp", keyword: "võ nguyên giáp,bác giáp,vo nguyen giap,bac giap", image: "/images/locnam_real/locnam_bac_giap.jpg?v=clean_grid_v5" },
-          { id: "tuong-gia-cat-luong", aliases: ["tuong-khong-minh"], name: "Tượng Gia Cát Lượng", keyword: "khổng minh,gia cát lượng,khong minh,gia cat luong", image: "/images/locnam_real/locnam_khong_minh.jpg?v=clean_grid_v5" },
-          { id: "tuong-quan-cong", aliases: ["tuong-quan-van-truong", "quan-van-truong"], name: "Tượng Quan Công - Quan Vân Trường", keyword: "quan công,quan vân trường,quan cong,quan van truong", image: "/images/locnam_real/locnam_quan_cong.jpg?v=clean_grid_v5" },
+          { id: "tuong-tran-hung-dao", aliases: ["tuong-tran-quoc-tuan", "tran-quoc-tuan", "duc-thanh-tran"], name: "Tượng đồng Trần Hưng Đạo - Trần Quốc Tuấn", keyword: "trần hưng đạo,trần quốc tuấn,tran hung dao,tran quoc tuan,đức thánh trần,duc thanh tran", image: "/images/locnam_real/locnam_tran_hung_dao.jpg?v=clean_grid_v6" },
+          { id: "tuong-bac-ho", name: "Tượng Bác Hồ", keyword: "bác hồ,bac ho", image: "/images/locnam_real/locnam_bac_ho.jpg?v=clean_grid_v6" },
+          { id: "tuong-vo-nguyen-giap", name: "Tượng Bác Võ Nguyên Giáp", keyword: "võ nguyên giáp,bác giáp,vo nguyen giap,bac giap", image: "/images/locnam_real/locnam_bac_giap.jpg?v=clean_grid_v6" },
+          { id: "tuong-gia-cat-luong", aliases: ["tuong-khong-minh"], name: "Tượng Gia Cát Lượng", keyword: "khổng minh,gia cát lượng,khong minh,gia cat luong", image: "/images/locnam_real/locnam_khong_minh.jpg?v=clean_grid_v6" },
+          { id: "tuong-quan-cong", aliases: ["tuong-quan-van-truong", "quan-van-truong"], name: "Tượng Quan Công - Quan Vân Trường", keyword: "quan công,quan vân trường,quan cong,quan van truong", image: "/images/locnam_real/locnam_quan_cong.jpg?v=clean_grid_v6" },
         ],
       },
       {
