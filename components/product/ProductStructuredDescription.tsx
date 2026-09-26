@@ -14,7 +14,8 @@ import {
   Layers,
   ChevronRight,
 } from "lucide-react";
-import { ArticleVideoPlayer, isRawFilename } from "@/components/common/ArticleVideoPlayer";
+import { ArticleVideoPlayer } from "@/components/common/ArticleVideoPlayer";
+import { isRawFilename } from "@/lib/videoUtils";
 
 interface ProductStructuredDescriptionProps {
   description?: string | null;

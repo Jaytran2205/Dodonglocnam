@@ -10,7 +10,8 @@ import { articlesData, Article } from "../articlesData";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/JsonLd";
 import { Calendar, Clock, ChevronRight, Phone, MessageCircle, BookOpen, Tag } from "lucide-react";
 import prisma from "@/lib/prisma";
-import { ArticleVideoPlayer, isRawFilename } from "@/components/common/ArticleVideoPlayer";
+import { ArticleVideoPlayer } from "@/components/common/ArticleVideoPlayer";
+import { isRawFilename } from "@/lib/videoUtils";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
