@@ -197,6 +197,7 @@ export function markdownToHtml(md: string): string {
       continue;
     }
     if (
+      trimmed.startsWith("/api/videos/") ||
       trimmed.startsWith("/uploads/videos/") ||
       /\.(mp4|webm|ogg|mov|mkv|avi)(\?.*)?$/i.test(trimmed)
     ) {
@@ -423,6 +424,7 @@ export function ProductArticleEditor({
   const [videoTitle, setVideoTitle] = useState("");
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoUploadStatus, setVideoUploadStatus] = useState<string>("");
   const [videoFileMeta, setVideoFileMeta] = useState<{ name: string; size: string } | null>(null);
   const [isDragOverVideo, setIsDragOverVideo] = useState(false);
   const videoFileInputRef = useRef<HTMLInputElement>(null);
@@ -590,8 +592,8 @@ export function ProductArticleEditor({
     setShowBoxPicker(false);
   };
 
-  // Video upload handler with progress tracking
-  const handleUploadVideoFile = (file: File) => {
+  // Resilient Chunked Video Upload Handler (bypasses Vercel 4.5MB limit, auto-retries, supports large videos)
+  const handleUploadVideoFile = async (file: File) => {
     if (!file) return;
 
     const validExts = [".mp4", ".webm", ".mov", ".ogg", ".avi", ".mkv", ".m4v"];
@@ -603,9 +605,9 @@ export function ProductArticleEditor({
       return;
     }
 
-    const MAX_SIZE = 250 * 1024 * 1024; // 250MB
+    const MAX_SIZE = 150 * 1024 * 1024; // 150MB
     if (file.size > MAX_SIZE) {
-      toastWarning("Dung lượng video vượt quá 250MB. Vui lòng nén video hoặc chọn tệp nhỏ hơn.", "Tệp quá lớn");
+      toastWarning("Dung lượng video vượt quá 150MB. Vui lòng nén video hoặc chọn tệp nhỏ hơn.", "Tệp quá lớn");
       return;
     }
 
@@ -616,46 +618,112 @@ export function ProductArticleEditor({
 
     setUploadingVideo(true);
     setVideoUploadProgress(0);
+    setVideoUploadStatus("Đang khởi tạo tải lên...");
     setVideoFileMeta({ name: file.name, size: formatSize(file.size) });
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB per chunk (safely below Vercel's 4.5MB serverless limit)
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const uploadId = "up_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/admin/upload-video", true);
+    try {
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunkBlob = file.slice(start, end);
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100);
+        let chunkSuccess = false;
+        let lastErrorMsg = "";
+
+        // Retry chunk up to 3 times on temporary network hiccup
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          setVideoUploadStatus(
+            totalChunks > 1
+              ? `Đang tải phần ${i + 1}/${totalChunks}${attempt > 1 ? ` (thử lại lần ${attempt})` : ""}...`
+              : "Đang tải video lên máy chủ..."
+          );
+
+          try {
+            const formData = new FormData();
+            formData.append("uploadId", uploadId);
+            formData.append("chunkIndex", i.toString());
+            formData.append("totalChunks", totalChunks.toString());
+            formData.append("chunk", chunkBlob, `chunk-${i}.bin`);
+
+            const res = await fetch("/api/admin/upload-video/chunk", {
+              method: "POST",
+              body: formData,
+            });
+
+            if (res.ok) {
+              const resData = await res.json().catch(() => null);
+              if (resData && resData.success) {
+                chunkSuccess = true;
+                break;
+              } else {
+                lastErrorMsg = resData?.message || "Lỗi lưu phần video tải lên.";
+              }
+            } else {
+              if (res.status === 413) {
+                lastErrorMsg = "Phần video vượt giới hạn payload máy chủ.";
+              } else if (res.status === 401) {
+                lastErrorMsg = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+              } else {
+                lastErrorMsg = `Máy chủ phản hồi mã lỗi ${res.status}.`;
+              }
+            }
+          } catch (e: any) {
+            lastErrorMsg = e?.message || "Lỗi kết nối khi tải phần video.";
+          }
+
+          if (attempt < 3) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        }
+
+        if (!chunkSuccess) {
+          throw new Error(lastErrorMsg || `Không thể tải phần ${i + 1}/${totalChunks}.`);
+        }
+
+        const percent = Math.round(((i + 1) / totalChunks) * 88);
         setVideoUploadProgress(percent);
       }
-    };
 
-    xhr.onload = () => {
-      setUploadingVideo(false);
-      try {
-        const data = JSON.parse(xhr.responseText);
-        if (xhr.status >= 200 && xhr.status < 300 && data.success && data.url) {
-          setVideoUrl(data.url);
-          if (!videoTitle.trim()) {
-            const cleanTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ");
-            setVideoTitle(cleanTitle);
-          }
-          toastSuccess(`Đã tải video "${file.name}" lên thành công!`, "Tải video hoàn tất");
-        } else {
-          toastError(data.message || "Tải video lên máy chủ thất bại.", "Lỗi tải video");
+      // Step 2: Finalize and assemble chunks into streaming video
+      setVideoUploadStatus("Đang ghép và tối ưu hóa video trên hệ thống...");
+      setVideoUploadProgress(92);
+
+      const completeRes = await fetch("/api/admin/upload-video/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadId,
+          filename: file.name,
+          mimeType: file.type || "video/mp4",
+          size: file.size,
+          totalChunks,
+        }),
+      });
+
+      const completeData = await completeRes.json().catch(() => null);
+
+      if (completeRes.ok && completeData && completeData.success && completeData.url) {
+        setVideoUploadProgress(100);
+        setVideoUploadStatus("Hoàn tất!");
+        setVideoUrl(completeData.url);
+        if (!videoTitle.trim()) {
+          const cleanTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ");
+          setVideoTitle(cleanTitle);
         }
-      } catch {
-        toastError("Không thể xử lý phản hồi từ máy chủ.", "Lỗi tải video");
+        toastSuccess(`Đã tải video "${file.name}" lên thành công!`, "Tải video hoàn tất");
+      } else {
+        throw new Error(completeData?.message || "Lỗi hoàn tất xử lý video trên máy chủ.");
       }
-    };
-
-    xhr.onerror = () => {
+    } catch (err: any) {
+      console.error("Video Upload Error:", err);
+      toastError(err?.message || "Lỗi tải video lên máy chủ.", "Lỗi tải video");
+    } finally {
       setUploadingVideo(false);
-      toastError("Lỗi kết nối khi tải video lên máy chủ.", "Lỗi mạng");
-    };
-
-    xhr.send(formData);
+    }
   };
 
   const handleVideoDrop = (e: React.DragEvent) => {
@@ -1505,7 +1573,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                           Đang tải lên: <span className="text-rose-400">{videoFileMeta?.name}</span>
                         </p>
                         <p className="text-[11px] text-gray-400">
-                          {videoFileMeta?.size} • Máy chủ đang xử lý và lưu trữ video...
+                          {videoFileMeta?.size} • {videoUploadStatus || "Đang xử lý và lưu trữ video..."}
                         </p>
                       </div>
                       {/* Real-time Progress Bar */}
@@ -1594,7 +1662,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                       </div>
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#152236] border border-[#1e344d] text-[11px] text-gray-300">
                         <Film className="w-3.5 h-3.5 text-rose-400" />
-                        <span>Hỗ trợ MP4, WebM, MOV, AVI, MKV (Tối đa 250MB)</span>
+                        <span>Hỗ trợ MP4, WebM, MOV, AVI, MKV (Tối đa 150MB)</span>
                       </div>
                       <button
                         type="button"

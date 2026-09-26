@@ -161,3 +161,27 @@ model ActivityLog {
   @@index([entity])
   @@index([action])
 }
+
+model UploadedVideo {
+  id        String   @id @default(cuid())
+  filename  String
+  mimeType  String   @default("video/mp4")
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model VideoChunk {
+  id         String   @id @default(cuid())
+  uploadId   String
+  chunkIndex Int
+  data       Bytes
+  createdAt  DateTime @default(now())
+
+  @@unique([uploadId, chunkIndex])
+  @@index([uploadId])
+  @@index([createdAt])
+}
+

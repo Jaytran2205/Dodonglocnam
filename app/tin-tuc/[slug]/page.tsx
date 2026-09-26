@@ -387,7 +387,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                 }
                 // Check Video Tag: [video title="..."]url[/video] or raw URL
                 const videoMatch = paragraph.match(/^\[video(?:=([^\]\s]+)|\s+title="([^"]+)")?\](?:([^\[]+)\[\/video\])?$/i);
-                if (videoMatch || paragraph.startsWith("/uploads/videos/") || /\.(mp4|webm|mov|ogg|mkv|avi)(\?.*)?$/i.test(paragraph) || paragraph.includes("youtube.com") || paragraph.includes("youtu.be")) {
+                if (videoMatch || paragraph.startsWith("/api/videos/") || paragraph.startsWith("/uploads/videos/") || /\.(mp4|webm|mov|ogg|mkv|avi)(\?.*)?$/i.test(paragraph) || paragraph.includes("youtube.com") || paragraph.includes("youtu.be")) {
                   const vUrl = videoMatch ? (videoMatch[1] || videoMatch[3] || "").trim() : paragraph.trim();
                   const vTitle = videoMatch ? videoMatch[2] : undefined;
                   const ytMatch = vUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);

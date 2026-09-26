@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
+import prisma from "@/lib/prisma";
 import fs from "fs/promises";
 import path from "path";
 
@@ -53,20 +54,36 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const videoUploadsDir = path.join(process.cwd(), "public", "uploads", "videos");
-    await fs.mkdir(videoUploadsDir, { recursive: true });
+    // 1. Save to PostgreSQL database (UploadedVideo) for guaranteed permanence across serverless instances
+    const cleanBaseName = baseName.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase();
+    const safeFilename = `${cleanBaseName}${cleanExt}`;
 
-    const safeName = `video-${Date.now()}-${baseName}-${Math.random().toString(36).slice(2, 6)}${cleanExt}`;
-    const filePath = path.join(videoUploadsDir, safeName);
+    const uploadedVideo = await prisma.uploadedVideo.create({
+      data: {
+        filename: safeFilename,
+        mimeType: file.type || "video/mp4",
+        size: buffer.length,
+        data: buffer,
+      },
+    });
 
-    await fs.writeFile(filePath, buffer);
+    // 2. Optionally write to local disk if writable (local dev cache)
+    try {
+      const videoUploadsDir = path.join(process.cwd(), "public", "uploads", "videos");
+      await fs.mkdir(videoUploadsDir, { recursive: true });
+      const localFilePath = path.join(videoUploadsDir, `video-${uploadedVideo.id}${cleanExt}`);
+      await fs.writeFile(localFilePath, buffer);
+    } catch {
+      // Ignored on read-only serverless platforms like Vercel
+    }
 
-    const publicUrl = `/uploads/videos/${safeName}`;
+    const publicUrl = `/api/videos/${uploadedVideo.id}/${safeFilename}`;
 
     return NextResponse.json({
       success: true,
       url: publicUrl,
-      filename: file.name,
+      videoId: uploadedVideo.id,
+      filename: safeFilename,
       size: file.size,
       type: file.type || "video/mp4",
       message: "Tải video lên máy chủ thành công!"

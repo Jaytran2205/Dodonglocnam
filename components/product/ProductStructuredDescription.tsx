@@ -50,8 +50,9 @@ function parseVideoTag(text: string): { url: string; title?: string } | null {
     return { url: trimmed };
   }
 
-  // Raw MP4/WebM/MOV URL or local uploaded video
+  // Raw MP4/WebM/MOV URL or local/API uploaded video
   if (
+    trimmed.startsWith("/api/videos/") ||
     trimmed.startsWith("/uploads/videos/") ||
     trimmed.startsWith("/uploads/") ||
     /\.(mp4|webm|ogg|mov|mkv|avi|m4v)(\?.*)?$/i.test(trimmed)
