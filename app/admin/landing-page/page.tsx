@@ -21,6 +21,16 @@ import {
   Sparkles,
   Award,
   Upload,
+  Film,
+  Play,
+  Trash2,
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  Video,
+  X,
+  Clock,
+  Eye,
 } from "lucide-react";
 import { useToast } from "@/components/admin/AdminToast";
 
@@ -196,7 +206,12 @@ export default function AdminLandingPageManager() {
     cs3_desc: "Trung tâm quà tặng mạ vàng 24k, mô hình thuyền buồm phong thủy & quà biếu VIP.",
 
     // Footer Description
-    footer_about: "Xưởng đúc đồng Lộc Nam chuyên đúc tượng chân dung truyền thần, đồ thờ cúng gia tiên, quà tặng mạ vàng 24k, mô hình thuyền buồm phong thủy và trống đồng Đông Sơn cao cấp."
+    footer_about: "Xưởng đúc đồng Lộc Nam chuyên đúc tượng chân dung truyền thần, đồ thờ cúng gia tiên, quà tặng mạ vàng 24k, mô hình thuyền buồm phong thủy và trống đồng Đông Sơn cao cấp.",
+
+    // Video Trang Chủ (Thư Viện Video Thực Tế)
+    video_section_subtitle: "THƯ VIỆN VIDEO THỰC TẾ",
+    video_section_title: "VIDEO QUY TRÌNH CHẾ TÁC & SẢN PHẨM",
+    video_section_desc: "Kênh truyền hình & tư liệu trực quan giúp quý khách an tâm tuyệt đối về chất lượng đúc đồng thủ công"
   });
 
   const [loading, setLoading] = useState(true);
@@ -207,6 +222,7 @@ export default function AdminLandingPageManager() {
     | "hero"
     | "featured_categories"
     | "favorite_products"
+    | "videos"
     | "reviews"
     | "branches"
     | "artisan"
@@ -365,6 +381,184 @@ export default function AdminLandingPageManager() {
     }
   };
 
+  const defaultHomeVideos = [
+    {
+      id: "v1",
+      title: "Trực Tiếp Quy Trình Rót Đồng Đại Hồng Chung 1 Tấn - Chuông Đồng Đỏ Nguyên Chất Ý Yên",
+      category: "QUY TRÌNH ĐÚC ĐỒNG",
+      duration: "05:32",
+      views: "15.420",
+      image: "/images/videos/NUnVlHO1mEU.jpg",
+      videoUrl: "https://www.youtube.com/watch?v=NUnVlHO1mEU",
+      desc: "Cận cảnh quy trình nghệ nhân nấu đồng đỏ nguyên chất và rót khuôn đúc Đại Hồng Chung 1 tấn tại xưởng đúc đồng Lộc Nam.",
+      active: true,
+    },
+    {
+      id: "v2",
+      title: "Nghệ Nhân Chạm Khắc Long Phụng Trên Bề Mặt Trống Đồng Đông Sơn - Tinh Xảo Từng Chi Tiết",
+      category: "CHẠM KHẮC THỦ CÔNG",
+      duration: "08:15",
+      views: "28.910",
+      image: "/images/videos/wmWQK2MBn3c.jpg",
+      videoUrl: "https://www.youtube.com/watch?v=wmWQK2MBn3c",
+      desc: "Từng đường nét hoa văn chạm tỉ mỉ bằng tay thể hiện tay nghề thượng thừa của nghệ nhân gia truyền.",
+      active: true,
+    },
+    {
+      id: "v3",
+      title: "Hướng Dẫn Phân Biệt Đồng Thật Chuẩn Cát Tút Với Đồng Pha Kém Chất Lượng Ngoài Thị Trường",
+      category: "KIẾN THỨC ĐỒ THỜ",
+      duration: "04:45",
+      views: "42.150",
+      image: "/images/videos/o-vHwLilgjM.jpg",
+      videoUrl: "https://www.youtube.com/watch?v=o-vHwLilgjM",
+      desc: "Kinh nghiệm thực tế chọn đồng chuẩn, giữ màu bền đẹp hàng trăm năm không bị oxy hóa hay hoen gỉ.",
+      active: true,
+    },
+    {
+      id: "v4",
+      title: "Bàn Giao Bộ Đỉnh Đồng Cát Tút Cao Cấp Cho Biệt Thự Gia Chủ Tại Starlake Tây Hồ",
+      category: "BÀN GIAO CÔNG TRÌNH",
+      duration: "06:20",
+      views: "19.800",
+      image: "/images/videos/ctwWCrZZwk4.jpg",
+      videoUrl: "https://www.youtube.com/watch?v=ctwWCrZZwk4",
+      desc: "Trọn bộ đỉnh đồng cát tút ngũ sự an vị trang nghiêm trên ban thờ gia tiên của khách hàng VIP tại Hà Nội.",
+      active: true,
+    },
+  ];
+
+  const [homeVideos, setHomeVideos] = useState<any[]>(defaultHomeVideos);
+  const [uploadedVideos, setUploadedVideos] = useState<any[]>([]);
+  const [loadingUploadedVideos, setLoadingUploadedVideos] = useState(false);
+  const [videoPickerIndex, setVideoPickerIndex] = useState<number | null>(null);
+  const [previewModalVideo, setPreviewModalVideo] = useState<{ title: string; url: string } | null>(null);
+
+  const fetchUploadedVideos = async () => {
+    setLoadingUploadedVideos(true);
+    try {
+      const res = await fetch("/api/admin/videos");
+      const data = await res.json();
+      if (data.success && data.videos) {
+        setUploadedVideos(data.videos);
+      }
+    } catch (err) {
+      console.error("Error fetching uploaded videos:", err);
+    } finally {
+      setLoadingUploadedVideos(false);
+    }
+  };
+
+  const openVideoPicker = (index: number) => {
+    setVideoPickerIndex(index);
+    if (uploadedVideos.length === 0) {
+      fetchUploadedVideos();
+    }
+  };
+
+  const handleUpdateVideo = (index: number, field: string, val: any) => {
+    setHomeVideos((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: val };
+      handleChange("home_videos", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleMoveVideo = (index: number, direction: "up" | "down") => {
+    setHomeVideos((prev) => {
+      const newIndex = direction === "up" ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[newIndex];
+      updated[newIndex] = temp;
+      handleChange("home_videos", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleDeleteVideo = (index: number) => {
+    if (homeVideos.length <= 1) {
+      toastWarning("Cần giữ lại ít nhất 1 video trong hệ thống!", "Không thể xóa");
+      return;
+    }
+    showConfirm({
+      title: "Xác nhận xóa video",
+      message: "Bạn có chắc chắn muốn xóa video này khỏi danh sách hiển thị trên trang chủ?",
+      confirmText: "Xóa Video",
+      cancelText: "Hủy Bỏ",
+      type: "danger",
+      onConfirm: () => {
+        setHomeVideos((prev) => {
+          const updated = prev.filter((_, idx) => idx !== index);
+          handleChange("home_videos", JSON.stringify(updated));
+          return updated;
+        });
+        toastSuccess("Đã xóa video khỏi danh sách!", "Đã xóa");
+      },
+    });
+  };
+
+  const handleAddVideo = () => {
+    setHomeVideos((prev) => {
+      const newVideo = {
+        id: "v_" + Date.now().toString(),
+        title: "Video mới " + (prev.length + 1),
+        category: "QUY TRÌNH CHẾ TÁC",
+        duration: "05:00",
+        views: "10.000",
+        image: "/images/hero_golden_ship.jpg",
+        videoUrl: "",
+        desc: "Mô tả ngắn gọn về video quy trình đúc đồng hoặc sản phẩm thực tế.",
+        active: true,
+      };
+      const updated = [...prev, newVideo];
+      handleChange("home_videos", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleUploadVideoThumbnail = async (index: number, file: File) => {
+    const uploadKey = `video_thumb_${index}`;
+    setUploadingKey(uploadKey);
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+    try {
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: uploadForm,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        handleUpdateVideo(index, "image", data.url);
+        toastSuccess(`Đã tải ảnh đại diện video thành công!`, "Tải ảnh");
+      } else {
+        toastError(data.message || "Tải ảnh thất bại", "Lỗi tải ảnh");
+      }
+    } catch {
+      toastError("Lỗi tải ảnh lên máy chủ", "Lỗi mạng");
+    } finally {
+      setUploadingKey(null);
+    }
+  };
+
+  const getEmbedHelper = (url: string) => {
+    if (!url) return { type: "youtube" as const, src: "" };
+    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/i);
+    if (ytMatch && ytMatch[1]) {
+      return {
+        type: "youtube" as const,
+        src: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`,
+      };
+    }
+    if (url.includes("youtube.com/embed")) {
+      const src = url.includes("autoplay=1") ? url : `${url}${url.includes("?") ? "&" : "?"}autoplay=1`;
+      return { type: "youtube" as const, src };
+    }
+    return { type: "video" as const, src: url };
+  };
+
   useEffect(() => {
     fetch("/api/admin/landing-page")
       .then((res) => res.json())
@@ -379,6 +573,16 @@ export default function AdminLandingPageManager() {
               }
             } catch (err) {
               console.error("Error parsing home_slider_banners:", err);
+            }
+          }
+          if (data.settings.home_videos) {
+            try {
+              const parsed = JSON.parse(data.settings.home_videos);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setHomeVideos(parsed);
+              }
+            } catch (err) {
+              console.error("Error parsing home_videos:", err);
             }
           }
         }
@@ -518,6 +722,19 @@ export default function AdminLandingPageManager() {
         >
           <Sparkles className="w-4 h-4" />
           <span>Sản Phẩm Yêu Thích (5 Mẫu)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("videos")}
+          className={`px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all whitespace-nowrap ${
+            activeTab === "videos"
+              ? "bg-[#d4af37] text-[#0c1420] shadow-md"
+              : "bg-[#121c2b] text-[#94a3b8] hover:text-white"
+          }`}
+        >
+          <Film className="w-4 h-4" />
+          <span>Video Trang Chủ</span>
         </button>
 
         <button
@@ -1220,6 +1437,325 @@ export default function AdminLandingPageManager() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* TAB: VIDEO TRANG CHỦ (THƯ VIỆN VIDEO THỰC TẾ) */}
+        {activeTab === "videos" && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Header info */}
+            <div className="bg-[#0c1420] border-2 border-[#d4af37]/40 rounded-2xl p-5 sm:p-7 shadow-2xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2d42] pb-5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-[#d4af37]">
+                    <Film className="w-5 h-5" />
+                    <h3 className="font-serif font-bold text-base uppercase tracking-wide">
+                      Thư Viện Video Thực Tế (Quy Trình Chế Tác & Sản Phẩm)
+                    </h3>
+                  </div>
+                  <p className="text-xs text-[#94a3b8]">
+                    Quản lý danh sách video hiển thị ngoài trang chủ (khu vực "THƯ VIỆN VIDEO THỰC TẾ") và trang xem tất cả video (/video). Bạn có thể chọn video tải lên trực tiếp từ hệ thống hoặc dán link YouTube.
+                  </p>
+                </div>
+
+                <Link
+                  href="/admin/videos"
+                  target="_blank"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#121c2b] hover:bg-[#1a2b3d] text-[#d4af37] border border-[#d4af37]/40 text-xs font-bold uppercase tracking-wider transition-all shadow-md shrink-0"
+                >
+                  <Film className="w-4 h-4 text-[#dfb755]" />
+                  <span>Kho Video Tải Lên</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              {/* Header texts controls */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="block text-[#d4af37] mb-1 font-semibold text-xs">
+                    Phụ đề mục (Subtitle):
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.video_section_subtitle || ""}
+                    onChange={(e) => handleChange("video_section_subtitle", e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
+                    placeholder="THƯ VIỆN VIDEO THỰC TẾ"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#d4af37] mb-1 font-semibold text-xs">
+                    Tiêu đề chính (Title lớn):
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.video_section_title || ""}
+                    onChange={(e) => handleChange("video_section_title", e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
+                    placeholder="VIDEO QUY TRÌNH CHẾ TÁC & SẢN PHẨM"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[#d4af37] mb-1 font-semibold text-xs">
+                    Đoạn mô tả ngắn dưới tiêu đề:
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={settings.video_section_desc || ""}
+                    onChange={(e) => handleChange("video_section_desc", e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
+                    placeholder="Kênh truyền hình & tư liệu trực quan giúp quý khách an tâm tuyệt đối về chất lượng đúc đồng thủ công"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* List of Videos */}
+            <div className="space-y-5">
+              {homeVideos.map((vid, idx) => (
+                <div
+                  key={vid.id || idx}
+                  className={`border rounded-xl p-4 sm:p-5 transition-all ${
+                    vid.active !== false
+                      ? "bg-[#121c2b]/90 border-[#22354e] hover:border-[#d4af37]/60"
+                      : "bg-[#0f1722]/50 border-dashed border-[#1f2d42] opacity-60"
+                  }`}
+                >
+                  {/* Top Bar */}
+                  <div className="flex items-center justify-between pb-3 border-b border-[#1f2d42] mb-4">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="w-6 h-6 rounded-full bg-[#d4af37] text-[#0c1420] font-bold text-xs flex items-center justify-center">
+                        {idx + 1}
+                      </span>
+                      <span className="font-serif font-bold text-xs sm:text-sm text-white uppercase tracking-wider line-clamp-1">
+                        Video {idx + 1}: {vid.title || "Chưa đặt tiêu đề"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateVideo(idx, "active", vid.active === false ? true : false)}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer transition-colors ${
+                          vid.active !== false
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
+                            : "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
+                        }`}
+                      >
+                        {vid.active !== false ? "● Đang hiển thị" : "○ Đã tạm ẩn"}
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveVideo(idx, "up")}
+                        className="px-2 py-1 rounded-lg bg-[#1f2d42] hover:bg-[#2d415f] text-[#94a3b8] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition-colors"
+                        title="Di chuyển lên trước"
+                      >
+                        ▲ Lên
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === homeVideos.length - 1}
+                        onClick={() => handleMoveVideo(idx, "down")}
+                        className="px-2 py-1 rounded-lg bg-[#1f2d42] hover:bg-[#2d415f] text-[#94a3b8] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-xs font-bold transition-colors"
+                        title="Di chuyển xuống sau"
+                      >
+                        ▼ Xuống
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteVideo(idx)}
+                        className="px-2.5 py-1 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/40 text-xs font-bold transition-colors"
+                        title="Xóa video này"
+                      >
+                        ✕ Xóa
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                    {/* Left: Thumbnail & Video Source */}
+                    <div className="lg:col-span-5 space-y-3">
+                      <div>
+                        <label className="block text-[#d4af37] font-bold text-xs uppercase tracking-wider mb-1.5">
+                          Ảnh Bìa Thumbnail:
+                        </label>
+                        <div className="aspect-[16/10] rounded-xl overflow-hidden bg-[#0c1420] border border-[#1f2d42] relative flex items-center justify-center group/preview">
+                          {vid.image ? (
+                            <img
+                              src={vid.image}
+                              alt={vid.title}
+                              className="w-full h-full object-cover object-center"
+                            />
+                          ) : (
+                            <div className="text-center text-[#64748b] p-4">
+                              <ImageIcon className="w-8 h-8 mx-auto mb-1 text-[#334155]" />
+                              <span>Chưa có ảnh bìa</span>
+                            </div>
+                          )}
+
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-opacity">
+                            <div className="w-10 h-10 rounded-full bg-[#dfb755] text-[#0c1420] flex items-center justify-center shadow-lg">
+                              <Play className="w-4 h-4 fill-current ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Upload & Link for Thumbnail */}
+                        <div className="flex gap-2 mt-2">
+                          <input
+                            type="text"
+                            value={vid.image || ""}
+                            onChange={(e) => handleUpdateVideo(idx, "image", e.target.value)}
+                            className="flex-1 px-3 py-2 bg-[#0c1420] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                            placeholder="/images/videos/..."
+                          />
+                          <label className="px-3 py-2 bg-[#1f2d42] hover:bg-[#2d415f] text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1 shrink-0">
+                            {uploadingKey === `video_thumb_${idx}` ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Upload className="w-3.5 h-3.5" />
+                            )}
+                            <span>Tải Ảnh</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleUploadVideoThumbnail(idx, f);
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Video Source */}
+                      <div className="pt-2 border-t border-[#1f2d42] space-y-2">
+                        <label className="block text-[#d4af37] font-bold text-xs uppercase tracking-wider">
+                          Đường Dẫn Video:
+                        </label>
+                        <input
+                          type="text"
+                          value={vid.videoUrl || ""}
+                          onChange={(e) => handleUpdateVideo(idx, "videoUrl", e.target.value)}
+                          className="w-full px-3 py-2 bg-[#0c1420] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                          placeholder="https://www.youtube.com/watch?v=... hoặc /api/videos/..."
+                        />
+
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => openVideoPicker(idx)}
+                            className="px-3 py-1.5 rounded-lg bg-[#dfb755]/20 hover:bg-[#dfb755]/30 text-[#dfb755] border border-[#dfb755]/40 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                          >
+                            <Film className="w-3.5 h-3.5" />
+                            <span>Chọn từ Kho Video</span>
+                          </button>
+
+                          {vid.videoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewModalVideo({ title: vid.title, url: vid.videoUrl })}
+                              className="px-3 py-1.5 rounded-lg bg-[#1f2d42] hover:bg-[#2d415f] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                            >
+                              <Play className="w-3.5 h-3.5 text-[#dfb755]" />
+                              <span>Xem Thử</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Info */}
+                    <div className="lg:col-span-7 space-y-3.5">
+                      <div>
+                        <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                          Tiêu Đề Video:
+                        </label>
+                        <input
+                          type="text"
+                          value={vid.title || ""}
+                          onChange={(e) => handleUpdateVideo(idx, "title", e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-[#0c1420] border border-[#1f2d42] rounded-xl text-white font-medium text-xs focus:outline-none focus:border-[#d4af37]"
+                          placeholder="Ví dụ: Quy trình rót đồng Đại Hồng Chung..."
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                            Huy Hiệu (Badge):
+                          </label>
+                          <input
+                            type="text"
+                            value={vid.category || ""}
+                            onChange={(e) => handleUpdateVideo(idx, "category", e.target.value)}
+                            className="w-full px-3 py-2 bg-[#0c1420] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                            placeholder="QUY TRÌNH ĐÚC ĐỒNG"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                            Thời Lượng:
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={vid.duration || ""}
+                              onChange={(e) => handleUpdateVideo(idx, "duration", e.target.value)}
+                              className="w-full px-3 py-2 pl-7 bg-[#0c1420] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                              placeholder="05:32"
+                            />
+                            <Clock className="w-3.5 h-3.5 text-[#dfb755] absolute left-2.5 top-2.5" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                            Lượt Xem Mô Phỏng:
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={vid.views || ""}
+                              onChange={(e) => handleUpdateVideo(idx, "views", e.target.value)}
+                              className="w-full px-3 py-2 pl-7 bg-[#0c1420] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                              placeholder="15.420"
+                            />
+                            <Eye className="w-3.5 h-3.5 text-[#dfb755] absolute left-2.5 top-2.5" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                          Mô Tả Tóm Tắt Video:
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={vid.desc || ""}
+                          onChange={(e) => handleUpdateVideo(idx, "desc", e.target.value)}
+                          className="w-full px-3.5 py-2 bg-[#0c1420] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37] leading-relaxed"
+                          placeholder="Cận cảnh quy trình nghệ nhân nấu đồng đỏ nguyên chất và rót khuôn..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Add Video Button */}
+            <button
+              type="button"
+              onClick={handleAddVideo}
+              className="w-full py-4 rounded-xl border-2 border-dashed border-[#d4af37]/40 hover:border-[#d4af37] bg-[#121c2b]/60 hover:bg-[#121c2b] text-[#d4af37] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Thêm Video Mới Vào Thư Viện</span>
+            </button>
           </div>
         )}
 
@@ -1931,6 +2467,169 @@ export default function AdminLandingPageManager() {
           </button>
         </div>
       </form>
+
+      {/* MODAL 1: CHỌN TỪ KHO VIDEO TẢI LÊN */}
+      {videoPickerIndex !== null && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setVideoPickerIndex(null)}
+        >
+          <div
+            className="bg-[#0c1420] border-2 border-[#d4af37]/60 rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#1f2d42] pb-3 shrink-0">
+              <div className="flex items-center gap-2 text-[#d4af37]">
+                <Film className="w-5 h-5" />
+                <h3 className="font-serif font-bold text-sm uppercase tracking-wider">
+                  Chọn Video Cho Thẻ #{videoPickerIndex + 1}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setVideoPickerIndex(null)}
+                className="w-8 h-8 rounded-full bg-[#121c2b] text-[#94a3b8] hover:text-white flex items-center justify-center border border-[#1f2d42]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-[#94a3b8] shrink-0">
+              <span>Danh sách video đã tải lên máy chủ:</span>
+              <Link
+                href="/admin/videos"
+                target="_blank"
+                className="text-[#dfb755] hover:underline flex items-center gap-1 font-semibold"
+              >
+                <span>Tải thêm video mới</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+              {loadingUploadedVideos ? (
+                <div className="py-12 text-center text-[#d4af37]">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                  <span className="text-xs">Đang tải danh sách video...</span>
+                </div>
+              ) : uploadedVideos.length === 0 ? (
+                <div className="py-10 text-center text-[#94a3b8] border border-dashed border-[#1f2d42] rounded-xl p-6">
+                  <Film className="w-8 h-8 mx-auto mb-2 text-[#475569]" />
+                  <p className="font-semibold text-white text-xs mb-1">Chưa có video nào được tải lên!</p>
+                  <p className="text-[11px] mb-3">Vui lòng truy cập trang Kho Video để tải lên các file video MP4.</p>
+                  <Link
+                    href="/admin/videos"
+                    target="_blank"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#d4af37] text-[#0c1420] text-xs font-bold"
+                  >
+                    <span>Mở Kho Video Tải Lên</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
+              ) : (
+                uploadedVideos.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-3 rounded-xl bg-[#121c2b] border border-[#1f2d42] hover:border-[#d4af37]/60 transition-all gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-lg bg-[#0c1420] border border-[#1f2d42] flex items-center justify-center shrink-0 text-[#dfb755]">
+                        <Video className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-xs text-white truncate">
+                          {item.title || item.originalName}
+                        </div>
+                        <div className="text-[10px] text-[#94a3b8] flex items-center gap-2 mt-0.5">
+                          <span>{item.sizeFormatted}</span>
+                          <span>•</span>
+                          <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString("vi-VN") : ""}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewModalVideo({ title: item.title || item.originalName, url: item.url })}
+                        className="p-1.5 rounded-lg bg-[#1f2d42] hover:bg-[#2d415f] text-white text-xs"
+                        title="Xem trước"
+                      >
+                        <Play className="w-3.5 h-3.5 text-[#dfb755]" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleUpdateVideo(videoPickerIndex, "videoUrl", item.url);
+                          toastSuccess(`Đã chọn video "${item.title || item.originalName}" cho thẻ #${videoPickerIndex + 1}!`, "Đã chọn");
+                          setVideoPickerIndex(null);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#0c1420] text-xs font-bold hover:brightness-110 transition-all shadow-sm cursor-pointer"
+                      >
+                        Chọn Video
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: XEM THỬ VIDEO TRƯỚC KHI LƯU */}
+      {previewModalVideo && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setPreviewModalVideo(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl bg-[#0c1420] rounded-2xl overflow-hidden border-2 border-[#d4af37]/60 shadow-2xl p-4 sm:p-5 space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-[#1f2d42]">
+              <div className="font-serif font-bold text-xs sm:text-sm text-white line-clamp-1 pr-3">
+                {previewModalVideo.title}
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewModalVideo(null)}
+                className="w-7 h-7 rounded-full bg-[#121c2b] text-white hover:text-[#dfb755] flex items-center justify-center border border-[#1f2d42]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-inner flex items-center justify-center">
+              {(() => {
+                const helper = getEmbedHelper(previewModalVideo.url);
+                if (helper.type === "video") {
+                  return (
+                    <video
+                      src={helper.src}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-contain"
+                    >
+                      Trình duyệt không hỗ trợ thẻ video này.
+                    </video>
+                  );
+                }
+                return (
+                  <iframe
+                    src={helper.src}
+                    title={previewModalVideo.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full border-0"
+                  />
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

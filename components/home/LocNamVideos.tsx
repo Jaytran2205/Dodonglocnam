@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Play,
@@ -13,61 +13,133 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+interface VideoItem {
+  id: string;
+  title: string;
+  category: string;
+  duration: string;
+  views: string;
+  image: string;
+  videoUrl?: string;
+  embedUrl?: string;
+  desc: string;
+  active?: boolean;
+}
+
+const defaultVideos: VideoItem[] = [
+  {
+    id: "v1",
+    title: "Trực Tiếp Quy Trình Rót Đồng Đại Hồng Chung 1 Tấn - Chuông Đồng Đỏ Nguyên Chất Ý Yên",
+    category: "QUY TRÌNH ĐÚC ĐỒNG",
+    duration: "05:32",
+    views: "15,420",
+    image: "/images/videos/NUnVlHO1mEU.jpg",
+    videoUrl: "https://www.youtube.com/watch?v=NUnVlHO1mEU",
+    desc: "Cận cảnh quy trình nghệ nhân nấu đồng đỏ nguyên chất và rót khuôn đúc Tôn Tượng Phật & Đại Hồng Chung bằng đồng tại xưởng đúc đồng Lộc Nam.",
+  },
+  {
+    id: "v2",
+    title: "Nghệ Nhân Chạm Khắc Long Phụng Trên Bề Mặt Trống Đồng Đông Sơn - Tinh Xảo Từng Chi Tiết",
+    category: "CHẠM KHẮC THỦ CÔNG",
+    duration: "08:15",
+    views: "28,910",
+    image: "/images/videos/wmWQK2MBn3c.jpg",
+    videoUrl: "https://www.youtube.com/watch?v=wmWQK2MBn3c",
+    desc: "Từng đường nét hoa văn chạm tỉ mỉ bằng tay thể hiện tay nghề thượng thừa của nghệ nhân đúc đồng Lộc Nam.",
+  },
+  {
+    id: "v3",
+    title: "Hướng Dẫn Phân Biệt Đồng Thật Chuẩn Cát Tút Với Đồng Pha Kém Chất Lượng Ngoài Thị Trường",
+    category: "KIẾN THỨC ĐỒ THỜ",
+    duration: "04:45",
+    views: "42,150",
+    image: "/images/videos/o-vHwLilgjM.jpg",
+    videoUrl: "https://www.youtube.com/watch?v=o-vHwLilgjM",
+    desc: "Kinh nghiệm thực tế chọn đồng chuẩn, giữ màu bền đẹp hàng trăm năm không bị oxy hóa hay hoen gỉ.",
+  },
+  {
+    id: "v4",
+    title: "Bàn Giao Bộ Đỉnh Đồng Cát Tút Cao Cấp Cho Biệt Thự Gia Chủ Tại Starlake Tây Hồ",
+    category: "BÀN GIAO CÔNG TRÌNH",
+    duration: "06:20",
+    views: "19,800",
+    image: "/images/videos/ctwWCrZZwk4.jpg",
+    videoUrl: "https://www.youtube.com/watch?v=ctwWCrZZwk4",
+    desc: "Trọn bộ đỉnh đồng cát tút ngũ sự an vị trang nghiêm trên ban thờ gia tiên của khách hàng VIP tại Hà Nội.",
+  },
+];
+
+function getEmbedUrl(url: string): { type: "youtube" | "video"; src: string } {
+  if (!url) return { type: "youtube", src: "" };
+
+  const ytMatch = url.match(
+    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/i
+  );
+  if (ytMatch && ytMatch[1]) {
+    return {
+      type: "youtube",
+      src: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`,
+    };
+  }
+
+  if (url.includes("youtube.com/embed")) {
+    const src = url.includes("autoplay=1")
+      ? url
+      : `${url}${url.includes("?") ? "&" : "?"}autoplay=1`;
+    return { type: "youtube", src };
+  }
+
+  return { type: "video", src: url };
+}
+
 export function LocNamVideos() {
+  const [videos, setVideos] = useState<VideoItem[]>(defaultVideos);
+  const [sectionMeta, setSectionMeta] = useState({
+    subtitle: "THƯ VIỆN VIDEO THỰC TẾ",
+    title: "VIDEO QUY TRÌNH CHẾ TÁC & SẢN PHẨM",
+    desc: "Kênh truyền hình & tư liệu trực quan giúp quý khách an tâm tuyệt đối về chất lượng đúc đồng thủ công của Đồ Đồng Lộc Nam.",
+  });
+
   const [selectedVideo, setSelectedVideo] = useState<{
     id: string;
     title: string;
-    embedUrl: string;
+    url: string;
   } | null>(null);
 
   const [showAllMobile, setShowAllMobile] = useState(false);
 
-  const videos = [
-    {
-      id: "v1",
-      title: "Quá trình đúc tượng phật tại xưởng Ý Yên - Nam Định",
-      category: "XƯỞNG ĐÚC Ý YÊN",
-      duration: "03:45",
-      views: "15,200",
-      image: "/images/videos/NUnVlHO1mEU.jpg",
-      youtubeId: "NUnVlHO1mEU",
-      embedUrl: "https://www.youtube.com/embed/NUnVlHO1mEU?autoplay=1",
-      desc: "Cận cảnh quy trình nghệ nhân nấu đồng đỏ nguyên chất và rót khuôn đúc Tôn Tượng Phật bằng đồng tại xưởng đúc đồng Lộc Nam.",
-    },
-    {
-      id: "v2",
-      title: "Lắp đặt, vận chuyển bàn giao Tôn Tượng Phật về tỉnh Bến Tre",
-      category: "BÀN GIAO CÔNG TRÌNH",
-      duration: "06:12",
-      views: "18,420",
-      image: "/images/videos/o-vHwLilgjM.jpg",
-      youtubeId: "o-vHwLilgjM",
-      embedUrl: "https://www.youtube.com/embed/o-vHwLilgjM?autoplay=1",
-      desc: "Hành trình vận chuyển đường dài và thi công an vị Tôn Tượng Phật uy nghiêm, chuẩn phong thủy cho khách hàng tại Bến Tre.",
-    },
-    {
-      id: "v3",
-      title: "Thi công lắp đặt Tượng Thánh Mẫu Tổ Nghề May Mặc tại Ninh Bình",
-      category: "TƯỢNG DANH NHÂN",
-      duration: "08:30",
-      views: "21,100",
-      image: "/images/videos/wmWQK2MBn3c.jpg",
-      youtubeId: "wmWQK2MBn3c",
-      embedUrl: "https://www.youtube.com/embed/wmWQK2MBn3c?autoplay=1",
-      desc: "Lễ an vị và khánh thành công trình tượng Thánh Mẫu Tứ Phi Hoàng Hậu Nguyễn Thị Sen đúc bằng đồng nguyên khối tại Ninh Bình.",
-    },
-    {
-      id: "v4",
-      title: "QUÀ TẶNG BẰNG ĐỒNG MẠ VÀNG - ĐỒNG TIỀN THÁI BÌNH HƯNG BẢO",
-      category: "QUÀ TẶNG MẠ VÀNG",
-      duration: "04:18",
-      views: "12,640",
-      image: "/images/videos/ctwWCrZZwk4.jpg",
-      youtubeId: "ctwWCrZZwk4",
-      embedUrl: "https://www.youtube.com/embed/ctwWCrZZwk4?autoplay=1",
-      desc: "Vật phẩm phong thủy chiêu tài tấn bảo - Đồng tiền cổ Thái Bình Hưng Bảo mạ vàng 24k cao cấp chế tác bởi Lộc Nam.",
-    },
-  ];
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.settings) {
+          const s = data.settings;
+          if (s.video_section_subtitle || s.video_section_title || s.video_section_desc) {
+            setSectionMeta({
+              subtitle: s.video_section_subtitle || "THƯ VIỆN VIDEO THỰC TẾ",
+              title: s.video_section_title || "VIDEO QUY TRÌNH CHẾ TÁC & SẢN PHẨM",
+              desc:
+                s.video_section_desc ||
+                "Kênh truyền hình & tư liệu trực quan giúp quý khách an tâm tuyệt đối về chất lượng đúc đồng thủ công của Đồ Đồng Lộc Nam.",
+            });
+          }
+          if (s.home_videos) {
+            try {
+              const parsed = JSON.parse(s.home_videos);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const activeOnes = parsed.filter((v: any) => v.active !== false);
+                if (activeOnes.length > 0) {
+                  setVideos(activeOnes);
+                }
+              }
+            } catch (err) {
+              console.error("Error parsing home_videos:", err);
+            }
+          }
+        }
+      })
+      .catch((err) => console.error("Error loading video settings:", err));
+  }, []);
 
   return (
     <section className="bg-gradient-to-b from-[#f7f3ec] to-[#fbf9f5] py-10 sm:py-16 px-3.5 sm:px-6 lg:px-8 border-b border-[#ece5d8]">
@@ -77,13 +149,13 @@ export function LocNamVideos() {
           <div className="space-y-1">
             <div className="text-[#a67c2e] font-serif text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-1.5 mb-0.5">
               <VideoIcon className="w-3.5 h-3.5 text-[#dfb755] flex-shrink-0" />
-              <span>THƯ VIỆN VIDEO THỰC TẾ</span>
+              <span>{sectionMeta.subtitle}</span>
             </div>
             <h2 className="font-serif text-xl sm:text-3xl lg:text-4xl font-extrabold text-[#1a2533] tracking-wide uppercase leading-tight">
-              VIDEO QUY TRÌNH CHẾ TÁC & SẢN PHẨM
+              {sectionMeta.title}
             </h2>
             <p className="text-xs sm:text-sm text-[#64748b] font-light max-w-2xl">
-              Cận cảnh quy trình đúc đồng truyền thống, nghệ nhân chế tác tinh xảo và không gian trưng bày của Đồ Đồng Lộc Nam.
+              {sectionMeta.desc}
             </p>
           </div>
 
@@ -100,15 +172,16 @@ export function LocNamVideos() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {videos.map((vid, idx) => {
             const isHiddenOnMobile = idx > 0 && !showAllMobile;
+            const targetUrl = vid.videoUrl || vid.embedUrl || "";
 
             return (
               <div
-                key={vid.id}
+                key={vid.id || idx}
                 onClick={() =>
                   setSelectedVideo({
-                    id: vid.id,
+                    id: vid.id || String(idx),
                     title: vid.title,
-                    embedUrl: vid.embedUrl,
+                    url: targetUrl,
                   })
                 }
                 className={`${
@@ -119,7 +192,7 @@ export function LocNamVideos() {
                   {/* Video Thumbnail with Play Button Overlay */}
                   <div className="aspect-[16/10] overflow-hidden bg-[#0c1825] relative border-b border-[#f1ebe1]">
                     <img
-                      src={vid.image}
+                      src={vid.image || "/images/hero_golden_ship.jpg"}
                       alt={vid.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-95 group-hover:brightness-105"
                       loading="lazy"
@@ -129,21 +202,23 @@ export function LocNamVideos() {
 
                     {/* Category Badge */}
                     <span className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 sm:px-2.5 py-1 rounded-md text-[9px] sm:text-[10px] font-black tracking-wider bg-[#0c1825]/90 text-[#dfb755] border border-[#dfb755]/50 backdrop-blur-sm shadow-md uppercase">
-                      {vid.category}
+                      {vid.category || "QUY TRÌNH CHẾ TÁC"}
                     </span>
 
                     {/* Play Icon Circle */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#0c1825] flex items-center justify-center shadow-[0_4px_20px_rgba(223,183,85,0.6)] group-hover:scale-110 transition-transform duration-300 border-2 border-white">
+                      <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#0c1420] flex items-center justify-center shadow-[0_4px_20px_rgba(223,183,85,0.6)] group-hover:scale-110 transition-transform duration-300 border-2 border-white">
                         <Play className="w-5 h-5 fill-current ml-0.5" />
                       </div>
                     </div>
 
                     {/* Duration Badge */}
-                    <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-black/85 text-white text-[10px] font-bold flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#dfb755]" />
-                      <span>{vid.duration}</span>
-                    </div>
+                    {vid.duration && (
+                      <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-black/85 text-white text-[10px] font-bold flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-[#dfb755]" />
+                        <span>{vid.duration}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Video Content */}
@@ -162,7 +237,7 @@ export function LocNamVideos() {
                 <div className="p-3.5 sm:p-4 pt-0 flex items-center justify-between text-xs border-t border-[#f1ebe1] pt-3">
                   <span className="text-[11px] text-[#64748b] flex items-center gap-1 font-medium">
                     <Eye className="w-3.5 h-3.5 text-[#b8860b]" />
-                    <span>{vid.views} lượt xem</span>
+                    <span>{vid.views || "15.000"} lượt xem</span>
                   </span>
                   <span className="text-xs font-bold text-[#b8860b] group-hover:underline flex items-center gap-1">
                     <span>Phát video</span>
@@ -176,17 +251,23 @@ export function LocNamVideos() {
 
         {/* Mobile Expand / Collapse Button & View All Link */}
         <div className="sm:hidden space-y-2 pt-1">
-          <button
-            onClick={() => setShowAllMobile(!showAllMobile)}
-            className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#fbf9f4] border-2 border-[#dfb755]/70 text-[#0c1825] font-bold text-xs shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation min-h-[44px]"
-          >
-            <span>{showAllMobile ? "Thu gọn bớt video" : "Xem thêm video khác (3 video)"}</span>
-            <ChevronDown
-              className={`w-4 h-4 text-[#b8860b] transition-transform duration-300 ${
-                showAllMobile ? "rotate-180" : ""
-              }`}
-            />
-          </button>
+          {videos.length > 1 && (
+            <button
+              onClick={() => setShowAllMobile(!showAllMobile)}
+              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#fbf9f4] border-2 border-[#dfb755]/70 text-[#0c1825] font-bold text-xs shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation min-h-[44px]"
+            >
+              <span>
+                {showAllMobile
+                  ? "Thu gọn bớt video"
+                  : `Xem thêm video khác (${videos.length - 1} video)`}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-[#b8860b] transition-transform duration-300 ${
+                  showAllMobile ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+          )}
 
           <Link
             href="/video"
@@ -215,21 +296,39 @@ export function LocNamVideos() {
               <button
                 onClick={() => setSelectedVideo(null)}
                 aria-label="Đóng video"
-                className="w-8 h-8 rounded-full bg-[#122336] text-white hover:text-[#dfb755] flex items-center justify-center transition-colors flex-shrink-0 border border-[#1c2c3d] touch-manipulation"
+                className="w-8 h-8 rounded-full bg-[#122336] text-white hover:text-[#dfb755] flex items-center justify-center transition-colors flex-shrink-0 border border-[#1c2c3d] touch-manipulation cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Video Iframe */}
-            <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-inner">
-              <iframe
-                src={selectedVideo.embedUrl}
-                title={selectedVideo.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
+            {/* Video Player: Native Video or YouTube Iframe */}
+            <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-inner flex items-center justify-center">
+              {(() => {
+                const media = getEmbedUrl(selectedVideo.url);
+                if (media.type === "video") {
+                  return (
+                    <video
+                      src={media.src}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-contain"
+                    >
+                      Trình duyệt không hỗ trợ thẻ video này.
+                    </video>
+                  );
+                }
+                return (
+                  <iframe
+                    src={media.src}
+                    title={selectedVideo.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full border-0"
+                  />
+                );
+              })()}
             </div>
           </div>
         </div>
