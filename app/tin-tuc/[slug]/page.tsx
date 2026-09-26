@@ -60,6 +60,92 @@ interface NormalizedArticle {
   isHtml?: boolean;
 }
 
+function parseShortcodesInHtml(content: string): string {
+  if (!content) return "";
+  let res = content;
+
+  // 1. Replace [video title="..."]URL[/video] or [video=URL] or [video]URL[/video]
+  res = res.replace(
+    /\[video(?:=([^\]\s]+)|\s+title="([^"]*)")?\]([\s\S]*?)\[\/video\]/gi,
+    (m, urlAttr, titleAttr, innerUrl) => {
+      const vUrl = (urlAttr || innerUrl || "").trim();
+      const vTitle = (titleAttr || "").trim();
+      if (!vUrl) return "";
+
+      const ytMatch = vUrl.match(
+        /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([a-zA-Z0-9_-]{11})/i
+      );
+      if (ytMatch && ytMatch[1]) {
+        return `
+          <div class="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-xl max-w-3xl mx-auto aspect-video not-prose">
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/${ytMatch[1]}"
+              title="${vTitle || "Video bài viết Đồ Đồng Lộc Nam"}"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+              class="w-full h-full border-0"
+            ></iframe>
+          </div>
+          ${vTitle ? `<p class="text-center text-xs sm:text-sm text-[#5a4a32] italic -mt-4 mb-6 font-serif">${vTitle}</p>` : ""}
+        `;
+      }
+
+      return `
+        <div class="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-xl max-w-3xl mx-auto not-prose">
+          <div class="aspect-video w-full flex items-center justify-center bg-black">
+            <video
+              src="${vUrl}"
+              controls
+              playsinline
+              preload="metadata"
+              class="w-full h-full object-contain"
+            >
+              Trình duyệt của bạn không hỗ trợ phát thẻ video HTML5.
+            </video>
+          </div>
+          ${vTitle ? `<p class="text-center text-xs sm:text-sm text-[#5a4a32] italic p-3 bg-[#fbf9f5] border-t border-[#e2d5bd]/60 font-serif">${vTitle}</p>` : ""}
+        </div>
+      `;
+    }
+  );
+
+  // 2. Also replace standalone video URL on a single line
+  res = res.replace(
+    /(?:<p>)?(\/api\/videos\/[^\s<"]+\.(?:mp4|webm|mov|ogg|mkv|avi)(?:\?[^\s<"]*)?)(?:<\/p>)?/gi,
+    (m, vUrl) => {
+      return `
+        <div class="my-8 rounded-2xl overflow-hidden border border-[#e2d5bd] bg-black shadow-xl max-w-3xl mx-auto not-prose">
+          <div class="aspect-video w-full flex items-center justify-center bg-black">
+            <video
+              src="${vUrl}"
+              controls
+              playsinline
+              preload="metadata"
+              class="w-full h-full object-contain"
+            >
+              Trình duyệt của bạn không hỗ trợ phát thẻ video HTML5.
+            </video>
+          </div>
+        </div>
+      `;
+    }
+  );
+
+  // 3. Callout Box tags: [box=gold]...[/box]
+  const boxClasses: Record<string, string> = {
+    gold: "bg-amber-50/90 border-amber-400 text-amber-950",
+    jade: "bg-emerald-50/90 border-emerald-400 text-emerald-950",
+    red: "bg-rose-50/90 border-rose-400 text-rose-950",
+    blue: "bg-sky-50/90 border-sky-400 text-sky-950",
+  };
+  res = res.replace(/\[box=([a-zA-Z0-9_-]+)\]([\s\S]*?)\[\/box\]/gi, (m, bType, bContent) => {
+    const cls = boxClasses[bType.toLowerCase()] || "bg-amber-50/90 border-amber-400 text-amber-950";
+    return `<div class="my-4 p-4 rounded-xl border-2 ${cls} font-medium shadow-sm leading-relaxed">${bContent}</div>`;
+  });
+
+  return res;
+}
+
 async function getArticle(slug: string): Promise<NormalizedArticle | null> {
   const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
 
@@ -79,16 +165,19 @@ async function getArticle(slug: string): Promise<NormalizedArticle | null> {
       const isHtml = /<\/?[a-z][\s\S]*>/i.test(rawContent);
 
       let contentData: string[] | string = rawContent;
-      if (!isHtml) {
-        if (rawContent.startsWith("[") && rawContent.endsWith("]")) {
+      if (isHtml) {
+        contentData = parseShortcodesInHtml(rawContent);
+      } else {
+        const normalized = rawContent.replace(/(\[video[\s\S]*?\[\/video\])/gi, "\n\n$1\n\n");
+        if (normalized.startsWith("[") && normalized.endsWith("]")) {
           try {
-            const parsed = JSON.parse(rawContent);
+            const parsed = JSON.parse(normalized);
             if (Array.isArray(parsed)) contentData = parsed;
           } catch {
-            contentData = rawContent.split(/\r?\n\r?\n/).map((s) => s.trim()).filter(Boolean);
+            contentData = normalized.split(/\r?\n\r?\n/).map((s) => s.trim()).filter(Boolean);
           }
         } else {
-          contentData = rawContent.split(/\r?\n\r?\n/).map((s) => s.trim()).filter(Boolean);
+          contentData = normalized.split(/\r?\n\r?\n/).map((s) => s.trim()).filter(Boolean);
         }
       }
 
@@ -386,10 +475,10 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                   }
                 }
                 // Check Video Tag: [video title="..."]url[/video] or raw URL
-                const videoMatch = paragraph.match(/^\[video(?:=([^\]\s]+)|\s+title="([^"]+)")?\](?:([^\[]+)\[\/video\])?$/i);
+                const videoMatch = paragraph.match(/\[video(?:=([^\]\s]+)|\s+title="([^"]*)")?\]([\s\S]*?)\[\/video\]/i);
                 if (videoMatch || paragraph.startsWith("/api/videos/") || paragraph.startsWith("/uploads/videos/") || /\.(mp4|webm|mov|ogg|mkv|avi)(\?.*)?$/i.test(paragraph) || paragraph.includes("youtube.com") || paragraph.includes("youtu.be")) {
                   const vUrl = videoMatch ? (videoMatch[1] || videoMatch[3] || "").trim() : paragraph.trim();
-                  const vTitle = videoMatch ? videoMatch[2] : undefined;
+                  const vTitle = videoMatch ? (videoMatch[2] || "").trim() || undefined : undefined;
                   const ytMatch = vUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
                   const ytId = ytMatch ? ytMatch[1] : null;
 

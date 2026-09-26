@@ -33,11 +33,11 @@ function getYouTubeId(url: string): string | null {
 function parseVideoTag(text: string): { url: string; title?: string } | null {
   const trimmed = text.trim();
 
-  // [video=URL] or [video title="..."]URL[/video]
-  const tagMatch = trimmed.match(/^\[video(?:=([^\]\s]+)|\s+title="([^"]+)")?\](?:([^\[]+)\[\/video\])?$/i);
+  // [video=URL] or [video title="..."]URL[/video] or [video]URL[/video]
+  const tagMatch = trimmed.match(/\[video(?:=([^\]\s]+)|\s+title="([^"]*)")?\]([\s\S]*?)\[\/video\]/i);
   if (tagMatch) {
     const url = (tagMatch[1] || tagMatch[3] || "").trim();
-    const title = tagMatch[2] || undefined;
+    const title = (tagMatch[2] || "").trim() || undefined;
     if (url) return { url, title };
   }
 
