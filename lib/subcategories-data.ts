@@ -157,11 +157,11 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
         keyword: "danh nhân,trần hưng đạo,trần quốc tuấn,bác hồ,bác giáp,võ nguyên giáp,quan công,quan vân trường,gia cát lượng,khổng minh,nguyễn trãi,phùng quang thanh,tướng quân,lê đại đao,danh nhan,tran hung dao,tran quoc tuan,nguyen trai",
         image: "/images/tuong-dong/tuong-danh-nhan.jpg",
         children: [
-          { id: "tuong-tran-hung-dao", aliases: ["tuong-tran-quoc-tuan", "tran-quoc-tuan", "duc-thanh-tran"], name: "Tượng đồng Trần Hưng Đạo - Trần Quốc Tuấn", keyword: "trần hưng đạo,trần quốc tuấn,tran hung dao,tran quoc tuan,đức thánh trần,duc thanh tran", image: "/images/locnam_real/locnam_tran_hung_dao.jpg?v=clean_grid_v6" },
-          { id: "tuong-bac-ho", name: "Tượng Bác Hồ", keyword: "bác hồ,bac ho", image: "/images/locnam_real/locnam_bac_ho.jpg?v=clean_grid_v6" },
-          { id: "tuong-vo-nguyen-giap", name: "Tượng Bác Võ Nguyên Giáp", keyword: "võ nguyên giáp,bác giáp,vo nguyen giap,bac giap", image: "/images/locnam_real/locnam_bac_giap.jpg?v=clean_grid_v6" },
-          { id: "tuong-gia-cat-luong", aliases: ["tuong-khong-minh"], name: "Tượng Gia Cát Lượng", keyword: "khổng minh,gia cát lượng,khong minh,gia cat luong", image: "/images/locnam_real/locnam_khong_minh.jpg?v=clean_grid_v6" },
-          { id: "tuong-quan-cong", aliases: ["tuong-quan-van-truong", "quan-van-truong"], name: "Tượng Quan Công - Quan Vân Trường", keyword: "quan công,quan vân trường,quan cong,quan van truong", image: "/images/locnam_real/locnam_quan_cong.jpg?v=clean_grid_v6" },
+          { id: "tuong-tran-hung-dao", aliases: ["tuong-tran-quoc-tuan", "tran-quoc-tuan", "duc-thanh-tran"], name: "Tượng đồng Trần Hưng Đạo - Trần Quốc Tuấn", keyword: "trần hưng đạo,trần quốc tuấn,tran hung dao,tran quoc tuan,đức thánh trần,duc thanh tran", image: "/images/tuong-dong/danh-nhan/avatar-tran-hung-dao.jpg?v=danh_nhan_v7" },
+          { id: "tuong-bac-ho", name: "Tượng Bác Hồ", keyword: "bác hồ,bac ho", image: "/images/tuong-dong/danh-nhan/avatar-bac-ho.jpg?v=danh_nhan_v7" },
+          { id: "tuong-vo-nguyen-giap", name: "Tượng Bác Võ Nguyên Giáp", keyword: "võ nguyên giáp,bác giáp,vo nguyen giap,bac giap", image: "/images/tuong-dong/danh-nhan/avatar-vo-nguyen-giap.jpg?v=danh_nhan_v7" },
+          { id: "tuong-gia-cat-luong", aliases: ["tuong-khong-minh"], name: "Tượng Gia Cát Lượng", keyword: "khổng minh,gia cát lượng,khong minh,gia cat luong", image: "/images/tuong-dong/danh-nhan/avatar-gia-cat-luong.jpg?v=danh_nhan_v7" },
+          { id: "tuong-quan-cong", aliases: ["tuong-quan-van-truong", "quan-van-truong"], name: "Tượng Quan Công - Quan Vân Trường", keyword: "quan công,quan vân trường,quan cong,quan van truong", image: "/images/tuong-dong/danh-nhan/avatar-quan-cong.jpg?v=danh_nhan_v7" },
         ],
       },
       {
