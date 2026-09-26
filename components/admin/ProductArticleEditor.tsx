@@ -36,6 +36,8 @@ import {
   FileText,
   Code,
   Type,
+  Search,
+  RefreshCw,
 } from "lucide-react";
 import { ProductStructuredDescription } from "@/components/product/ProductStructuredDescription";
 import { useToast } from "@/components/admin/AdminToast";
@@ -419,7 +421,7 @@ export function ProductArticleEditor({
   const [showImageModal, setShowImageModal] = useState(false);
 
   // Video modal form state
-  const [videoTab, setVideoTab] = useState<"upload" | "link">("upload");
+  const [videoTab, setVideoTab] = useState<"upload" | "gallery" | "link">("upload");
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -427,6 +429,9 @@ export function ProductArticleEditor({
   const [videoUploadStatus, setVideoUploadStatus] = useState<string>("");
   const [videoFileMeta, setVideoFileMeta] = useState<{ name: string; size: string } | null>(null);
   const [isDragOverVideo, setIsDragOverVideo] = useState(false);
+  const [galleryVideos, setGalleryVideos] = useState<any[]>([]);
+  const [loadingGallery, setLoadingGallery] = useState(false);
+  const [gallerySearch, setGallerySearch] = useState("");
   const videoFileInputRef = useRef<HTMLInputElement>(null);
 
   // Image modal form state
@@ -592,6 +597,22 @@ export function ProductArticleEditor({
     setShowBoxPicker(false);
   };
 
+  // Fetch gallery videos from database
+  const fetchGalleryVideos = async () => {
+    setLoadingGallery(true);
+    try {
+      const res = await fetch("/api/admin/videos");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.videos)) {
+        setGalleryVideos(data.videos);
+      }
+    } catch {
+      // Ignored
+    } finally {
+      setLoadingGallery(false);
+    }
+  };
+
   // Resilient Chunked Video Upload Handler (bypasses Vercel 4.5MB limit, auto-retries, supports large videos)
   const handleUploadVideoFile = async (file: File) => {
     if (!file) return;
@@ -715,6 +736,7 @@ export function ProductArticleEditor({
           setVideoTitle(cleanTitle);
         }
         toastSuccess(`Đã tải video "${file.name}" lên thành công!`, "Tải video hoàn tất");
+        fetchGalleryVideos();
       } else {
         throw new Error(completeData?.message || "Lỗi hoàn tất xử lý video trên máy chủ.");
       }
@@ -735,48 +757,31 @@ export function ProductArticleEditor({
     }
   };
 
-  // Video insertion
-  const handleInsertVideo = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Video insertion with guaranteed direct markdown update
+  const handleInsertVideo = (e?: React.MouseEvent | React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!videoUrl.trim()) {
-      toastWarning("Vui lòng tải lên tệp video hoặc nhập đường dẫn video.", "Chưa có video");
+      toastWarning("Vui lòng tải lên tệp video hoặc chọn từ kho video.", "Chưa có video");
       return;
     }
 
-    const title = videoTitle.trim() || "Video thực tế sản phẩm";
+    const title = videoTitle.trim();
     const url = videoUrl.trim();
 
-    if (activeTab === "visual" || activeTab === "split") {
-      const isDirectVideo = !url.includes("youtube.com") && !url.includes("youtu.be");
-      const vHtml = `<div data-video="${url}" data-title="${title}" class="my-5 p-3 rounded-2xl border-2 border-rose-500/40 bg-[#0c1825] text-white shadow-xl select-none">
-        <div class="flex items-center justify-between pb-2 mb-2 border-b border-rose-500/30 text-rose-400 font-bold text-xs uppercase tracking-wider">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-            <span>${isDirectVideo ? "Video Đã Tải Lên" : "Video YouTube"}: ${title}</span>
-          </div>
-          <span class="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">${url}</span>
-        </div>
-        ${isDirectVideo ? `
-          <div class="aspect-video w-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
-            <video src="${url}" controls playsinline preload="metadata" class="w-full h-full object-contain"></video>
-          </div>
-        ` : `
-          <div class="p-3 bg-rose-950/40 rounded-xl text-xs text-rose-200 font-medium">▶ [Video YouTube: ${title} - ${url}]</div>
-        `}
-        ${title ? `<p class="text-center text-xs text-rose-200/80 italic mt-2">${title}</p>` : ""}
-      </div><p><br></p>`;
+    const videoMarkdown = title
+      ? `\n\n[video title="${title}"]${url}[/video]\n\n`
+      : `\n\n[video]${url}[/video]\n\n`;
 
-      visualEditorRef.current?.focus();
-      document.execCommand("insertHTML", false, vHtml);
-      handleVisualInput();
+    const textarea = textareaRef.current;
+    if (textarea && (activeTab === "code" || activeTab === "split")) {
+      insertAtCursor(videoMarkdown);
     } else {
-      let code = "";
-      if (videoTitle.trim()) {
-        code = `\n\n[video title="${videoTitle.trim()}"]${url}[/video]\n\n`;
-      } else {
-        code = `\n\n[video]${url}[/video]\n\n`;
+      const currentVal = value || "";
+      const updatedVal = currentVal ? `${currentVal.trimEnd()}${videoMarkdown}` : videoMarkdown.trim();
+      onChange(updatedVal);
+      if (visualEditorRef.current) {
+        visualEditorRef.current.innerHTML = markdownToHtml(updatedVal);
       }
-      insertAtCursor(code);
     }
 
     toastSuccess("Đã chèn video vào bài viết thành công!", "Chèn video");
@@ -784,6 +789,28 @@ export function ProductArticleEditor({
     setVideoTitle("");
     setVideoFileMeta(null);
     setVideoUploadProgress(0);
+    setVideoUploadStatus("");
+    setShowVideoModal(false);
+  };
+
+  // Direct select from existing video gallery
+  const handleSelectFromGallery = (video: any) => {
+    const title = video.filename.replace(/\.[^/.]+$/, "").replace(/[-_]+/g, " ");
+    const videoMarkdown = `\n\n[video title="${title}"]${video.url}[/video]\n\n`;
+
+    const textarea = textareaRef.current;
+    if (textarea && (activeTab === "code" || activeTab === "split")) {
+      insertAtCursor(videoMarkdown);
+    } else {
+      const currentVal = value || "";
+      const updatedVal = currentVal ? `${currentVal.trimEnd()}${videoMarkdown}` : videoMarkdown.trim();
+      onChange(updatedVal);
+      if (visualEditorRef.current) {
+        visualEditorRef.current.innerHTML = markdownToHtml(updatedVal);
+      }
+    }
+
+    toastSuccess(`Đã chèn video "${video.filename}" vào bài viết!`, "Chèn video thành công");
     setShowVideoModal(false);
   };
 
@@ -815,9 +842,9 @@ export function ProductArticleEditor({
     }
   };
 
-  // Image Insertion
-  const handleInsertImage = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Image Insertion with guaranteed direct markdown update
+  const handleInsertImage = (e?: React.MouseEvent | React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!imageUrl.trim()) {
       toastWarning("Vui lòng nhập liên kết hình ảnh hoặc tải ảnh lên", "Thiếu ảnh");
       return;
@@ -825,15 +852,18 @@ export function ProductArticleEditor({
 
     const caption = imageCaption.trim() || productName;
     const url = imageUrl.trim();
+    const imgMarkdown = `\n\n![${caption}](${url})\n\n`;
 
-    if (activeTab === "visual" || activeTab === "split") {
-      const imgHtml = `<div class="my-4 text-center"><img src="${url}" alt="${caption}" class="max-h-72 rounded-xl mx-auto shadow-md border border-slate-200 object-contain" /><p class="text-xs text-slate-500 italic mt-1.5">${caption}</p></div><p><br></p>`;
-      visualEditorRef.current?.focus();
-      document.execCommand("insertHTML", false, imgHtml);
-      handleVisualInput();
+    const textarea = textareaRef.current;
+    if (textarea && (activeTab === "code" || activeTab === "split")) {
+      insertAtCursor(imgMarkdown);
     } else {
-      const code = `\n\n![${caption}](${url})\n\n`;
-      insertAtCursor(code);
+      const currentVal = value || "";
+      const updatedVal = currentVal ? `${currentVal.trimEnd()}${imgMarkdown}` : imgMarkdown.trim();
+      onChange(updatedVal);
+      if (visualEditorRef.current) {
+        visualEditorRef.current.innerHTML = markdownToHtml(updatedVal);
+      }
     }
 
     toastSuccess("Đã chèn ảnh vào bài viết thành công!", "Chèn ảnh");
@@ -1287,7 +1317,10 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           {/* Video Insertion Button */}
           <button
             type="button"
-            onClick={() => setShowVideoModal(true)}
+            onClick={() => {
+              setShowVideoModal(true);
+              fetchGalleryVideos();
+            }}
             className="p-1.5 rounded-lg text-[#f43f5e] hover:bg-[#16253b] font-bold text-xs flex items-center gap-1.5"
             title="Chèn video thực tế (YouTube, TikTok, Facebook, MP4)"
           >
@@ -1525,10 +1558,27 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 }`}
               >
                 <UploadCloud className="w-4 h-4" />
-                <span>Tải Video Từ Máy Tính</span>
-                <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/40 font-mono">
-                  Ưu tiên
-                </span>
+                <span>Tải Video Mới</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setVideoTab("gallery");
+                  fetchGalleryVideos();
+                }}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                  videoTab === "gallery"
+                    ? "bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-md shadow-rose-900/40"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                <Film className="w-4 h-4" />
+                <span>Kho Video Của Bạn</span>
+                {galleryVideos.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/50 font-mono text-rose-300">
+                    {galleryVideos.length}
+                  </span>
+                )}
               </button>
               <button
                 type="button"
@@ -1540,11 +1590,11 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 }`}
               >
                 <LinkIcon className="w-3.5 h-3.5" />
-                <span>Hoặc Nhập Link Video</span>
+                <span>Link YouTube</span>
               </button>
             </div>
 
-            <form onSubmit={handleInsertVideo} className="space-y-4">
+            <div className="space-y-4">
               {/* TAB 1: UPLOAD VIDEO TỪ MÁY TÍNH */}
               {videoTab === "upload" && (
                 <div className="space-y-3">
@@ -1593,7 +1643,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-emerald-400 flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>Video Đã Sẵn Sàng</span>
+                          <span>Video Đã Tải Lên Thành Công</span>
                         </span>
                         <button
                           type="button"
@@ -1675,7 +1725,94 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 </div>
               )}
 
-              {/* TAB 2: NHẬP LINK NGOÀI / YOUTUBE */}
+              {/* TAB 2: KHO VIDEO CỦA BẠN (GALLERY) */}
+              {videoTab === "gallery" && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="relative flex-1">
+                      <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={gallerySearch}
+                        onChange={(e) => setGallerySearch(e.target.value)}
+                        placeholder="Tìm trong kho video đã tải lên..."
+                        className="w-full bg-[#111c2e] border border-[#1f2d42] text-white text-xs pl-8 pr-3 py-2 rounded-xl focus:outline-none focus:border-rose-500"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fetchGalleryVideos()}
+                      className="p-2 bg-[#152236] hover:bg-[#1f2d42] text-gray-300 rounded-xl text-xs transition-colors shrink-0"
+                      title="Làm mới kho video"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${loadingGallery ? "animate-spin" : ""}`} />
+                    </button>
+                  </div>
+
+                  {loadingGallery ? (
+                    <div className="py-12 flex flex-col items-center justify-center gap-2 text-center text-xs text-gray-400">
+                      <Loader2 className="w-6 h-6 text-rose-500 animate-spin" />
+                      <span>Đang tải danh sách video...</span>
+                    </div>
+                  ) : galleryVideos.length === 0 ? (
+                    <div className="py-10 text-center text-xs text-gray-400 space-y-2 bg-[#070e17] rounded-xl border border-[#1e344d] p-4">
+                      <Film className="w-8 h-8 text-gray-600 mx-auto" />
+                      <p>Chưa có video nào trong kho lưu trữ.</p>
+                      <button
+                        type="button"
+                        onClick={() => setVideoTab("upload")}
+                        className="text-rose-400 hover:text-rose-300 underline font-semibold"
+                      >
+                        Bấm vào đây để tải video mới lên
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto space-y-2.5 pr-1">
+                      {galleryVideos
+                        .filter((v) => !gallerySearch || v.filename.toLowerCase().includes(gallerySearch.toLowerCase()))
+                        .map((v) => (
+                          <div
+                            key={v.id}
+                            className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                              videoUrl === v.url
+                                ? "bg-rose-950/40 border-rose-500"
+                                : "bg-[#070e17] border-[#1e344d] hover:border-rose-500/50"
+                            }`}
+                          >
+                            <div className="w-20 aspect-video rounded-lg overflow-hidden bg-black shrink-0 relative">
+                              <video src={v.url} className="w-full h-full object-cover" preload="metadata" />
+                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                <Play className="w-4 h-4 text-white drop-shadow" />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <p className="text-xs font-bold text-white truncate" title={v.filename}>
+                                {v.filename}
+                              </p>
+                              <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono mt-0.5">
+                                <span className="text-rose-300">{v.sizeFormatted}</span>
+                                <span>•</span>
+                                <span>{new Date(v.createdAt).toLocaleDateString("vi-VN")}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleSelectFromGallery(v)}
+                                className="px-3 py-1.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-lg text-xs font-bold shadow transition-all flex items-center gap-1"
+                              >
+                                <Plus className="w-3 h-3" />
+                                <span>Chèn Video</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: NHẬP LINK NGOÀI / YOUTUBE */}
               {videoTab === "link" && (
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-white block uppercase">
@@ -1715,7 +1852,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               {/* ACTION BUTTONS */}
               <div className="pt-3 border-t border-[#1e344d] flex items-center justify-between">
                 <span className="text-[11px] text-gray-400">
-                  {videoUrl ? "✓ Đã sẵn sàng chèn video" : "Chọn video để tiếp tục"}
+                  {videoUrl ? "✓ Đã chọn video sẵn sàng chèn" : "Chọn hoặc tải video để tiếp tục"}
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -1730,7 +1867,8 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                     Hủy Bỏ
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleInsertVideo}
                     disabled={!videoUrl.trim() || uploadingVideo}
                     className="px-6 py-2.5 bg-gradient-to-r from-rose-600 via-rose-500 to-rose-600 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-rose-900/40 transition-all"
                   >
@@ -1739,7 +1877,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   </button>
                 </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -1764,7 +1902,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               </button>
             </div>
 
-            <form onSubmit={handleInsertImage} className="space-y-4">
+            <div className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-white block uppercase">
                   Tải Ảnh Lên Từ Máy Tính HOẶC Nhập URL Ảnh
@@ -1825,14 +1963,15 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   Hủy Bỏ
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleInsertImage}
                   className="px-5 py-2 bg-[#10b981] hover:bg-[#059669] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Chèn Ảnh Ngay</span>
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

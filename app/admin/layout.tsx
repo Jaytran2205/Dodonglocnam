@@ -22,7 +22,8 @@ import {
   ShieldCheck,
   History,
   Globe,
-  Plus
+  Plus,
+  Film
 } from "lucide-react";
 import { ToastProvider } from "@/components/admin/AdminToast";
 
@@ -86,6 +87,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/landing-page", label: "Giao Diện & Trang Chủ", icon: Sliders },
     { href: "/admin/orders", label: "Quản Lý Đơn Hàng", icon: ShoppingCart, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null },
     { href: "/admin/articles", label: "Bài Viết Chuẩn SEO", icon: FileText },
+    { href: "/admin/videos", label: "Kho Video Tải Lên", icon: Film },
     { href: "/admin/customers", label: "Khách Hàng & Liên Hệ", icon: Users },
     { href: "/admin/users", label: "Tài Khoản & Phân Quyền", icon: ShieldCheck },
     { href: "/admin/logs", label: "Lịch Sử Hoạt Động", icon: History },
