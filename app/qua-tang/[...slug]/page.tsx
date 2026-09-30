@@ -88,33 +88,7 @@ const getCachedAllGiftProducts = cache(
 );
 
 export async function generateStaticParams() {
-  const mainCat = findMainCategory("qua-tang");
-  if (!mainCat) return [];
-
-  const paramsList: { slug: string[] }[] = [];
-
-  mainCat.subCategories.forEach((sub) => {
-    paramsList.push({ slug: [sub.id] });
-    paramsList.push({ slug: [sub.id, "tat-ca"] });
-    paramsList.push({ slug: [sub.id, sub.id] });
-    if (sub.aliases) {
-      sub.aliases.forEach((a) => {
-        paramsList.push({ slug: [a] });
-        paramsList.push({ slug: [a, "tat-ca"] });
-        paramsList.push({ slug: [a, sub.id] });
-      });
-    }
-    if (sub.children) {
-      sub.children.forEach((child) => {
-        paramsList.push({ slug: [sub.id, child.id] });
-        if (child.aliases) {
-          child.aliases.forEach((ca) => paramsList.push({ slug: [sub.id, ca] }));
-        }
-      });
-    }
-  });
-
-  return paramsList;
+  return [];
 }
 
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
