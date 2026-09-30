@@ -777,7 +777,7 @@ export function ModernHeader() {
       },
       items: [
         { label: "Thuyền buồm phong thủy", href: "/qua-tang/qua-tang-doanh-nghiep/thuyen-buom-phong-thuy", demoTitle: "Mô Hình Thuyền Buồm Mạ Vàng 24K", demoDesc: "Biểu tượng Thuận Buồm Xuôi Gió chiêu tài đón lộc, hanh thông sự nghiệp.", demoImage: "/images/locnam_real/locnam_thuyen_buom.jpg" },
-        { label: "Cây kim ngân tài lộc", href: "/qua-tang/qua-tang-doanh-nghiep/cay-kim-ngan-phat-tai", demoTitle: "Cây Kim Ngân Mạ Vàng 24K", demoDesc: "Cây kim ngân phong thủy chiêu tài hút vượng khí để bàn làm việc.", demoImage: "/images/belux/belux_qua_tang_sep.jpg" },
+        { label: "Cây kim ngân tài lộc", href: "/qua-tang/qua-tang-doanh-nghiep/cay-kim-ngan-phat-tai", demoTitle: "Cây Kim Ngân Mạ Vàng 24K", demoDesc: "Cây kim ngân phong thủy chiêu tài hút vượng khí để bàn làm việc.", demoImage: "/images/products/qua-tang-doanh-nghiep/cay-kim-ngan-4_chinh.jpg" },
         { label: "Tranh chữ mạ vàng 24K", href: "/qua-tang/qua-tang-doanh-nghiep/tranh-chu-dong-dat-vang", demoTitle: "Tranh Chữ Phúc Tâm An Dát Vàng 24K", demoDesc: "Tranh chữ thư pháp bằng đồng dát vàng nền đen sang trọng.", demoImage: "/images/products/qua-tang-doanh-nghiep/tranh-chu-phuc-nen-den_chinh.jpg" },
         { label: "Quà biếu đối tác & Doanh nghiệp VIP", href: "/qua-tang/qua-tang-doanh-nghiep/qua-tang-doanh-nghiep-vip", demoTitle: "Quà Tặng Đối Tác Chiến Lược Lộc Nam", demoDesc: "Tùng la hán, đôi hươu, đại bàng mạ vàng 24k đẳng cấp vương giả.", demoImage: "/images/locnam_real/locnam_qua_doanh_nghiep.jpg" },
       ],
@@ -796,7 +796,7 @@ export function ModernHeader() {
       },
       items: [
         { label: "Hoa sen bằng đồng mạ vàng", href: "/qua-tang/qua-tang-su-kien/hoa-sen-ma-vang", demoTitle: "Chậu Hoa Sen Mạ Vàng 24K", demoDesc: "Hoa sen đúc đồng thủ công mạ vàng thanh cao và trang nhã.", demoImage: "/images/locnam_real/locnam_qua_tet.jpg" },
-        { label: "Hoa lan phú quý mạ vàng", href: "/qua-tang/qua-tang-su-kien/hoa-lan-phu-quy", demoTitle: "Chậu Hoa Lan Phú Quý Mạ Vàng", demoDesc: "Hoa lan hồ điệp nở rộ tượng trưng cho sự phú quý, thịnh vượng.", demoImage: "/images/belux/belux_qua_tang_phu_nu.jpg" },
+        { label: "Hoa lan phú quý mạ vàng", href: "/qua-tang/qua-tang-su-kien/hoa-lan-phu-quy", demoTitle: "Chậu Hoa Lan Phú Quý Mạ Vàng", demoDesc: "Hoa lan hồ điệp nở rộ tượng trưng cho sự phú quý, thịnh vượng.", demoImage: "/images/products/qua-tang-su-kien/hoa-lan-1_chinh.jpg" },
         { label: "Hoa mẫu đơn tài lộc", href: "/qua-tang/qua-tang-su-kien/hoa-mau-don-quy-phai", demoTitle: "Tượng Hoa Mẫu Đơn Dát Vàng 24K", demoDesc: "Nữ hoàng của các loài hoa mang vẻ đẹp quyền quý, viên mãn.", demoImage: "/images/products/qua-tang-su-kien/hoa-mau-don_chinh.jpg" },
         { label: "Tranh tri ân & Quà sự kiện", href: "/qua-tang/qua-tang-su-kien/tranh-tri-an-su-kien", demoTitle: "Tranh Tri Ân Thầy Cô, Đối Tác Dát Vàng", demoDesc: "Quà tặng tri ân ngày nhà giáo 20/11, mừng thọ và sự kiện vinh danh.", demoImage: "/images/locnam_real/locnam_qua_thay_co.jpg" },
       ],
@@ -1152,16 +1152,25 @@ export function ModernHeader() {
                           return (
                             <div className="col-span-4 p-4 xl:p-5 bg-[#0a1524] flex flex-col justify-between">
                               <div>
-                                <div className="aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-[#050c14] border border-[#1c2e42] relative shadow-md">
+                                <div className="aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-[#03070d] border border-[#1c2e42] relative shadow-md group flex items-center justify-center">
+                                  {/* Lớp nền mờ ambient sang trọng phủ kín khung 16/10 */}
+                                  <img
+                                    src={currentPreview.image}
+                                    alt=""
+                                    aria-hidden="true"
+                                    className="absolute inset-0 w-full h-full object-cover blur-md opacity-25 scale-110 pointer-events-none select-none"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1524] via-transparent to-black/20 pointer-events-none" />
+
+                                  {/* Ảnh chính thể hiện trọn vẹn sản phẩm: object-contain đảm bảo KHÔNG mất đầu, KHÔNG mất chân tượng */}
                                   <img
                                     key={currentPreview.image}
                                     src={currentPreview.image}
                                     alt={currentPreview.previewTitle}
-                                    className="w-full h-full object-cover animate-fadeIn transition-transform duration-500 hover:scale-105"
+                                    className="relative z-10 w-full h-full object-contain p-1.5 animate-fadeIn transition-transform duration-500 group-hover:scale-105 drop-shadow-[0_8px_20px_rgba(0,0,0,0.85)]"
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                  <div className="absolute bottom-2.5 left-3 right-3">
-                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#dfb755] text-black uppercase tracking-wider">
+                                  <div className="absolute bottom-2.5 left-3 right-3 z-20 pointer-events-none">
+                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#dfb755] text-black uppercase tracking-wider shadow">
                                       {currentPreview.tag || activeGroup.title}
                                     </span>
                                   </div>
@@ -1306,16 +1315,25 @@ export function ModernHeader() {
                           return (
                             <div className="col-span-4 p-4 xl:p-5 bg-[#0a1524] flex flex-col justify-between">
                               <div>
-                                <div className="aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-[#050c14] border border-[#1c2e42] relative shadow-md">
+                                <div className="aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-[#03070d] border border-[#1c2e42] relative shadow-md group flex items-center justify-center">
+                                  {/* Lớp nền mờ ambient sang trọng phủ kín khung 16/10 */}
+                                  <img
+                                    src={currentGiftPreview.image}
+                                    alt=""
+                                    aria-hidden="true"
+                                    className="absolute inset-0 w-full h-full object-cover blur-md opacity-25 scale-110 pointer-events-none select-none"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1524] via-transparent to-black/20 pointer-events-none" />
+
+                                  {/* Ảnh chính thể hiện trọn vẹn sản phẩm: object-contain đảm bảo KHÔNG mất đầu, KHÔNG mất chân */}
                                   <img
                                     key={currentGiftPreview.image}
                                     src={currentGiftPreview.image}
                                     alt={currentGiftPreview.previewTitle}
-                                    className="w-full h-full object-cover animate-fadeIn transition-transform duration-500 hover:scale-105"
+                                    className="relative z-10 w-full h-full object-contain p-1.5 animate-fadeIn transition-transform duration-500 group-hover:scale-105 drop-shadow-[0_8px_20px_rgba(0,0,0,0.85)]"
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                  <div className="absolute bottom-2.5 left-3 right-3">
-                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#dfb755] text-black uppercase tracking-wider">
+                                  <div className="absolute bottom-2.5 left-3 right-3 z-20 pointer-events-none">
+                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#dfb755] text-black uppercase tracking-wider shadow">
                                       {currentGiftPreview.tag || activeGift.title}
                                     </span>
                                   </div>

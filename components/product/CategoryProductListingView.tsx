@@ -292,42 +292,100 @@ export function CategoryProductListingView({
           return false;
         }
 
-        // Special exclusion: Tượng Thần - Thánh must NOT include Quan Công, Trần Hưng Đạo, Thần Tài Voi/Ngựa, Quản gia
+        // Special check: Tượng Thần - Thánh
         const isThanThanhView =
           activeDetailCategory?.id === "tuong-than-thanh" ||
           activeSubCategory?.id === "tuong-than-thanh";
-        if (
-          isThanThanhView &&
-          (pName.includes("quan công") ||
+        if (isThanThanhView) {
+          // Exclude Buddha & Bodhisattva statues from Thần - Thánh
+          if (pName.includes("bồ tát") || pName.includes("thích ca") || pName.includes("quan âm") || pName.includes("a di đà")) {
+            return false;
+          }
+        }
+
+        // 12 Con Giáp STRICT FILTERING: Prevent any Buddha, Historic Figures, Kings, or Deities from leaking in
+        const isZodiacView =
+          activeSubCategory?.id === "tuong-12-con-giap" ||
+          activeSubCategory?.id === "tuong-linh-vat-12-con-giap" ||
+          activeSubCategory?.id === "linh-vat-12-con-giap" ||
+          (Boolean(activeDetailCategory?.id?.startsWith("tuong-")) && [
+            "tuong-chuot", "tuong-trau", "tuong-ho", "tuong-meo", "tuong-rong",
+            "tuong-ran", "tuong-ngua", "tuong-de", "tuong-khi", "tuong-ga",
+            "tuong-cho", "tuong-lon"
+          ].includes(activeDetailCategory!.id));
+
+        if (isZodiacView) {
+          // 1. Exclude Buddha & Bodhisattva statues
+          if (
+            pName.includes("phật") ||
+            pName.includes("thích ca") ||
+            pName.includes("quan âm") ||
+            pName.includes("chuẩn đề") ||
+            pName.includes("a di đà") ||
+            pName.includes("tam thánh") ||
+            pName.includes("bồ tát") ||
+            pName.includes("địa tạng") ||
+            pName.includes("di lặc") ||
+            pName.includes("tiêu diện") ||
+            pName.includes("hộ pháp") ||
+            pName.includes("tuyết sơn")
+          ) {
+            return false;
+          }
+          // 2. Exclude Famous Historic Figures / Portrait Statues
+          if (
+            pName.includes("bác hồ") ||
+            pName.includes("hồ chí minh") ||
+            pName.includes("bác giáp") ||
+            pName.includes("võ nguyên giáp") ||
+            pName.includes("nguyễn trãi") ||
+            pName.includes("khổng minh") ||
+            pName.includes("chu văn an") ||
+            pName.includes("truyền thần") ||
+            pName.includes("chân dung") ||
+            pName.includes("bán thân")
+          ) {
+            return false;
+          }
+          // 3. Exclude Kings & Emperors
+          if (
+            pName.includes("vua ") ||
+            pName.includes("lê lợi") ||
+            pName.includes("quang trung") ||
+            pName.includes("lý thái tổ") ||
+            pName.includes("ngô quyền") ||
+            pName.includes("đinh bộ lĩnh") ||
+            pName.includes("trần nhân tông") ||
+            pName.includes("lê hoàn") ||
+            pName.includes("lê đại hành") ||
+            pName.includes("hoàng đế")
+          ) {
+            return false;
+          }
+          // 4. Exclude Deities & Sages
+          if (
+            pName.includes("quan công") ||
             pName.includes("quan vân trường") ||
             pName.includes("trần hưng đạo") ||
             pName.includes("trần quốc tuấn") ||
-            pName.includes("voi") ||
-            pName.includes("ngựa thần tài") ||
-            pName.includes("quản gia") ||
-            pNameClean.includes("quan gia"))
-        ) {
-          return false;
-        }
+            pName.includes("thánh gióng") ||
+            pName.includes("thần tài") ||
+            pName.includes("thổ địa")
+          ) {
+            return false;
+          }
+          // 5. Exclude Tam Đa (Phúc Lộc Thọ)
+          if (pName.includes("tam đa") || pName.includes("phúc lộc thọ")) {
+            return false;
+          }
 
-        // Zodiac exclusions: prevent tone/substring leaks
-        if (activeDetailCategory?.id === "tuong-ho" && (pName.includes("chó") || pName.includes("rắn") || pName.includes("hổ mang") || pName.includes("bác hồ") || pName.includes("tam đa") || pName.includes("phúc lộc thọ") || pName.includes("lê đại hành") || pNameClean.includes("bac ho") || pNameClean.includes("le dai hanh"))) {
-          return false;
-        }
-        if (activeDetailCategory?.id === "tuong-ngua" && (pName.includes("quan công") || pName.includes("quan vân trường") || pName.includes("ngô quyền") || pName.includes("mã thượng phong hầu") || pName.includes("bát mã"))) {
-          return false;
-        }
-        if (activeDetailCategory?.id === "tuong-de" && (pName.includes("chuẩn đề") || pName.includes("bồ đề") || pName.includes("lê đại hành") || pName.includes("đế tiền") || pNameClean.includes("chuan de") || pNameClean.includes("bo de"))) {
-          return false;
-        }
-        if (activeDetailCategory?.id === "tuong-khi" && (pName.includes("bán thân") || pName.includes("truyền thần") || pName.includes("toàn thân") || pName.includes("bác hồ") || pName.includes("bác giáp") || pName.includes("quang trung") || pName.includes("lê lợi") || pName.includes("mã thượng phong hầu"))) {
-          return false;
-        }
-        if (activeDetailCategory?.id === "tuong-cho" && (pName.includes("cho khách") || pName.includes("cho chùa") || pName.includes("cho doanh nghiệp") || pName.includes("bàn giao") || pName.includes("nguyễn trãi") || pName.includes("khổng minh") || pName.includes("tam thánh") || pName.includes("chuẩn đề") || pName.includes("di lặc"))) {
-          return false;
-        }
-        if (activeDetailCategory?.id === "tuong-lon" && (pName.includes("cỡ lớn") || pNameClean.includes("co lon") || pName.includes("di lặc") || pName.includes("tam thánh"))) {
-          return false;
+          // Detail subcategory specific exclusions
+          if (activeDetailCategory?.id === "tuong-ho" && pName.includes("hổ mang")) return false;
+          if (activeDetailCategory?.id === "tuong-ngua" && (pName.includes("ngựa thần tài") || pName.includes("quan công"))) return false;
+          if (activeDetailCategory?.id === "tuong-de" && (pName.includes("chuẩn đề") || pName.includes("bồ đề"))) return false;
+          if (activeDetailCategory?.id === "tuong-khi" && !pName.includes("khỉ") && !pName.includes("mã thượng phong hầu")) return false;
+          if (activeDetailCategory?.id === "tuong-cho" && !pName.includes("chó") && !pName.includes("tuất")) return false;
+          if (activeDetailCategory?.id === "tuong-lon" && !pName.includes("lợn") && !pName.includes("heo") && !pName.includes("hợi")) return false;
         }
 
         return activeKeywords.some((kw) => {
@@ -338,10 +396,9 @@ export function CategoryProductListingView({
           if (cleanKw.includes(" ")) {
             return pName.includes(cleanKw) || pNameClean.includes(cleanKwTones);
           }
-          // Single word: use word boundary regex to avoid matching substrings like "ngọ" in "ngọc" or "heo" in "theo"
+          // Single word: use word boundary regex with exact accents/tones to avoid matching "cho" in "cho khách", "ho" in "bác hồ", "de" in "chuẩn đề", "khi" in "tam khí", "lon" in "cỡ lớn"
           const regex = new RegExp(`(^|[\\s,./()_\\-+:"'])${cleanKw.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`, "i");
-          const regexClean = new RegExp(`(^|[\\s,./()_\\-+:"'])${cleanKwTones.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}($|[\\s,./()_\\-+:"'])`, "i");
-          return regex.test(pName) || regexClean.test(pNameClean);
+          return regex.test(pName);
         });
       });
     }
