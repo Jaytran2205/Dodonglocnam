@@ -407,20 +407,21 @@ export function CategoryProductListingView({
     if (priceFilter !== "all") {
       result = result.filter((p) => {
         const price = p.price || 0;
-        if (price === 0) return true; // Liên hệ
         switch (priceFilter) {
+          case "contact":
+            return price === 0;
           case "under-1m":
-            return price < 1000000;
+            return price > 0 && price < 1000000;
           case "1m-3m":
-            return price >= 1000000 && price <= 3000000;
+            return price >= 1000000 && price < 3000000;
           case "3m-5m":
-            return price > 3000000 && price <= 5000000;
+            return price >= 3000000 && price < 5000000;
           case "5m-10m":
-            return price > 5000000 && price <= 10000000;
+            return price >= 5000000 && price < 10000000;
           case "10m-20m":
-            return price > 10000000 && price <= 20000000;
+            return price >= 10000000 && price < 20000000;
           case "above-20m":
-            return price > 20000000;
+            return price >= 20000000;
           default:
             return true;
         }
@@ -430,7 +431,9 @@ export function CategoryProductListingView({
     // 3. Sorting
     result.sort((a, b) => {
       if (sortBy === "price-asc") {
-        return (a.price || 0) - (b.price || 0);
+        const pA = a.price && a.price > 0 ? a.price : Infinity;
+        const pB = b.price && b.price > 0 ? b.price : Infinity;
+        return pA - pB;
       }
       if (sortBy === "price-desc") {
         return (b.price || 0) - (a.price || 0);

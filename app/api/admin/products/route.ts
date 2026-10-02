@@ -105,32 +105,49 @@ export async function PUT(req: NextRequest) {
 
   try {
     const data = await req.json();
-    const { id, name, price, originalPrice, material, dimensions, weight, shortDescription, description, images, isFeatured, inStock, categoryId, subCategoryId, categoryIds, subCategoryIds, tags } = data;
+    const { id } = data;
 
     if (!id) {
       return NextResponse.json({ success: false, message: "Thiếu ID sản phẩm." }, { status: 400 });
     }
 
+    const updateData: any = {};
+
+    if (data.name !== undefined) {
+      if (typeof data.name !== "string" || !data.name.trim()) {
+        return NextResponse.json({ success: false, message: "Tên sản phẩm không được để trống." }, { status: 400 });
+      }
+      updateData.name = data.name.trim();
+    }
+    if (data.price !== undefined) {
+      updateData.price = data.price !== null && data.price !== "" ? parseFloat(data.price) : null;
+    }
+    if (data.originalPrice !== undefined) {
+      updateData.originalPrice = data.originalPrice !== null && data.originalPrice !== "" ? parseFloat(data.originalPrice) : null;
+    }
+    if (data.material !== undefined) updateData.material = data.material || null;
+    if (data.dimensions !== undefined) updateData.dimensions = data.dimensions || null;
+    if (data.weight !== undefined) updateData.weight = data.weight || null;
+    if (data.shortDescription !== undefined) updateData.shortDescription = data.shortDescription || null;
+    if (data.description !== undefined) updateData.description = data.description || null;
+    if (data.images !== undefined) {
+      updateData.images = typeof data.images === "string" ? data.images : JSON.stringify(data.images || []);
+    }
+    if (data.isFeatured !== undefined) updateData.isFeatured = Boolean(data.isFeatured);
+    if (data.inStock !== undefined) updateData.inStock = Boolean(data.inStock);
+    if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+    if (data.subCategoryId !== undefined) updateData.subCategoryId = data.subCategoryId || null;
+    if (data.categoryIds !== undefined) {
+      updateData.categoryIds = data.categoryIds ? (typeof data.categoryIds === "string" ? data.categoryIds : JSON.stringify(data.categoryIds)) : null;
+    }
+    if (data.subCategoryIds !== undefined) {
+      updateData.subCategoryIds = data.subCategoryIds ? (typeof data.subCategoryIds === "string" ? data.subCategoryIds : JSON.stringify(data.subCategoryIds)) : null;
+    }
+    if (data.tags !== undefined) updateData.tags = data.tags || null;
+
     const product = await prisma.product.update({
       where: { id },
-      data: {
-        name,
-        price: price ? parseFloat(price) : null,
-        originalPrice: originalPrice ? parseFloat(originalPrice) : null,
-        material,
-        dimensions,
-        weight,
-        shortDescription,
-        description,
-        images: typeof images === "string" ? images : JSON.stringify(images || []),
-        isFeatured: Boolean(isFeatured),
-        inStock: inStock !== undefined ? Boolean(inStock) : true,
-        categoryId,
-        subCategoryId: subCategoryId || null,
-        categoryIds: categoryIds ? (typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds)) : null,
-        subCategoryIds: subCategoryIds ? (typeof subCategoryIds === "string" ? subCategoryIds : JSON.stringify(subCategoryIds)) : null,
-        tags: tags || null
-      },
+      data: updateData,
       include: { category: true }
     });
 
@@ -150,8 +167,12 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: true, message: "Cập nhật sản phẩm thành công!", product });
   } catch (error: any) {
     console.error("Update Product Error:", error);
-    return NextResponse.json({ success: false, message: "Lỗi cập nhật sản phẩm." }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Lỗi cập nhật sản phẩm: " + (error?.message || "") }, { status: 500 });
   }
+}
+
+export async function PATCH(req: NextRequest) {
+  return PUT(req);
 }
 
 export async function DELETE(req: NextRequest) {

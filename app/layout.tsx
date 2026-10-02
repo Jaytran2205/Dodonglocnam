@@ -123,7 +123,9 @@ export default function RootLayout({
         <link
           rel="preload"
           as="image"
-          href="/images/banners/banner_he_thong_xuong_ultra.jpg"
+          href="/images/banners/banner_he_thong_showroom_xuong_v3.webp"
+          type="image/webp"
+          // @ts-ignore
           fetchPriority="high"
         />
         {/* Preconnect & DNS-Prefetch for External CDNs */}

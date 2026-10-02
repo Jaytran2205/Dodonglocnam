@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Save to Database Setting table
+    // 1. Save to Database Setting table (persistent source of truth across Vercel deployments)
     await prisma.setting.upsert({
       where: { key: "subcategories_catalog" },
       update: {
@@ -74,69 +74,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 2. Synchronize directly to lib/subcategories-data.ts source file on disk
-    try {
-      const filePath = path.join(process.cwd(), "lib", "subcategories-data.ts");
-      const fileCode = `export interface DetailCategoryItem {
-  id: string;
-  name: string;
-  keyword: string;
-  image: string;
-  aliases?: string[];
-}
-
-export interface SubCategoryItem {
-  id: string;
-  name: string;
-  keyword: string;
-  image: string;
-  aliases?: string[];
-  children?: DetailCategoryItem[];
-}
-
-export interface MainCategoryData {
-  name: string;
-  slug: string;
-  aliases?: string[];
-  banner?: string;
-  description?: string;
-  subCategories: SubCategoryItem[];
-}
-
-export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = ${JSON.stringify(catalog, null, 2)};
-
-export function findMainCategory(catSlug: string): MainCategoryData | undefined {
-  return DEFAULT_HIERARCHICAL_CATEGORIES.find(
-    (c) => c.slug === catSlug || (c.aliases && c.aliases.includes(catSlug))
-  );
-}
-
-export function findSubCategory(catSlug: string, subSlug: string): SubCategoryItem | undefined {
-  const cat = findMainCategory(catSlug);
-  if (!cat) return undefined;
-  return cat.subCategories.find(
-    (s) => s.id === subSlug || (s.aliases && s.aliases.includes(subSlug))
-  );
-}
-
-export function findDetailCategory(
-  catSlug: string,
-  subSlug: string,
-  detailSlug: string
-): DetailCategoryItem | undefined {
-  const sub = findSubCategory(catSlug, subSlug);
-  if (!sub || !sub.children) return undefined;
-  return sub.children.find(
-    (d) => d.id === detailSlug || (d.aliases && d.aliases.includes(detailSlug))
-  );
-}
-`;
-      fs.writeFileSync(filePath, fileCode, "utf-8");
-    } catch (fsError) {
-      console.warn("Could not write lib/subcategories-data.ts on disk:", fsError);
-    }
-
-    // 3. Purge Next.js Cache for storefront pages
+    // 2. Purge Next.js Cache for storefront pages
     try {
       revalidatePath("/san-pham", "layout");
       revalidatePath("/qua-tang", "layout");

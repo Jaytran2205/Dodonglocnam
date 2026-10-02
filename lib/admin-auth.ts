@@ -26,5 +26,25 @@ export function verifyAdminToken(token: string): AdminTokenPayload | null {
 export async function getAdminSession(req: NextRequest): Promise<AdminTokenPayload | null> {
   const token = req.cookies.get("admin_token")?.value;
   if (!token) return null;
-  return verifyAdminToken(token);
+  const decoded = verifyAdminToken(token);
+  if (!decoded) return null;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, email: true, name: true, role: true, isActive: true }
+    });
+    if (!user || !user.isActive) {
+      return null;
+    }
+    return {
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role
+    };
+  } catch (error) {
+    // If DB check fails transiently, return decoded token
+    return decoded;
+  }
 }

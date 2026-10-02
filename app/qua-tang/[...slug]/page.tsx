@@ -64,9 +64,11 @@ const getCachedAllGiftProducts = cache(
     async () => {
       return prisma.product.findMany({
         where: {
-          category: {
-            slug: { in: ["qua-tang", "qua-tang-dong"] },
-          },
+          OR: [
+            { category: { slug: { in: ["qua-tang", "qua-tang-dong"] } } },
+            { categoryIds: { contains: "qua-tang" } },
+            { tags: { contains: "quà tặng" } },
+          ],
         },
         orderBy: { createdAt: "desc" },
         select: {
@@ -76,6 +78,10 @@ const getCachedAllGiftProducts = cache(
           price: true,
           originalPrice: true,
           images: true,
+          subCategoryId: true,
+          subCategoryIds: true,
+          categoryIds: true,
+          tags: true,
           category: {
             select: { name: true, slug: true },
           },

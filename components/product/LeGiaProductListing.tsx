@@ -332,8 +332,8 @@ export function LeGiaProductListing({
       result = result.filter((p) => p.category.slug === selectedCategory);
     }
 
-    // 2. Filter by subcategory (only if not searching with global search text)
-    if (selectedSubItem && !searchQuery.trim()) {
+    // 2. Filter by subcategory (works alongside search query)
+    if (selectedSubItem) {
       const q = selectedSubItem.toLowerCase().trim();
 
       // Find matching subcategory or detail category from catalog if available
@@ -582,8 +582,10 @@ export function LeGiaProductListing({
     }
 
     // 3. Filter by price range
-    if (priceFilter === "under-1m") {
-      result = result.filter((p) => p.price !== null && p.price < 1000000);
+    if (priceFilter === "contact") {
+      result = result.filter((p) => p.price === null || p.price === 0);
+    } else if (priceFilter === "under-1m") {
+      result = result.filter((p) => p.price !== null && p.price > 0 && p.price < 1000000);
     } else if (priceFilter === "1m-3m") {
       result = result.filter(
         (p) => p.price !== null && p.price >= 1000000 && p.price < 3000000
@@ -606,7 +608,11 @@ export function LeGiaProductListing({
 
     // 4. Sort
     if (sortBy === "price-asc") {
-      result.sort((a, b) => (a.price || 0) - (b.price || 0));
+      result.sort((a, b) => {
+        const pA = a.price && a.price > 0 ? a.price : Infinity;
+        const pB = b.price && b.price > 0 ? b.price : Infinity;
+        return pA - pB;
+      });
     } else if (sortBy === "price-desc") {
       result.sort((a, b) => (b.price || 0) - (a.price || 0));
     } else if (sortBy === "name-asc") {

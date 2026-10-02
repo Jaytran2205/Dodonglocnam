@@ -101,6 +101,11 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  // Only SUPER_ADMIN and ADMIN can delete categories
+  if (session.role !== "SUPER_ADMIN" && session.role !== "ADMIN") {
+    return NextResponse.json({ success: false, message: "Chỉ Quản trị viên cấp cao mới có quyền xóa danh mục." }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -109,22 +114,33 @@ export async function DELETE(req: NextRequest) {
     }
 
     const existing = await prisma.category.findUnique({ where: { id } });
-    await prisma.category.delete({ where: { id } });
-
-    if (existing) {
-      logActivity({
-        req,
-        session,
-        action: "DELETE",
-        entity: "CATEGORY",
-        entityId: id,
-        entityName: existing.name,
-        summary: `Xóa danh mục: "${existing.name}"`,
-      }).catch(() => {});
+    if (!existing) {
+      return NextResponse.json({ success: false, message: "Không tìm thấy danh mục để xóa." }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, message: "Đã xóa danh mục." });
+    // Safety guard: prevent cascade deleting products
+    const productCount = await prisma.product.count({ where: { categoryId: id } });
+    if (productCount > 0) {
+      return NextResponse.json({
+        success: false,
+        message: `Không thể xóa danh mục "${existing.name}" vì hiện đang có ${productCount} sản phẩm trực thuộc. Vui lòng chuyển hoặc xóa các sản phẩm đó trước khi xóa danh mục này!`
+      }, { status: 400 });
+    }
+
+    await prisma.category.delete({ where: { id } });
+
+    logActivity({
+      req,
+      session,
+      action: "DELETE",
+      entity: "CATEGORY",
+      entityId: id,
+      entityName: existing.name,
+      summary: `Xóa danh mục: "${existing.name}"`,
+    }).catch(() => {});
+
+    return NextResponse.json({ success: true, message: `Đã xóa danh mục "${existing.name}".` });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: "Lỗi xóa danh mục." }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Lỗi xóa danh mục: " + (error?.message || "") }, { status: 500 });
   }
 }

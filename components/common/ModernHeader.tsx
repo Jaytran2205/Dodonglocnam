@@ -73,9 +73,13 @@ export function ModernHeader() {
 
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
 
+    const abortController = new AbortController();
+
     searchDebounceRef.current = setTimeout(() => {
       setIsSearching(true);
-      fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`, {
+        signal: abortController.signal,
+      })
         .then((res) => res.json())
         .then((data) => {
           if (data.success && Array.isArray(data.products)) {
@@ -85,12 +89,17 @@ export function ModernHeader() {
             setLiveResults([]);
           }
         })
-        .catch(() => setLiveResults([]))
+        .catch((err) => {
+          if (err?.name !== "AbortError") {
+            setLiveResults([]);
+          }
+        })
         .finally(() => setIsSearching(false));
     }, 180);
 
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      abortController.abort();
     };
   }, [searchQuery]);
 

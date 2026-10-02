@@ -516,43 +516,59 @@ export default function AdminProductsPage() {
 
   const toggleStock = async (prod: any) => {
     const nextStatus = !prod.inStock;
+    // Optimistic UI update
     setProducts((prev) =>
       prev.map((p) => (p.id === prod.id ? { ...p, inStock: nextStatus } : p))
     );
-    toastInfo(
-      `Đã chuyển "${prod.name}" sang trạng thái ${nextStatus ? "Còn hàng" : "Hết hàng"}`,
-      "Kho hàng"
-    );
     try {
-      await fetch("/api/admin/products", {
-        method: "PUT",
+      const res = await fetch("/api/admin/products", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: prod.id, inStock: nextStatus }),
       });
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+      toastInfo(
+        `Đã chuyển "${prod.name}" sang trạng thái ${nextStatus ? "Còn hàng" : "Hết hàng"}`,
+        "Kho hàng"
+      );
     } catch (e) {
-      toastError("Lỗi cập nhật trạng thái kho", "Lỗi hệ thống");
+      // Rollback
+      setProducts((prev) =>
+        prev.map((p) => (p.id === prod.id ? { ...p, inStock: !nextStatus } : p))
+      );
+      toastError("Lỗi cập nhật trạng thái kho. Đã hoàn tác!", "Lỗi hệ thống");
     }
   };
 
   const toggleFeatured = async (prod: any) => {
     const nextFeatured = !prod.isFeatured;
+    // Optimistic UI update
     setProducts((prev) =>
       prev.map((p) => (p.id === prod.id ? { ...p, isFeatured: nextFeatured } : p))
     );
-    toastSuccess(
-      nextFeatured
-        ? `Đã đánh dấu "${prod.name}" là sản phẩm nổi bật ⭐`
-        : `Đã bỏ đánh dấu nổi bật "${prod.name}"`,
-      "Sản phẩm nổi bật"
-    );
     try {
-      await fetch("/api/admin/products", {
-        method: "PUT",
+      const res = await fetch("/api/admin/products", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: prod.id, isFeatured: nextFeatured }),
       });
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+      toastSuccess(
+        nextFeatured
+          ? `Đã đánh dấu "${prod.name}" là sản phẩm nổi bật ⭐`
+          : `Đã bỏ đánh dấu nổi bật "${prod.name}"`,
+        "Sản phẩm nổi bật"
+      );
     } catch (e) {
-      toastError("Lỗi cập nhật sản phẩm nổi bật", "Lỗi hệ thống");
+      // Rollback
+      setProducts((prev) =>
+        prev.map((p) => (p.id === prod.id ? { ...p, isFeatured: !nextFeatured } : p))
+      );
+      toastError("Lỗi cập nhật sản phẩm nổi bật. Đã hoàn tác!", "Lỗi hệ thống");
     }
   };
 

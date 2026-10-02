@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 let cachedProducts: any[] | null = null;
 let lastCacheTime = 0;
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache
+const CACHE_TTL_MS = 30 * 1000; // 30 seconds cache for freshness
 
 async function getCachedProducts() {
   const now = Date.now();
@@ -24,31 +24,58 @@ async function getCachedProducts() {
         select: { name: true, slug: true },
       },
     },
-    take: 1000,
+    orderBy: { createdAt: "desc" },
+    take: 5000,
   });
   cachedProducts = products;
   lastCacheTime = now;
   return products;
 }
 
+// Synonyms dictionary for bronze handicraft & spiritual items
+const SYNONYM_MAP: Record<string, string[]> = {
+  "ong hoang": ["quan hoang"],
+  "quan hoang": ["ong hoang"],
+  "ong hoang muoi": ["quan hoang muoi"],
+  "quan hoang muoi": ["ong hoang muoi"],
+  "ong hoang bay": ["quan hoang bay"],
+  "quan hoang bay": ["ong hoang bay"],
+  "quan cong": ["quan van truong"],
+  "quan van truong": ["quan cong"],
+  "thuyen buom": ["thuan buom xuoi gio", "thuan buom"],
+  "phat ba": ["quan am", "me quan am"],
+  "hoang de": ["vua"],
+  "dieu khac": ["duc", "cham"],
+};
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const q = searchParams.get("q") || searchParams.get("search") || "";
-    const cleanQ = removeVietnameseTones(q.trim().toLowerCase());
+    const q = (searchParams.get("q") || searchParams.get("search") || "").trim();
+    const cleanQ = removeVietnameseTones(q.toLowerCase());
 
     if (!cleanQ) {
       return NextResponse.json(
         { success: true, products: [] },
         {
           headers: {
-            "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
+            "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
           },
         }
       );
     }
 
     const products = await getCachedProducts();
+
+    // Expand search query with synonyms
+    const searchPhrases = [cleanQ];
+    for (const [key, syns] of Object.entries(SYNONYM_MAP)) {
+      if (cleanQ.includes(key)) {
+        for (const syn of syns) {
+          searchPhrases.push(cleanQ.replace(key, syn));
+        }
+      }
+    }
 
     const qTokens = cleanQ.split(/\s+/).filter(Boolean);
     const scored: {
@@ -62,6 +89,8 @@ export async function GET(request: NextRequest) {
       score: number;
     }[] = [];
 
+    const isSpecificAnimalSearch = /\b(hổ|cọp|rắn|khỉ|dê|gà|chó|lợn|heo|mèo|chuột|trâu)\b/i.test(q);
+
     for (const p of products) {
       const rawN = (p.name || "").toLowerCase();
       const cleanN = removeVietnameseTones(rawN);
@@ -73,18 +102,27 @@ export async function GET(request: NextRequest) {
 
       let score = 0;
 
-      // 1. Exact phrase match in name
-      if (rawN.includes(q.trim().toLowerCase())) {
-        score = 1000;
-      } else if (cleanN.includes(cleanQ)) {
-        score = 900;
+      // 1. Exact phrase match or synonym phrase match
+      for (const phrase of searchPhrases) {
+        if (cleanN.includes(phrase)) {
+          score = Math.max(score, phrase === cleanQ ? 1000 : 950);
+        }
       }
+
+      // If user specifically typed with diacritics (e.g. "hổ")
+      if (isSpecificAnimalSearch && q.toLowerCase() === "hổ") {
+        if (!/\b(hổ|cọp)\b/i.test(rawN)) {
+          // Skip if it doesn't actually contain the animal "hổ"
+          continue;
+        }
+      }
+
       // 2. All tokens match whole words in name
-      else if (qTokens.every((t) => nWords.includes(t))) {
+      if (score === 0 && qTokens.every((t) => nWords.includes(t))) {
         score = 800;
       }
       // 3. Multi-word match across name + category
-      else if (qTokens.length > 1) {
+      else if (score === 0 && qTokens.length > 1) {
         const allWords = [...nWords, ...catWords];
         if (
           qTokens.every((t) => allWords.includes(t)) &&
@@ -93,12 +131,14 @@ export async function GET(request: NextRequest) {
           score = 700;
         }
       }
-      // 4. Single token match in name
-      else if (
-        qTokens.length === 1 &&
-        (nWords.includes(qTokens[0]) || nWords.some((w) => w.startsWith(qTokens[0])))
-      ) {
-        score = 500;
+      // 4. Single token match: only allow startsWith if token has 3 or more chars
+      else if (score === 0 && qTokens.length === 1) {
+        const singleToken = qTokens[0];
+        if (nWords.includes(singleToken)) {
+          score = 600;
+        } else if (singleToken.length >= 3 && nWords.some((w) => w.startsWith(singleToken))) {
+          score = 400;
+        }
       }
 
       if (score > 0) {

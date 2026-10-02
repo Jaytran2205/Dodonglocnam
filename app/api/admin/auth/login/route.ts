@@ -14,11 +14,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Vui lòng nhập đầy đủ tài khoản và mật khẩu." }, { status: 400 });
     }
 
-    // Find user by email or username/name (case-insensitive)
+    // Find user by email, username, or name (case-insensitive)
     const user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: identifier },
+          { username: identifier },
           { email: `${identifier}@ducdonglocnam.com` },
           { name: { equals: identifier, mode: "insensitive" } }
         ]
@@ -27,6 +28,14 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ success: false, message: "Tài khoản hoặc mật khẩu không chính xác." }, { status: 401 });
+    }
+
+    // Check account status
+    if (!user.isActive) {
+      return NextResponse.json({
+        success: false,
+        message: "Tài khoản của bạn đã bị khóa hoặc ngừng hoạt động. Vui lòng liên hệ Quản trị viên cấp cao."
+      }, { status: 403 });
     }
 
     let isMatch = false;

@@ -17,12 +17,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Không tìm thấy tệp tải lên" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
     const originalExt = path.extname(file.name) || ".jpg";
     const cleanExt = originalExt.toLowerCase();
-    const isVideo = file.type?.startsWith("video/") || [".mp4", ".webm", ".mov", ".ogg", ".avi", ".mkv"].includes(cleanExt);
+    
+    const ALLOWED_IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"];
+    const ALLOWED_VIDEO_EXTS = [".mp4", ".webm", ".mov"];
+
+    const isVideo = file.type?.startsWith("video/") || ALLOWED_VIDEO_EXTS.includes(cleanExt);
+    const isImage = file.type?.startsWith("image/") || ALLOWED_IMAGE_EXTS.includes(cleanExt);
+
+    if (!isImage && !isVideo) {
+      return NextResponse.json(
+        { success: false, message: "Định dạng tệp không được hỗ trợ. Chỉ chấp nhận ảnh (JPG, PNG, WebP, GIF) hoặc video (MP4, WebM)." },
+        { status: 400 }
+      );
+    }
+
+    // Size limit: 10MB for image, 50MB for video
+    const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+    const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+
+    if (isImage && file.size > MAX_IMAGE_SIZE) {
+      return NextResponse.json(
+        { success: false, message: `Dung lượng ảnh vượt quá giới hạn cho phép (tối đa 10MB). Kích thước file: ${(file.size / (1024 * 1024)).toFixed(1)}MB.` },
+        { status: 400 }
+      );
+    }
+
+    if (isVideo && file.size > MAX_VIDEO_SIZE) {
+      return NextResponse.json(
+        { success: false, message: `Dung lượng video vượt quá giới hạn cho phép (tối đa 50MB).` },
+        { status: 400 }
+      );
+    }
+
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
     
     const targetDir = isVideo
       ? path.join(process.cwd(), "public", "uploads", "videos")

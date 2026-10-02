@@ -462,6 +462,71 @@ export function getSubCatInfoForProduct(
   const fullText = `${pName} ${pTags}`;
   const fullTextClean = `${pNameClean} ${pTagsClean}`;
 
+  function matchesKeyword(text: string, textClean: string, kw: string): boolean {
+    if (!kw) return false;
+    const kwTrim = kw.trim().toLowerCase();
+    if (!kwTrim) return false;
+    const kwClean = removeVietnameseTones(kwTrim);
+
+    // Safeguards for single animal names to avoid false positive substring matches
+    if (kwClean === "ho") {
+      // "hổ" - must NOT match "hoàng", "hòa", "hồ", "họ", "hội", "hộ", "phòng thờ"
+      return /\b(hổ|cọp)\b/i.test(text) || /\b(tuong ho|con ho)\b/i.test(textClean);
+    }
+    if (kwClean === "khi") {
+      // "khỉ" - must NOT match "tam khí" or "khảm tam khí"
+      if (text.includes("tam khí") || textClean.includes("tam khi")) return false;
+      return /\b(khỉ)\b/i.test(text) || /\b(tuong khi|con khi)\b/i.test(textClean);
+    }
+    if (kwClean === "ran") {
+      // "rắn" - must NOT match "trần" (trần nhân tông, trần hưng đạo)
+      if (text.includes("trần") || textClean.includes("tran")) return false;
+      return /\b(rắn)\b/i.test(text) || /\b(tuong ran|con ran)\b/i.test(textClean);
+    }
+    if (kwClean === "de") {
+      // "dê" - must NOT match "chuẩn đề", "đế", "bệ", "để"
+      if (text.includes("chuẩn đề") || textClean.includes("chuan de")) return false;
+      return /\b(dê)\b/i.test(text) || /\b(tuong de|con de)\b/i.test(textClean);
+    }
+    if (kwClean === "ga") {
+      return /\b(gà|kê)\b/i.test(text) || /\b(tuong ga|con ga)\b/i.test(textClean);
+    }
+    if (kwClean === "cho") {
+      // "chó" - must not match preposition "cho" (ví dụ: "cho phòng thờ", "cho bàn thờ", "cho nhà chùa")
+      if (/\b(cho phòng thờ|cho bàn thờ|cho nhà|cho chùa|cho khách)\b/i.test(text)) {
+        return /\b(tượng chó|chó phong thủy|chó tài lộc)\b/i.test(text);
+      }
+      return /\b(tượng chó|chó phong thủy|chó bằng đồng)\b/i.test(text) || /\b(tuong cho|cho phong thuy)\b/i.test(textClean);
+    }
+    if (kwClean === "lon" || kwClean === "heo") {
+      return /\b(lợn|heo)\b/i.test(text) || /\b(tuong lon|con lon|tuong heo|con heo)\b/i.test(textClean);
+    }
+    if (kwClean === "chuot") {
+      return /\b(chuột)\b/i.test(text) || /\b(tuong chuot|con chuot)\b/i.test(textClean);
+    }
+    if (kwClean === "trau") {
+      return /\b(trâu|bò tót)\b/i.test(text) || /\b(tuong trau|con trau|bo tot)\b/i.test(textClean);
+    }
+    if (kwClean === "meo") {
+      return /\b(mèo)\b/i.test(text) || /\b(tuong meo|con meo)\b/i.test(textClean);
+    }
+    if (kwClean === "ngua") {
+      return /\b(ngựa|bát mã|mã đáo|tuấn mã)\b/i.test(text) || /\b(tuong ngua|bat ma|ma dao)\b/i.test(textClean);
+    }
+    if (kwClean === "rong") {
+      return /\b(rồng|long)\b/i.test(text) || /\b(tuong rong|an rong)\b/i.test(textClean);
+    }
+
+    // If multi-word phrase
+    if (kwTrim.includes(" ")) {
+      if (text.includes(kwTrim) || textClean.includes(kwClean)) return true;
+    }
+
+    // Word boundary check
+    const regexClean = new RegExp(`(^|[^a-z0-9])${kwClean}([^a-z0-9]|$)`, "i");
+    return regexClean.test(textClean);
+  }
+
   // Priority check for 'do-tho-cung':
   // If product mentions 'đầy đủ', 'bộ sưu tập', 'trọn bộ' -> matches 'bo-suu-tap-do-tho'
   if (main.slug === "do-tho-cung") {
@@ -486,8 +551,7 @@ export function getSubCatInfoForProduct(
         if (ch.aliases) kws.push(...ch.aliases.map((a) => a.toLowerCase().replace(/-/g, " ")));
 
         for (const kw of kws) {
-          const kwClean = removeVietnameseTones(kw);
-          if (fullText.includes(kw) || fullTextClean.includes(kwClean)) {
+          if (matchesKeyword(fullText, fullTextClean, kw)) {
             return { id: ch.id, name: `${sub.name} › ${ch.name}`, parentId: sub.id, parentName: sub.name };
           }
         }
@@ -502,8 +566,7 @@ export function getSubCatInfoForProduct(
     if (sub.aliases) kws.push(...sub.aliases.map((a) => a.toLowerCase().replace(/-/g, " ")));
 
     for (const kw of kws) {
-      const kwClean = removeVietnameseTones(kw);
-      if (fullText.includes(kw) || fullTextClean.includes(kwClean)) {
+      if (matchesKeyword(fullText, fullTextClean, kw)) {
         return { id: sub.id, name: sub.name, parentId: null, parentName: null };
       }
     }
