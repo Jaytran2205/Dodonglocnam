@@ -68,6 +68,105 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .catch(() => {});
   }, [pathname, isLoginPage]);
 
+  // Route titles mapping for activity logs
+  const PAGE_TITLES: { [key: string]: string } = {
+    "/admin": "Bảng Điều Khiển Tổng Quan",
+    "/admin/products": "Quản Lý Sản Phẩm",
+    "/admin/categories": "Danh Mục & Thẻ Con",
+    "/admin/landing-page": "Giao Diện & Trang Chủ",
+    "/admin/orders": "Quản Lý Đơn Hàng",
+    "/admin/articles": "Bài Viết Chuẩn SEO",
+    "/admin/videos": "Kho Video Tải Lên",
+    "/admin/customers": "Khách Hàng & Liên Hệ",
+    "/admin/users": "Tài Khoản & Phân Quyền",
+    "/admin/logs": "Lịch Sử Hoạt Động Hệ Thống",
+  };
+
+  // 1. Automatic Navigation / Page View Tracking
+  useEffect(() => {
+    if (isLoginPage || !pathname) return;
+
+    try {
+      const lastTracked = sessionStorage.getItem("last_tracked_path");
+      const lastTrackedTime = parseInt(sessionStorage.getItem("last_tracked_time") || "0", 10);
+      const now = Date.now();
+
+      // Avoid spamming if user re-clicks the same menu within 10 seconds
+      if (lastTracked === pathname && now - lastTrackedTime < 10000) {
+        return;
+      }
+
+      sessionStorage.setItem("last_tracked_path", pathname);
+      sessionStorage.setItem("last_tracked_time", String(now));
+
+      const pageTitle = PAGE_TITLES[pathname] || `Trang ${pathname}`;
+
+      fetch("/api/admin/logs/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "NAVIGATE",
+          entity: "PAGE",
+          summary: `Truy cập trang: ${pageTitle} (${pathname})`,
+          details: { pathname, title: pageTitle },
+        }),
+      }).catch(() => {});
+    } catch {}
+  }, [pathname, isLoginPage]);
+
+  // 2. Notable Click Interaction Tracking
+  useEffect(() => {
+    if (isLoginPage) return;
+
+    const handleGlobalClick = (e: MouseEvent) => {
+      try {
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+
+        const clickable = target.closest<HTMLElement>("[data-track-click], button, a");
+        if (!clickable) return;
+
+        const customTrack = clickable.getAttribute("data-track-click");
+        const titleAttr = clickable.getAttribute("title");
+        const ariaLabel = clickable.getAttribute("aria-label");
+        const textContent = (clickable.innerText || clickable.textContent || "").trim();
+
+        let label = customTrack || titleAttr || ariaLabel;
+        if (!label && textContent && textContent.length <= 40 && !textContent.includes("\n")) {
+          label = textContent;
+        }
+
+        if (!label || label.length < 3 || /^[0-9]+$/.test(label)) return;
+
+        const clickKey = `${pathname}_${label}`;
+        const lastClickKey = sessionStorage.getItem("last_click_key");
+        const lastClickTime = parseInt(sessionStorage.getItem("last_click_time") || "0", 10);
+        const now = Date.now();
+
+        if (lastClickKey === clickKey && now - lastClickTime < 3000) return;
+
+        sessionStorage.setItem("last_click_key", clickKey);
+        sessionStorage.setItem("last_click_time", String(now));
+
+        fetch("/api/admin/logs/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "CLICK",
+            entity: "SYSTEM",
+            summary: `Click thao tác: "${label.slice(0, 80)}" tại ${PAGE_TITLES[pathname] || pathname}`,
+            details: { label, pathname },
+          }),
+        }).catch(() => {});
+      } catch {}
+    };
+
+    document.addEventListener("click", handleGlobalClick, true);
+    return () => {
+      document.removeEventListener("click", handleGlobalClick, true);
+    };
+  }, [pathname, isLoginPage]);
+
   if (isLoginPage) {
     return <>{children}</>;
   }

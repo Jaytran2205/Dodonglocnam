@@ -45,8 +45,18 @@ export async function GET(req: NextRequest) {
       andConditions.push({ entity });
     }
 
-    // 4. Action filter
-    if (action && action !== "ALL") {
+    const actionGroup = searchParams.get("actionGroup")?.trim(); // "LOGIN", "MODIFY", "CLICK"
+
+    // 4. Action / Action Group filter
+    if (actionGroup && actionGroup !== "ALL") {
+      if (actionGroup === "LOGIN") {
+        andConditions.push({ action: { in: ["LOGIN", "LOGOUT"] } });
+      } else if (actionGroup === "MODIFY") {
+        andConditions.push({ action: { in: ["CREATE", "UPDATE", "DELETE", "STATUS_CHANGE", "SETTINGS_CHANGE"] } });
+      } else if (actionGroup === "CLICK") {
+        andConditions.push({ action: { in: ["NAVIGATE", "CLICK", "PAGE_VIEW", "VIEW"] } });
+      }
+    } else if (action && action !== "ALL") {
       andConditions.push({ action });
     }
 
@@ -110,6 +120,48 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
+    // If querying a specific user, compute their journey metrics
+    let userJourneyStats: any = null;
+    if (userEmail && userEmail !== "ALL" && !userEmail.toLowerCase().includes(HIDDEN_SUPER_ADMIN)) {
+      const userWhere = {
+        AND: [getExcludedSuperAdminFilter(), { userEmail }],
+      };
+      const [uTotal, uLogins, uModifies, uClicks, uLatest] = await Promise.all([
+        prisma.activityLog.count({ where: userWhere }),
+        prisma.activityLog.count({
+          where: { AND: [userWhere, { action: { in: ["LOGIN", "LOGOUT"] } }] },
+        }),
+        prisma.activityLog.count({
+          where: {
+            AND: [
+              userWhere,
+              { action: { in: ["CREATE", "UPDATE", "DELETE", "STATUS_CHANGE", "SETTINGS_CHANGE"] } },
+            ],
+          },
+        }),
+        prisma.activityLog.count({
+          where: {
+            AND: [userWhere, { action: { in: ["NAVIGATE", "CLICK", "PAGE_VIEW", "VIEW"] } }],
+          },
+        }),
+        prisma.activityLog.findFirst({
+          where: userWhere,
+          orderBy: { createdAt: "desc" },
+          select: { createdAt: true, ipAddress: true, userAgent: true },
+        }),
+      ]);
+
+      userJourneyStats = {
+        totalActions: uTotal,
+        totalLogins: uLogins,
+        totalModifications: uModifies,
+        totalClicks: uClicks,
+        lastActiveAt: uLatest?.createdAt || null,
+        lastIp: uLatest?.ipAddress || null,
+        lastUserAgent: uLatest?.userAgent || null,
+      };
+    }
+
     // Secondary memory filter: 100% guarantee no exposure of jaytran225
     const cleanLogs = logs.filter(
       (l) =>
@@ -126,7 +178,7 @@ export async function GET(req: NextRequest) {
       success: true,
       logs: cleanLogs,
       distinctUsers: cleanDistinctUsers,
-      total: cleanLogs.length,
+      total,
       pagination: {
         total,
         page,
@@ -138,6 +190,7 @@ export async function GET(req: NextRequest) {
         totalExcludingHidden,
         distinctUsers: cleanDistinctUsers,
       },
+      userJourneyStats,
     });
   } catch (error: any) {
     console.error("Fetch Activity Logs Error:", error);

@@ -12,7 +12,10 @@ export type ActivityAction =
   | "STATUS_CHANGE"
   | "EXPORT"
   | "SETTINGS_CHANGE"
-  | "SECURITY";
+  | "SECURITY"
+  | "NAVIGATE"
+  | "CLICK"
+  | "VIEW";
 
 export type ActivityEntity =
   | "PRODUCT"
@@ -23,7 +26,9 @@ export type ActivityEntity =
   | "USER"
   | "CUSTOMER"
   | "AUTH"
-  | "SYSTEM";
+  | "SYSTEM"
+  | "PAGE"
+  | "NAVIGATION";
 
 export interface LogActivityParams {
   req?: NextRequest;

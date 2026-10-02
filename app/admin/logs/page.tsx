@@ -27,9 +27,14 @@ import {
   FileText,
   UserCheck,
   Sparkles,
-  Laptop
+  Laptop,
+  LogOut,
+  Compass,
+  MousePointer,
+  FileEdit
 } from "lucide-react";
 import { useToast } from "@/components/admin/AdminToast";
+import UserJourneyModal, { UserJourneyTarget } from "@/components/admin/UserJourneyModal";
 
 interface ActivityLogItem {
   id: string;
@@ -74,6 +79,8 @@ export default function AdminActivityLogsPage() {
 
   // Selected Log for details modal
   const [selectedLog, setSelectedLog] = useState<ActivityLogItem | null>(null);
+  // Selected user for journey inspection modal
+  const [journeyUser, setJourneyUser] = useState<UserJourneyTarget | null>(null);
 
   // Fetch logs
   const fetchLogs = async () => {
@@ -185,6 +192,31 @@ export default function AdminActivityLogsPage() {
           color: "bg-purple-500/20 text-purple-400 border-purple-500/40",
           icon: LogIn,
         };
+      case "LOGOUT":
+        return {
+          label: "Đăng Xuất",
+          color: "bg-indigo-500/20 text-indigo-400 border-indigo-500/40",
+          icon: LogOut,
+        };
+      case "NAVIGATE":
+      case "PAGE_VIEW":
+        return {
+          label: "Xem Trang",
+          color: "bg-cyan-500/20 text-cyan-400 border-cyan-500/40",
+          icon: Compass,
+        };
+      case "CLICK":
+        return {
+          label: "Click Nút",
+          color: "bg-teal-500/20 text-teal-400 border-teal-500/40",
+          icon: MousePointer,
+        };
+      case "VIEW":
+        return {
+          label: "Xem Chi Tiết",
+          color: "bg-sky-500/20 text-sky-400 border-sky-500/40",
+          icon: Eye,
+        };
       case "SETTINGS_CHANGE":
         return {
           label: "Cấu Hình",
@@ -223,6 +255,10 @@ export default function AdminActivityLogsPage() {
         return { label: "Tài Khoản", icon: UserCheck, color: "text-indigo-400" };
       case "AUTH":
         return { label: "Hệ Thống", icon: Shield, color: "text-purple-400" };
+      case "PAGE":
+        return { label: "Trang Quản Trị", icon: Compass, color: "text-cyan-400" };
+      case "NAVIGATION":
+        return { label: "Điều Hướng", icon: Compass, color: "text-cyan-400" };
       default:
         return { label: entity, icon: Tag, color: "text-gray-400" };
     }
@@ -371,9 +407,28 @@ export default function AdminActivityLogsPage() {
 
           {/* User Filter */}
           <div>
-            <label className="block text-[10px] uppercase font-bold text-[#94a3b8] mb-1">
-              Tài Khoản Thực Hiện
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[10px] uppercase font-bold text-[#94a3b8]">
+                Tài Khoản Thực Hiện
+              </label>
+              {userEmailFilter !== "ALL" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const du = distinctUsers.find((x) => x.userEmail === userEmailFilter);
+                    setJourneyUser({
+                      email: userEmailFilter,
+                      name: du?.userName || userEmailFilter,
+                      role: du?.userRole || "STAFF",
+                    });
+                  }}
+                  className="text-[10px] text-[#d4af37] hover:underline font-bold flex items-center gap-1"
+                >
+                  <Compass className="w-3 h-3" />
+                  <span>Xem Hành Trình</span>
+                </button>
+              )}
+            </div>
             <select
               value={userEmailFilter}
               onChange={(e) => {
@@ -483,8 +538,26 @@ export default function AdminActivityLogsPage() {
 
                         {/* Actor Info */}
                         <span className="text-[11px] text-[#94a3b8] flex items-center gap-1">
-                          bởi <strong className="text-[#d4af37] font-semibold">{log.userName}</strong>
-                          <span className="text-[#94a3b8]/60">({log.userEmail})</span>
+                          bởi{" "}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (log.userEmail) {
+                                setJourneyUser({
+                                  email: log.userEmail,
+                                  name: log.userName,
+                                  role: log.userRole,
+                                });
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-[#d4af37] hover:underline font-semibold hover:text-[#e5b869] transition-colors"
+                            title="Bấm để xem chi tiết hành trình đăng nhập, sửa xóa, click của nhân viên này"
+                          >
+                            <span>{log.userName}</span>
+                            <span className="text-[#94a3b8]/60 text-[10px]">({log.userEmail})</span>
+                            <Compass className="w-2.5 h-2.5 text-[#d4af37]/70" />
+                          </button>
                         </span>
                       </div>
 
@@ -610,13 +683,32 @@ export default function AdminActivityLogsPage() {
 
               {/* Grid Info */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[#111c2e]/60 rounded-xl border border-[#d4af37]/10">
-                  <div className="text-[10px] uppercase text-[#94a3b8] font-bold">Người Thực Hiện</div>
-                  <div className="text-white font-semibold mt-1">{selectedLog.userName}</div>
-                  <div className="text-[11px] text-[#94a3b8]">{selectedLog.userEmail}</div>
-                  <div className="text-[10px] text-[#d4af37] font-semibold mt-0.5">
-                    Vai trò: {selectedLog.userRole}
+                <div className="p-3 bg-[#111c2e]/60 rounded-xl border border-[#d4af37]/10 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase text-[#94a3b8] font-bold">Người Thực Hiện</div>
+                    <div className="text-white font-semibold mt-1">{selectedLog.userName}</div>
+                    <div className="text-[11px] text-[#94a3b8]">{selectedLog.userEmail}</div>
+                    <div className="text-[10px] text-[#d4af37] font-semibold mt-0.5">
+                      Vai trò: {selectedLog.userRole}
+                    </div>
                   </div>
+                  {selectedLog.userEmail && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setJourneyUser({
+                          email: selectedLog.userEmail!,
+                          name: selectedLog.userName,
+                          role: selectedLog.userRole,
+                        });
+                        setSelectedLog(null);
+                      }}
+                      className="mt-2.5 py-1.5 px-2 bg-gradient-to-r from-[#d4af37]/20 to-[#d4af37]/10 hover:from-[#d4af37]/30 hover:to-[#d4af37]/20 text-[#d4af37] border border-[#d4af37]/40 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                    >
+                      <Compass className="w-3.5 h-3.5" />
+                      <span>Xem Hành Trình Tài Khoản Này</span>
+                    </button>
+                  )}
                 </div>
 
                 <div className="p-3 bg-[#111c2e]/60 rounded-xl border border-[#d4af37]/10">
@@ -692,6 +784,14 @@ export default function AdminActivityLogsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* USER JOURNEY / ACTIVITY PROFILE MODAL */}
+      {journeyUser && (
+        <UserJourneyModal
+          user={journeyUser}
+          onClose={() => setJourneyUser(null)}
+        />
       )}
     </div>
   );

@@ -161,7 +161,15 @@ export async function PUT(req: NextRequest) {
       entityId: product.id,
       entityName: product.name,
       summary: `Cập nhật sản phẩm: "${product.name}"` + (product.price ? ` (${product.price.toLocaleString("vi-VN")}đ)` : ""),
-      details: { inStock: product.inStock, isFeatured: product.isFeatured },
+      details: {
+        updatedFields: Object.keys(updateData),
+        price: product.price,
+        inStock: product.inStock,
+        isFeatured: product.isFeatured,
+        material: product.material,
+        dimensions: product.dimensions,
+        category: product.category?.name,
+      },
     }).catch(() => {});
 
     return NextResponse.json({ success: true, message: "Cập nhật sản phẩm thành công!", product });
@@ -189,7 +197,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Thiếu ID sản phẩm." }, { status: 400 });
     }
 
-    const existing = await prisma.product.findUnique({ where: { id }, select: { name: true } });
+    const existing = await prisma.product.findUnique({
+      where: { id },
+      select: { name: true, price: true, categoryId: true },
+    });
     await prisma.product.delete({ where: { id } });
     try { revalidatePath("/", "layout"); } catch {}
 
@@ -201,6 +212,11 @@ export async function DELETE(req: NextRequest) {
       entityId: id,
       entityName: existing?.name || id,
       summary: `Xóa sản phẩm: "${existing?.name || id}" khỏi hệ thống`,
+      details: {
+        deletedProductId: id,
+        deletedProductName: existing?.name,
+        price: existing?.price,
+      },
     }).catch(() => {});
 
     return NextResponse.json({ success: true, message: "Đã xóa sản phẩm." });

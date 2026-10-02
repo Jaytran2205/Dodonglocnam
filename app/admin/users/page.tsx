@@ -29,9 +29,12 @@ import {
   Layers,
   ChevronRight,
   Info,
-  Users
+  Users,
+  History,
+  Compass
 } from "lucide-react";
 import { useToast } from "@/components/admin/AdminToast";
+import UserJourneyModal, { UserJourneyTarget } from "@/components/admin/UserJourneyModal";
 import {
   ALL_PERMISSIONS,
   ROLE_LABELS,
@@ -72,6 +75,7 @@ export default function AdminUsersPage() {
   const [modalMode, setModalMode] = useState<"CREATE" | "EDIT" | null>(null);
   const [editingUser, setEditingUser] = useState<UserItem | null>(null);
   const [passwordModalUser, setPasswordModalUser] = useState<UserItem | null>(null);
+  const [journeyUser, setJourneyUser] = useState<UserJourneyTarget | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Form State for Create / Edit
@@ -715,6 +719,26 @@ export default function AdminUsersPage() {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* View Journey / Activity History Button */}
+                          {!isHiddenAdmin && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setJourneyUser({
+                                  email: u.email,
+                                  name: u.name,
+                                  role: u.role,
+                                  phone: u.phone,
+                                  isActive: u.isActive,
+                                })
+                              }
+                              className="p-1.5 text-[#d4af37] hover:text-white hover:bg-[#d4af37]/20 rounded-lg transition-colors border border-[#d4af37]/30"
+                              title="Xem chi tiết lịch sử hoạt động (Đăng nhập, Sửa/Xóa, Click)"
+                            >
+                              <History className="w-4 h-4" />
+                            </button>
+                          )}
+
                           {/* Edit Button */}
                           <button
                             onClick={() => handleOpenEdit(u)}
@@ -1052,6 +1076,14 @@ export default function AdminUsersPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* USER JOURNEY / ACTIVITY PROFILE MODAL */}
+      {journeyUser && (
+        <UserJourneyModal
+          user={journeyUser}
+          onClose={() => setJourneyUser(null)}
+        />
       )}
     </div>
   );
