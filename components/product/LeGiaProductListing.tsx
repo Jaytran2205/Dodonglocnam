@@ -810,6 +810,12 @@ export function LeGiaProductListing({
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                       decoding="async"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.src.includes("hero_golden_ship")) {
+                          target.src = "/images/hero_golden_ship.jpg";
+                        }
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                   </div>
@@ -1477,6 +1483,12 @@ function ListingProductCard({
               fetchPriority={priority ? "high" : "auto"}
               width={400}
               height={400}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.includes("hero_golden_ship")) {
+                  target.src = "/images/hero_golden_ship.jpg";
+                }
+              }}
             />
 
             {/* Secondary images - mounted lazily on interaction only */}
@@ -1495,6 +1507,12 @@ function ListingProductCard({
                   decoding="async"
                   width={400}
                   height={400}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.includes("hero_golden_ship")) {
+                      target.src = "/images/hero_golden_ship.jpg";
+                    }
+                  }}
                 />
               );
             })}

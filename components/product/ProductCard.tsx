@@ -119,6 +119,12 @@ export function ProductCard({ product }: ProductCardProps) {
             width={400}
             height={400}
             className="w-full h-full object-contain group-hover/img:scale-105 transition-all duration-300"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.src.includes("hero_golden_ship")) {
+                target.src = "/images/hero_golden_ship.jpg";
+              }
+            }}
           />
           {product.material && (
             <span className="absolute top-2 left-2 px-2 py-0.5 bg-[#4A1015]/90 text-[#FFFDF9] text-[9px] font-bold tracking-wide rounded shadow-sm z-10">

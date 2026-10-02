@@ -1089,6 +1089,12 @@ function ListingProductCard({
             fetchPriority={priority ? "high" : "auto"}
             width={400}
             height={400}
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.src.includes("hero_golden_ship")) {
+                target.src = "/images/hero_golden_ship.jpg";
+              }
+            }}
           />
 
           {/* Secondary images - ONLY rendered when user hovers/interacts with THIS specific card */}
@@ -1107,6 +1113,12 @@ function ListingProductCard({
                 decoding="async"
                 width={400}
                 height={400}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes("hero_golden_ship")) {
+                    target.src = "/images/hero_golden_ship.jpg";
+                  }
+                }}
               />
             );
           })}

@@ -33,11 +33,11 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
       { id: "bo-suu-tap-do-tho", name: "Bộ sưu tập đồ thờ đầy đủ", keyword: "bộ sưu tập,đồ thờ đầy đủ,đầy đủ,day du,trọn bộ đồ thờ,bộ đồ thờ đầy đủ,đồ thờ cúng đầy đủ", image: "/images/do-tho-cung/bo-suu-tap-do-tho.jpg" },
       { id: "bo-tam-su-ngu-su", aliases: ["bo-ngu-su", "dinh-dong"], name: "Bộ tam sự, ngũ sự bằng đồng", keyword: "tam sự,ngũ sự,đỉnh đồng,đỉnh thờ,dinh tho,đỉnh bát tiên,dinh bat tien,đỉnh tai mây,dinh tai may,đỉnh trúc vuông,dinh truc vuong,đỉnh 50,đỉnh 60,đỉnh 70", image: "/images/do-tho-cung/bo-tam-su-ngu-su.jpg" },
       { id: "chan-nen", name: "Chân nến", keyword: "chân nến", image: "/images/do-tho-cung/chan-nen.jpg" },
-      { id: "hac-tho", name: "Hạc thờ", keyword: "hạc thờ", image: "/images/do-tho-cung/hac-tho.jpg" },
+      { id: "hac-tho", name: "Hạc thờ", keyword: "hạc thờ,hạc,đôi hạc", image: "/images/do-tho-cung/hac-tho.jpg" },
       { id: "den-tho", name: "Đèn thờ", keyword: "đèn thờ", image: "/images/do-tho-cung/den-tho.jpg" },
       { id: "bat-huong", name: "Bát hương", keyword: "bát hương", image: "/images/do-tho-cung/bat-huong.jpg" },
       { id: "ong-huong", aliases: ["ong-dung-huong"], name: "Ống hương", keyword: "ống hương,ống đựng hương,đựng hương,ong huong,ong dung huong", image: "/images/do-tho-cung/ong-huong.jpg" },
-      { id: "lo-hoa", name: "Lọ hoa", keyword: "lọ hoa", image: "/images/do-tho-cung/lo-hoa.jpg" },
+      { id: "lo-hoa", name: "Lọ hoa", keyword: "lọ hoa,bình hoa,hoa sen,bình hoa sen,bình sen", image: "/images/do-tho-cung/lo-hoa.jpg" },
       { id: "lo-loc-binh", aliases: ["loc-binh", "luc-binh-choe", "choe-dong", "loc-binh-choe", "luc-binh"], name: "Lọ lộc bình", keyword: "lộc bình,lọ lộc bình,đôi lọ lộc bình,đôi lộc bình,lục bình,củ tỏi,chóe,lọ lục bình", image: "/images/do-tho-cung/luc-binh-choe.jpg" },
       { id: "mam-bong", name: "Mâm bồng", keyword: "mâm bồng", image: "/images/do-tho-cung/mam-bong.jpg" },
       { id: "dai-nuoc", name: "Đài nước", keyword: "đài nước,đài thờ,bộ đài thờ,đài đựng nước,dai nuoc,dai tho", image: "/images/do-tho-cung/dai-nuoc.jpg" },
@@ -133,7 +133,7 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
       {
         id: "tuong-phat",
         name: "Tượng Phật",
-        keyword: "phật,a di đà,thích ca,quan âm,dược sư,đản sinh,bồ tát,phat",
+        keyword: "phật,a di đà,thích ca,quan âm,dược sư,đản sinh,bồ tát,phat,tam thánh,tây phương tam thánh",
         image: "/images/tuong-dong/tuong-phat.jpg",
         children: [
           { id: "tuong-a-di-da", name: "Tượng A Di Đà", keyword: "a di đà,a di da", image: "/images/locnam_real/locnam_buddha_08_tuong-phat-a-di-da-bang-d.jpg" },
@@ -381,3 +381,134 @@ export function findDetailCategory(
     (d) => d.id === detailSlug || (d.aliases && d.aliases.includes(detailSlug))
   );
 }
+
+export function removeVietnameseTones(str: string): string {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase();
+}
+
+export interface ProductSubCatInfo {
+  id: string;
+  name: string;
+  parentId: string | null;
+  parentName?: string | null;
+}
+
+export function getSubCatInfoForProduct(
+  prod: any,
+  catalog: MainCategoryData[] = DEFAULT_HIERARCHICAL_CATEGORIES
+): ProductSubCatInfo | null {
+  if (!prod) return null;
+
+  const catSlug = prod.category?.slug;
+  const main = catalog.find(
+    (c) => c.slug === catSlug || (c.aliases && c.aliases.includes(catSlug))
+  );
+  if (!main || !main.subCategories) return null;
+
+  // 1. Direct subCategoryId match
+  if (prod.subCategoryId) {
+    for (const sub of main.subCategories) {
+      if (sub.id === prod.subCategoryId || (sub.aliases && sub.aliases.includes(prod.subCategoryId))) {
+        return { id: sub.id, name: sub.name, parentId: null, parentName: null };
+      }
+      if (sub.children) {
+        const ch = sub.children.find(
+          (c) => c.id === prod.subCategoryId || (c.aliases && c.aliases.includes(prod.subCategoryId))
+        );
+        if (ch) {
+          return { id: ch.id, name: `${sub.name} › ${ch.name}`, parentId: sub.id, parentName: sub.name };
+        }
+      }
+    }
+  }
+
+  // 2. subCategoryIds match (JSON array or comma-separated string)
+  if (prod.subCategoryIds) {
+    let ids: string[] = [];
+    try {
+      const parsed = JSON.parse(prod.subCategoryIds);
+      if (Array.isArray(parsed)) ids = parsed;
+    } catch {
+      ids = prod.subCategoryIds.split(",").map((s: string) => s.trim()).filter(Boolean);
+    }
+    for (const subId of ids) {
+      for (const sub of main.subCategories) {
+        if (sub.id === subId || (sub.aliases && sub.aliases.includes(subId))) {
+          return { id: sub.id, name: sub.name, parentId: null, parentName: null };
+        }
+        if (sub.children) {
+          const ch = sub.children.find(
+            (c) => c.id === subId || (c.aliases && c.aliases.includes(subId))
+          );
+          if (ch) {
+            return { id: ch.id, name: `${sub.name} › ${ch.name}`, parentId: sub.id, parentName: sub.name };
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Fallback: Intelligent Keyword Matching from Name & Tags
+  const pName = (prod.name || "").toLowerCase();
+  const pNameClean = removeVietnameseTones(pName);
+  const pTags = (prod.tags || "").toLowerCase();
+  const pTagsClean = removeVietnameseTones(pTags);
+  const fullText = `${pName} ${pTags}`;
+  const fullTextClean = `${pNameClean} ${pTagsClean}`;
+
+  // Priority check for 'do-tho-cung':
+  // If product mentions 'đầy đủ', 'bộ sưu tập', 'trọn bộ' -> matches 'bo-suu-tap-do-tho'
+  if (main.slug === "do-tho-cung") {
+    if (
+      pName.includes("đầy đủ") ||
+      pName.includes("bộ sưu tập") ||
+      pName.includes("trọn bộ") ||
+      pNameClean.includes("day du") ||
+      pNameClean.includes("tron bo")
+    ) {
+      const sub = main.subCategories.find((s) => s.id === "bo-suu-tap-do-tho");
+      if (sub) return { id: sub.id, name: sub.name, parentId: null, parentName: null };
+    }
+  }
+
+  // Check children first for high-specificity matches
+  for (const sub of main.subCategories) {
+    if (sub.children && sub.children.length > 0) {
+      for (const ch of sub.children) {
+        const kws = (ch.keyword || "").split(",").map((k) => k.trim().toLowerCase()).filter(Boolean);
+        kws.push(ch.name.toLowerCase());
+        if (ch.aliases) kws.push(...ch.aliases.map((a) => a.toLowerCase().replace(/-/g, " ")));
+
+        for (const kw of kws) {
+          const kwClean = removeVietnameseTones(kw);
+          if (fullText.includes(kw) || fullTextClean.includes(kwClean)) {
+            return { id: ch.id, name: `${sub.name} › ${ch.name}`, parentId: sub.id, parentName: sub.name };
+          }
+        }
+      }
+    }
+  }
+
+  // Check parent subcategories
+  for (const sub of main.subCategories) {
+    const kws = (sub.keyword || "").split(",").map((k) => k.trim().toLowerCase()).filter(Boolean);
+    kws.push(sub.name.toLowerCase());
+    if (sub.aliases) kws.push(...sub.aliases.map((a) => a.toLowerCase().replace(/-/g, " ")));
+
+    for (const kw of kws) {
+      const kwClean = removeVietnameseTones(kw);
+      if (fullText.includes(kw) || fullTextClean.includes(kwClean)) {
+        return { id: sub.id, name: sub.name, parentId: null, parentName: null };
+      }
+    }
+  }
+
+  return null;
+}
+

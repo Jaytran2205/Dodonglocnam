@@ -38,7 +38,13 @@ import { ProductPromotionsBox } from "@/components/admin/ProductPromotionsBox";
 import { ProductSurfaceBox } from "@/components/admin/ProductSurfaceBox";
 import { ProductTagsBox } from "@/components/admin/ProductTagsBox";
 import { ProductFaqBox } from "@/components/admin/ProductFaqBox";
-import { DEFAULT_HIERARCHICAL_CATEGORIES, MainCategoryData } from "@/lib/subcategories-data";
+import {
+  DEFAULT_HIERARCHICAL_CATEGORIES,
+  MainCategoryData,
+  SubCategoryItem,
+  getSubCatInfoForProduct,
+  removeVietnameseTones,
+} from "@/lib/subcategories-data";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/components/admin/AdminToast";
 
@@ -165,16 +171,52 @@ export default function AdminProductsPage() {
 
   // Available Subcategories for the filter dropdown
   const availableSubcategoriesForFilter = useMemo(() => {
+    interface FilterSubOption {
+      id: string;
+      name: string;
+      displayName: string;
+      parentId?: string | null;
+      childIds?: string[];
+      keyword?: string;
+    }
+
+    const result: FilterSubOption[] = [];
+
+    const appendSub = (sub: SubCategoryItem) => {
+      const childIds = sub.children?.map((c) => c.id) || [];
+      result.push({
+        id: sub.id,
+        name: sub.name,
+        displayName: `└─ ${sub.name}`,
+        childIds,
+        keyword: sub.keyword,
+      });
+
+      if (sub.children && sub.children.length > 0) {
+        sub.children.forEach((ch) => {
+          result.push({
+            id: ch.id,
+            name: ch.name,
+            displayName: `   └── ${ch.name}`,
+            parentId: sub.id,
+            keyword: ch.keyword,
+          });
+        });
+      }
+    };
+
     if (selectedCat === "ALL") {
-      const allSubs: { id: string; name: string }[] = [];
+      const seenIds = new Set<string>();
       catalog.forEach((c) => {
         (c.subCategories || []).forEach((sub) => {
-          if (!allSubs.some((s) => s.id === sub.id)) {
-            allSubs.push({ id: sub.id, name: sub.name });
+          if (!seenIds.has(sub.id)) {
+            seenIds.add(sub.id);
+            appendSub(sub);
+            (sub.children || []).forEach((ch) => seenIds.add(ch.id));
           }
         });
       });
-      return allSubs;
+      return result;
     }
 
     const selectedDbCat = categories.find((c) => c.id === selectedCat || c.slug === selectedCat);
@@ -185,7 +227,10 @@ export default function AdminProductsPage() {
         c.slug === selectedDbCat.slug ||
         (c.aliases && c.aliases.includes(selectedDbCat.slug))
     );
-    return matchedCatalog ? matchedCatalog.subCategories || [] : [];
+    if (!matchedCatalog) return [];
+
+    matchedCatalog.subCategories.forEach((sub) => appendSub(sub));
+    return result;
   }, [selectedCat, categories, catalog]);
 
   // Open Create Modal
@@ -262,29 +307,8 @@ export default function AdminProductsPage() {
     setAngleImages(initialSlots);
 
     // Auto-detect subcategory if not explicitly stored
-    let detectedSubCat = prod.subCategoryId || "";
-    if (!detectedSubCat) {
-      const catSlug = prod.category?.slug;
-      const main = catalog.find((c) => c.slug === catSlug || (c.aliases && c.aliases.includes(catSlug)));
-      if (main && main.subCategories) {
-        const pName = (prod.name || "").toLowerCase();
-        for (const sub of main.subCategories) {
-          if (sub.children) {
-            const matchedChild = sub.children.find((ch) =>
-              pName.includes(ch.name.toLowerCase())
-            );
-            if (matchedChild) {
-              detectedSubCat = matchedChild.id;
-              break;
-            }
-          }
-          if (pName.includes(sub.name.toLowerCase())) {
-            detectedSubCat = sub.id;
-            break;
-          }
-        }
-      }
-    }
+    const detectedInfo = getSubCatInfoForProduct(prod, catalog);
+    const detectedSubCat = prod.subCategoryId || detectedInfo?.id || "";
 
     // Extract surfaces from material and tags
     const surfaces: string[] = [];
@@ -534,31 +558,8 @@ export default function AdminProductsPage() {
 
   // Helper to find Subcategory Name for a product
   const getSubCatNameForProduct = (prod: any) => {
-    if (!prod) return null;
-    const catSlug = prod.category?.slug;
-    const main = catalog.find((c) => c.slug === catSlug || (c.aliases && c.aliases.includes(catSlug)));
-    if (!main || !main.subCategories) return null;
-
-    if (prod.subCategoryId) {
-      for (const sub of main.subCategories) {
-        if (sub.id === prod.subCategoryId) return sub.name;
-        if (sub.children) {
-          const ch = sub.children.find((c) => c.id === prod.subCategoryId);
-          if (ch) return `${sub.name} › ${ch.name}`;
-        }
-      }
-    }
-
-    // Fallback: match by keywords
-    const pName = (prod.name || "").toLowerCase();
-    for (const sub of main.subCategories) {
-      if (sub.children) {
-        const ch = sub.children.find((c) => pName.includes(c.name.toLowerCase()));
-        if (ch) return `${sub.name} › ${ch.name}`;
-      }
-      if (pName.includes(sub.name.toLowerCase())) return sub.name;
-    }
-    return null;
+    const info = getSubCatInfoForProduct(prod, catalog);
+    return info?.name || null;
   };
 
   // Filter & Sort Products for Listing Table
@@ -566,30 +567,88 @@ export default function AdminProductsPage() {
     let list = [...products];
 
     if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.slug.toLowerCase().includes(q) ||
-          (p.material && p.material.toLowerCase().includes(q)) ||
-          (p.tags && p.tags.toLowerCase().includes(q))
-      );
+      const rawQ = search.trim().toLowerCase();
+      const cleanQ = removeVietnameseTones(rawQ);
+
+      list = list.filter((p) => {
+        const pName = (p.name || "").toLowerCase();
+        const pNameClean = removeVietnameseTones(pName);
+        const pSlug = (p.slug || "").toLowerCase();
+        const pMaterial = (p.material || "").toLowerCase();
+        const pMaterialClean = removeVietnameseTones(pMaterial);
+        const pTags = (p.tags || "").toLowerCase();
+        const pTagsClean = removeVietnameseTones(pTags);
+
+        const subInfo = getSubCatInfoForProduct(p, catalog);
+        const subName = (subInfo?.name || "").toLowerCase();
+        const subNameClean = removeVietnameseTones(subName);
+
+        const catName = (p.category?.name || "").toLowerCase();
+        const catNameClean = removeVietnameseTones(catName);
+
+        return (
+          pName.includes(rawQ) ||
+          pNameClean.includes(cleanQ) ||
+          pSlug.includes(cleanQ) ||
+          pMaterial.includes(rawQ) ||
+          pMaterialClean.includes(cleanQ) ||
+          pTags.includes(rawQ) ||
+          pTagsClean.includes(cleanQ) ||
+          subName.includes(rawQ) ||
+          subNameClean.includes(cleanQ) ||
+          catName.includes(rawQ) ||
+          catNameClean.includes(cleanQ)
+        );
+      });
     }
 
     if (selectedCat !== "ALL") {
       list = list.filter(
-        (p) => p.categoryId === selectedCat || p.category?.slug === selectedCat
+        (p) =>
+          p.categoryId === selectedCat ||
+          p.category?.slug === selectedCat ||
+          (p.categoryIds &&
+            (p.categoryIds.includes(selectedCat) ||
+              (p.category?.slug && p.categoryIds.includes(p.category.slug))))
       );
     }
 
     if (selectedSubCat !== "ALL") {
+      const selectedSubObj = availableSubcategoriesForFilter.find((s) => s.id === selectedSubCat);
+      const targetIds = [selectedSubCat, ...(selectedSubObj?.childIds || [])];
+
       list = list.filter((p) => {
-        if (p.subCategoryId === selectedSubCat) return true;
-        const subName = getSubCatNameForProduct(p);
-        const subObj = availableSubcategoriesForFilter.find((s) => s.id === selectedSubCat);
-        if (subObj && subName && subName.toLowerCase().includes(subObj.name.toLowerCase())) {
-          return true;
+        // 1. Direct subCategoryId match
+        if (p.subCategoryId && targetIds.includes(p.subCategoryId)) return true;
+
+        // 2. subCategoryIds match
+        if (p.subCategoryIds) {
+          for (let i = 0; i < targetIds.length; i++) {
+            if (p.subCategoryIds.includes(targetIds[i])) return true;
+          }
         }
+
+        // 3. Resolved subcategory info match
+        const subInfo = getSubCatInfoForProduct(p, catalog);
+        if (subInfo) {
+          if (targetIds.includes(subInfo.id)) return true;
+          if (subInfo.parentId && targetIds.includes(subInfo.parentId)) return true;
+        }
+
+        // 4. Keyword match for selected subcategory
+        if (selectedSubObj) {
+          const pName = (p.name || "").toLowerCase();
+          const pNameClean = removeVietnameseTones(pName);
+          const kws = (selectedSubObj.keyword || "").split(",").map((k) => k.trim().toLowerCase()).filter(Boolean);
+          kws.push(selectedSubObj.name.toLowerCase());
+          for (const kw of kws) {
+            const kwClean = removeVietnameseTones(kw);
+            if (pName.includes(kw) || pNameClean.includes(kwClean)) {
+              return true;
+            }
+          }
+        }
+
         return false;
       });
     }
@@ -605,11 +664,15 @@ export default function AdminProductsPage() {
     } else if (sortBy === "price-desc") {
       list.sort((a, b) => (b.price || 0) - (a.price || 0));
     } else if (sortBy === "name-asc") {
-      list.sort((a, b) => a.name.localeCompare(b.name));
+      list.sort((a, b) => a.name.localeCompare(b.name, "vi"));
+    } else if (sortBy === "name-desc") {
+      list.sort((a, b) => b.name.localeCompare(a.name, "vi"));
+    } else {
+      list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     }
 
     return list;
-  }, [products, search, selectedCat, selectedSubCat, stockFilter, sortBy, availableSubcategoriesForFilter]);
+  }, [products, search, selectedCat, selectedSubCat, stockFilter, sortBy, availableSubcategoriesForFilter, catalog]);
 
   const activeCatSlug =
     categories.find((c) => c.id === formData.categoryId)?.slug ||
@@ -698,7 +761,7 @@ export default function AdminProductsPage() {
               <option value="ALL">Tất Cả Nhánh Nhỏ ({availableSubcategoriesForFilter.length})</option>
               {availableSubcategoriesForFilter.map((sub) => (
                 <option key={sub.id} value={sub.id}>
-                  └─ {sub.name}
+                  {sub.displayName || `└─ ${sub.name}`}
                 </option>
               ))}
             </select>
@@ -785,6 +848,12 @@ export default function AdminProductsPage() {
                             src={img}
                             alt={prod.name}
                             className="w-full h-full object-contain rounded"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (!target.src.includes("hero_golden_ship")) {
+                                target.src = "/images/hero_golden_ship.jpg";
+                              }
+                            }}
                           />
                         </div>
                       </td>

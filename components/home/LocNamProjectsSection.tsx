@@ -59,6 +59,12 @@ export function LocNamProjectsSection() {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 loading="lazy"
                 decoding="async"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes("hero_golden_ship")) {
+                    target.src = "/images/hero_golden_ship.jpg";
+                  }
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
@@ -139,6 +145,12 @@ export function LocNamProjectsSection() {
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                     loading="lazy"
                     decoding="async"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.includes("hero_golden_ship")) {
+                        target.src = "/images/hero_golden_ship.jpg";
+                      }
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent sm:hidden" />
                   <span className="absolute bottom-1.5 left-1.5 sm:hidden px-1.5 py-0.5 bg-black/80 text-[#dfb755] text-[9px] font-bold rounded">

@@ -215,6 +215,12 @@ export function ProductDetailClient({
               decoding="async"
               // @ts-ignore
               fetchPriority="high"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.includes("hero_golden_ship")) {
+                  target.src = "/images/hero_golden_ship.jpg";
+                }
+              }}
             />
 
             {/* Previous Button */}
@@ -280,6 +286,12 @@ export function ProductDetailClient({
                       src={getWatermarkedImageUrl(img)}
                       alt={`${product.name} thumbnail ${idx + 1}`}
                       className="w-full h-full object-contain"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.src.includes("hero_golden_ship")) {
+                          target.src = "/images/hero_golden_ship.jpg";
+                        }
+                      }}
                     />
                   </button>
                 );
@@ -555,6 +567,12 @@ export function ProductDetailClient({
                     loading="lazy"
                     decoding="async"
                     className="max-h-[500px] w-auto object-contain rounded-lg"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.includes("hero_golden_ship")) {
+                        target.src = "/images/hero_golden_ship.jpg";
+                      }
+                    }}
                   />
                 </div>
 
@@ -579,6 +597,12 @@ export function ProductDetailClient({
                             loading="lazy"
                             decoding="async"
                             className="max-h-[360px] object-contain rounded-lg"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (!target.src.includes("hero_golden_ship")) {
+                                target.src = "/images/hero_golden_ship.jpg";
+                              }
+                            }}
                           />
                         </div>
                       ))}
@@ -787,6 +811,12 @@ export function ProductDetailClient({
                         loading="lazy"
                         decoding="async"
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.src.includes("hero_golden_ship")) {
+                            target.src = "/images/hero_golden_ship.jpg";
+                          }
+                        }}
                       />
                     </Link>
 

@@ -121,6 +121,12 @@ export function LocNamFavorites() {
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                       decoding="async"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.src.includes("hero_golden_ship")) {
+                          target.src = "/images/hero_golden_ship.jpg";
+                        }
+                      }}
                     />
                   </Link>
 
