@@ -82,14 +82,16 @@ export default function AdminDashboardPage() {
   const stats = data?.stats || {};
   const recentOrders = data?.recentOrders || [];
   const topProducts = data?.topProducts || [];
-  const monthlyRevenue = data?.monthlyRevenue || {
-    "T4": 0,
-    "T5": 0,
-    "T6": 0,
-    "T7": 0,
-    "T8": 0,
-    "T9": 0
-  };
+  const fallbackMonthlyRevenue = (() => {
+    const res: { [key: string]: number } = {};
+    const dNow = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(dNow.getFullYear(), dNow.getMonth() - i, 1);
+      res[`T${d.getMonth() + 1}`] = 0;
+    }
+    return res;
+  })();
+  const monthlyRevenue = data?.monthlyRevenue || fallbackMonthlyRevenue;
 
   const months = Object.keys(monthlyRevenue);
   const maxMonthValue = Math.max(...Object.values(monthlyRevenue).map((v) => Number(v) || 0), 1);

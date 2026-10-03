@@ -26,6 +26,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("landing"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền thay đổi cấu hình giao diện & trang chủ." }, { status: 403 });
+  }
+
   try {
     const { settings } = await req.json();
 

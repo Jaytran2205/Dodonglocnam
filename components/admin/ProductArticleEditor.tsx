@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import { ProductStructuredDescription } from "@/components/product/ProductStructuredDescription";
 import { useToast } from "@/components/admin/AdminToast";
+import { isSafeUrl, escapeAttribute, sanitizeHtml } from "@/lib/security";
 
 interface ProductArticleEditorProps {
   value: string;
@@ -165,9 +166,14 @@ export function markdownToHtml(md: string): string {
 
     // Links: [anchor text](url) (excluding images ![alt](url) which start with !)
     res = res.replace(/(^|[^\!])\[([^\]]+)\]\(([^)]+)\)/g, (match, prefix, linkText, url) => {
-      const isExternal = url.startsWith("http://") || url.startsWith("https://");
+      const cleanUrl = (url || "").trim();
+      if (!isSafeUrl(cleanUrl)) {
+        return `${prefix}${linkText}`;
+      }
+      const safeHref = escapeAttribute(cleanUrl);
+      const isExternal = safeHref.startsWith("http://") || safeHref.startsWith("https://");
       const targetAttr = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
-      return `${prefix}<a href="${url}"${targetAttr} class="text-[#b45309] dark:text-[#d4af37] underline decoration-[#d4af37]/60 hover:text-[#9b6f1e] font-semibold transition-colors">${linkText}</a>`;
+      return `${prefix}<a href="${safeHref}"${targetAttr} class="text-[#b45309] dark:text-[#d4af37] underline decoration-[#d4af37]/60 hover:text-[#9b6f1e] font-semibold transition-colors">${linkText}</a>`;
     });
 
     return res;
@@ -195,7 +201,7 @@ export function markdownToHtml(md: string): string {
     // HTML table or container
     if (trimmed.startsWith("<table") || (trimmed.startsWith("<div") && trimmed.includes("<table"))) {
       flushList();
-      htmlBlocks.push(trimmed);
+      htmlBlocks.push(sanitizeHtml(trimmed));
       continue;
     }
 
@@ -319,10 +325,15 @@ export function markdownToHtml(md: string): string {
     if (imgMatch) {
       flushList();
       const alt = imgMatch[1];
-      const src = imgMatch[2];
+      const src = imgMatch[2].trim();
+      if (!isSafeUrl(src)) {
+        continue;
+      }
+      const safeSrc = escapeAttribute(src);
+      const safeAlt = escapeAttribute(alt);
       htmlBlocks.push(
-        `<div class="my-4 text-center"><img src="${src}" alt="${alt}" class="max-h-72 rounded-xl mx-auto shadow-md border border-slate-200 object-contain" />${
-          alt ? `<p class="text-xs text-slate-500 italic mt-1.5">${alt}</p>` : ""
+        `<div class="my-4 text-center"><img src="${safeSrc}" alt="${safeAlt}" class="max-h-72 rounded-xl mx-auto shadow-md border border-slate-200 object-contain" />${
+          safeAlt ? `<p class="text-xs text-slate-500 italic mt-1.5">${safeAlt}</p>` : ""
         }</div>`
       );
       continue;
@@ -380,7 +391,7 @@ export function markdownToHtml(md: string): string {
 
   flushList();
 
-  return htmlBlocks.length > 0 ? htmlBlocks.join("\n") : "<p><br></p>";
+  return htmlBlocks.length > 0 ? sanitizeHtml(htmlBlocks.join("\n")) : "<p><br></p>";
 }
 
 // ---------------------------------------------------------------------------

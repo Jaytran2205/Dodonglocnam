@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
+import { parsePermissions, ROLE_DEFAULT_PERMISSIONS, RoleType } from "@/lib/permissions";
+
 const JWT_SECRET = process.env.JWT_SECRET || "locnam_luxury_bronze_secret_key_2026";
 
 export interface AdminTokenPayload {
@@ -9,6 +11,7 @@ export interface AdminTokenPayload {
   email: string;
   name: string;
   role: string;
+  permissions?: string[];
 }
 
 export function signAdminToken(payload: AdminTokenPayload): string {
@@ -32,19 +35,27 @@ export async function getAdminSession(req: NextRequest): Promise<AdminTokenPaylo
   try {
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, name: true, role: true, isActive: true }
+      select: { id: true, email: true, name: true, role: true, permissions: true, isActive: true }
     });
     if (!user || !user.isActive) {
       return null;
+    }
+    const roleUpper = (user.role || "STAFF").toUpperCase();
+    let permissions: string[];
+    if (user.permissions === null || user.permissions === undefined) {
+      permissions = ROLE_DEFAULT_PERMISSIONS[roleUpper as RoleType] || [];
+    } else {
+      permissions = parsePermissions(user.permissions);
     }
     return {
       userId: user.id,
       email: user.email,
       name: user.name,
-      role: user.role
+      role: roleUpper,
+      permissions,
     };
   } catch (error) {
-    // If DB check fails transiently, return decoded token
-    return decoded;
+    // Fail-closed on error for security
+    return null;
   }
 }

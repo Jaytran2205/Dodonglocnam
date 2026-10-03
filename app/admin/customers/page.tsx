@@ -157,7 +157,7 @@ export default function AdminCustomersPage() {
 
                       <td className="py-3.5 px-4 text-center font-bold text-white">
                         <span className="px-2.5 py-1 rounded-md bg-[#152236] text-[#d4af37]">
-                          {c.orderCount || 1} đơn
+                          {c.orderCount ?? 0} đơn
                         </span>
                       </td>
 

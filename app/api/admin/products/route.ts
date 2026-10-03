@@ -4,10 +4,33 @@ import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { logActivity } from "@/lib/activity-logger";
 
+function parseBool(val: any, fallback = false): boolean {
+  if (typeof val === "boolean") return val;
+  if (typeof val === "string") {
+    const lower = val.trim().toLowerCase();
+    if (lower === "true" || lower === "1") return true;
+    if (lower === "false" || lower === "0") return false;
+  }
+  if (typeof val === "number") return val !== 0;
+  return fallback;
+}
+
+function parsePrice(val: any): { valid: boolean; value: number | null } {
+  if (val === undefined || val === null || val === "") return { valid: true, value: null };
+  const num = typeof val === "number" ? val : parseFloat(String(val).replace(/,/g, ""));
+  if (isNaN(num) || num < 0) return { valid: false, value: null };
+  return { valid: true, value: num };
+}
+
 export async function GET(req: NextRequest) {
   const session = await getAdminSession(req);
   if (!session) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("products"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền xem danh sách sản phẩm." }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -38,12 +61,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("products"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền tạo sản phẩm." }, { status: 403 });
+  }
+
   try {
     const data = await req.json();
     const { name, slug: clientSlug, price, originalPrice, material, dimensions, weight, shortDescription, description, images, isFeatured, inStock, categoryId, subCategoryId, categoryIds, subCategoryIds, tags } = data;
 
     if (!name || !categoryId) {
       return NextResponse.json({ success: false, message: "Tên sản phẩm và danh mục là bắt buộc." }, { status: 400 });
+    }
+
+    const parsedPrice = parsePrice(price);
+    if (!parsedPrice.valid) {
+      return NextResponse.json({ success: false, message: "Giá bán sản phẩm phải là số không âm." }, { status: 400 });
+    }
+    const parsedOrigPrice = parsePrice(originalPrice);
+    if (!parsedOrigPrice.valid) {
+      return NextResponse.json({ success: false, message: "Giá gốc sản phẩm phải là số không âm." }, { status: 400 });
     }
 
     const rawSlug = (clientSlug || name)
@@ -63,16 +100,16 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         slug,
-        price: price ? parseFloat(price) : null,
-        originalPrice: originalPrice ? parseFloat(originalPrice) : null,
+        price: parsedPrice.value,
+        originalPrice: parsedOrigPrice.value,
         material,
         dimensions,
         weight,
         shortDescription,
         description,
         images: typeof images === "string" ? images : JSON.stringify(images || ["/images/artisan-foundry.jpg"]),
-        isFeatured: Boolean(isFeatured),
-        inStock: inStock !== undefined ? Boolean(inStock) : true,
+        isFeatured: parseBool(isFeatured, false),
+        inStock: parseBool(inStock, true),
         categoryId,
         subCategoryId: subCategoryId || null,
         categoryIds: categoryIds ? (typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds)) : null,
@@ -108,6 +145,11 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("products"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền cập nhật sản phẩm." }, { status: 403 });
+  }
+
   try {
     const data = await req.json();
     const { id } = data;
@@ -125,10 +167,18 @@ export async function PUT(req: NextRequest) {
       updateData.name = data.name.trim();
     }
     if (data.price !== undefined) {
-      updateData.price = data.price !== null && data.price !== "" ? parseFloat(data.price) : null;
+      const parsedPrice = parsePrice(data.price);
+      if (!parsedPrice.valid) {
+        return NextResponse.json({ success: false, message: "Giá bán sản phẩm phải là số không âm." }, { status: 400 });
+      }
+      updateData.price = parsedPrice.value;
     }
     if (data.originalPrice !== undefined) {
-      updateData.originalPrice = data.originalPrice !== null && data.originalPrice !== "" ? parseFloat(data.originalPrice) : null;
+      const parsedOrigPrice = parsePrice(data.originalPrice);
+      if (!parsedOrigPrice.valid) {
+        return NextResponse.json({ success: false, message: "Giá gốc sản phẩm phải là số không âm." }, { status: 400 });
+      }
+      updateData.originalPrice = parsedOrigPrice.value;
     }
     if (data.material !== undefined) updateData.material = data.material || null;
     if (data.dimensions !== undefined) updateData.dimensions = data.dimensions || null;
@@ -138,8 +188,8 @@ export async function PUT(req: NextRequest) {
     if (data.images !== undefined) {
       updateData.images = typeof data.images === "string" ? data.images : JSON.stringify(data.images || []);
     }
-    if (data.isFeatured !== undefined) updateData.isFeatured = Boolean(data.isFeatured);
-    if (data.inStock !== undefined) updateData.inStock = Boolean(data.inStock);
+    if (data.isFeatured !== undefined) updateData.isFeatured = parseBool(data.isFeatured, false);
+    if (data.inStock !== undefined) updateData.inStock = parseBool(data.inStock, true);
     if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
     if (data.subCategoryId !== undefined) updateData.subCategoryId = data.subCategoryId || null;
     if (data.categoryIds !== undefined) {
@@ -163,9 +213,13 @@ export async function PUT(req: NextRequest) {
       const existingProductWithSlug = await prisma.product.findFirst({
         where: { slug: cleanSlug, NOT: { id } },
       });
-      if (!existingProductWithSlug) {
-        updateData.slug = cleanSlug;
+      if (existingProductWithSlug) {
+        return NextResponse.json({
+          success: false,
+          message: `Đường dẫn (slug) "${cleanSlug}" đã được sử dụng bởi sản phẩm "${existingProductWithSlug.name}". Vui lòng chọn đường dẫn khác.`
+        }, { status: 409 });
       }
+      updateData.slug = cleanSlug;
     }
 
     const product = await prisma.product.update({
@@ -210,6 +264,11 @@ export async function DELETE(req: NextRequest) {
   const session = await getAdminSession(req);
   if (!session) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("products"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền xóa sản phẩm." }, { status: 403 });
   }
 
   try {

@@ -17,6 +17,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const hasPerm =
+    session.role === "SUPER_ADMIN" ||
+    session.role === "ADMIN" ||
+    (session.permissions &&
+      (session.permissions.includes("products") ||
+        session.permissions.includes("articles")));
+  if (!hasPerm) {
+    return NextResponse.json(
+      { success: false, message: "Bạn không có quyền tải video lên." },
+      { status: 403 }
+    );
+  }
+
   try {
     const formData = await req.formData();
     const uploadId = formData.get("uploadId") as string | null;
@@ -34,9 +47,16 @@ export async function POST(req: NextRequest) {
     const chunkIndex = parseInt(chunkIndexStr, 10);
     const totalChunks = totalChunksStr ? parseInt(totalChunksStr, 10) : 1;
 
-    if (isNaN(chunkIndex) || chunkIndex < 0) {
+    if (
+      isNaN(chunkIndex) ||
+      isNaN(totalChunks) ||
+      totalChunks <= 0 ||
+      totalChunks > 250 ||
+      chunkIndex < 0 ||
+      chunkIndex >= totalChunks
+    ) {
       return NextResponse.json(
-        { success: false, message: "Chỉ mục chunk không hợp lệ." },
+        { success: false, message: "Chỉ mục chunk hoặc tổng số chunk không hợp lệ (yêu cầu 0 <= chunkIndex < totalChunks <= 250)." },
         { status: 400 }
       );
     }

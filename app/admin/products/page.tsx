@@ -645,14 +645,20 @@ export default function AdminProductsPage() {
     }
 
     if (selectedCat !== "ALL") {
-      list = list.filter(
-        (p) =>
-          p.categoryId === selectedCat ||
-          p.category?.slug === selectedCat ||
-          (p.categoryIds &&
-            (p.categoryIds.includes(selectedCat) ||
-              (p.category?.slug && p.categoryIds.includes(p.category.slug))))
-      );
+      list = list.filter((p) => {
+        if (p.categoryId === selectedCat) return true;
+        if (p.category?.slug === selectedCat) return true;
+        if (p.categoryIds) {
+          try {
+            const parsed = JSON.parse(p.categoryIds);
+            if (Array.isArray(parsed) && parsed.includes(selectedCat)) return true;
+          } catch {
+            const parts = p.categoryIds.split(",").map((s: string) => s.trim());
+            if (parts.includes(selectedCat)) return true;
+          }
+        }
+        return false;
+      });
     }
 
     if (selectedSubCat !== "ALL") {
@@ -665,8 +671,13 @@ export default function AdminProductsPage() {
 
         // 2. subCategoryIds match
         if (p.subCategoryIds) {
-          for (let i = 0; i < targetIds.length; i++) {
-            if (p.subCategoryIds.includes(targetIds[i])) return true;
+          try {
+            const parsed = JSON.parse(p.subCategoryIds);
+            if (Array.isArray(parsed) && parsed.some((id: string) => targetIds.includes(id))) return true;
+          } catch {
+            for (let i = 0; i < targetIds.length; i++) {
+              if (p.subCategoryIds.includes(targetIds[i])) return true;
+            }
           }
         }
 
@@ -677,16 +688,22 @@ export default function AdminProductsPage() {
           if (subInfo.parentId && targetIds.includes(subInfo.parentId)) return true;
         }
 
-        // 4. Keyword match for selected subcategory
-        if (selectedSubObj) {
+        // 4. Keyword match for selected subcategory - only if product has NO explicit conflicting subCategoryId
+        if (selectedSubObj && !p.subCategoryId) {
           const pName = (p.name || "").toLowerCase();
           const pNameClean = removeVietnameseTones(pName);
           const kws = (selectedSubObj.keyword || "").split(",").map((k) => k.trim().toLowerCase()).filter(Boolean);
           kws.push(selectedSubObj.name.toLowerCase());
+
           for (const kw of kws) {
             const kwClean = removeVietnameseTones(kw);
-            if (pName.includes(kw) || pNameClean.includes(kwClean)) {
-              return true;
+            // If keyword has Vietnamese tones, enforce tone matching so "hổ" does not match "Bác Hồ"
+            if (/[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/.test(kw)) {
+              const regexRaw = new RegExp(`(^|[^a-z0-9àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ])${kw}([^a-z0-9àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]|$)`, "i");
+              if (regexRaw.test(pName)) return true;
+            } else {
+              const regexClean = new RegExp(`(^|[^a-z0-9])${kwClean}([^a-z0-9]|$)`, "i");
+              if (regexClean.test(pNameClean)) return true;
             }
           }
         }

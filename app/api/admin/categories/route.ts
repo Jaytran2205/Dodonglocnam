@@ -17,6 +17,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("categories"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền thêm danh mục." }, { status: 403 });
+  }
+
   try {
     const { name, description, image, order } = await req.json();
     if (!name) {
@@ -61,6 +66,11 @@ export async function PUT(req: NextRequest) {
   const session = await getAdminSession(req);
   if (!session) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("categories"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền chỉnh sửa danh mục." }, { status: 403 });
   }
 
   try {

@@ -42,14 +42,32 @@ const ARTICLE_CATEGORIES_TREE = [
     ],
   },
   {
-    name: "KIẾN THỨC ĐỒ ĐỒNG",
-    slug: "kien-thuc-do-dong",
+    name: "NGHỆ NHÂN & LÀNG NGHỀ",
+    slug: "nghe-nhan-lang-nghe",
     children: [
-      "Cẩm nang đồ thờ cúng gia tiên",
+      "Bàn tay vàng Dương Bá Tiến",
+      "Lịch sử làng nghề đúc đồng Ý Yên",
+      "Nghệ nhân đúc đồng truyền thống",
+    ],
+  },
+  {
+    name: "NGHỆ THUẬT ĐÚC ĐỒNG",
+    slug: "nghe-thuat-duc-dong",
+    children: [
       "Kỹ nghệ đúc đồng Ý Yên",
       "Mạ vàng 24K & Dát vàng 9999",
-      "Kích thước Lỗ Ban phong thủy",
-      "Cách phân biệt đồng nguyên chất",
+      "Nghệ thuật khảm tam khí, ngũ sắc",
+      "Quy trình rót đồng nóng chảy 1200 độ",
+    ],
+  },
+  {
+    name: "CẨM NANG THỜ TỰ",
+    slug: "cam-nang-tho-tu",
+    children: [
+      "Cẩm nang đồ thờ cúng gia tiên",
+      "Bố trí bộ ngũ sự, tam sự ban thờ",
+      "Kích thước Lỗ Ban đồ thờ phong thủy",
+      "Cách bao sái lau dọn đồ đồng thờ cúng",
     ],
   },
   {
@@ -60,6 +78,50 @@ const ARTICLE_CATEGORIES_TREE = [
       "Ý nghĩa 12 con giáp & Linh vật chiêu tài",
       "Vị trí an vị tượng danh nhân & Phật bản mệnh",
       "Vật phẩm phong thủy tụ tài phòng khách & văn phòng",
+    ],
+  },
+  {
+    name: "KIẾN THỨC ĐỒ ĐỒNG",
+    slug: "kien-thuc-do-dong",
+    children: [
+      "Cách phân biệt đồng nguyên chất và đồng pha tạp",
+      "Phương pháp bảo quản đồ đồng sáng bóng vĩnh cửu",
+      "Độ bền và giá trị truyền đời của đồ đồng",
+    ],
+  },
+  {
+    name: "CÔNG TRÌNH ĐÚC CHUÔNG NHÀ CHÙA",
+    slug: "cong-trinh-duc-chuong-nha-chua",
+    children: [
+      "Đúc Đại Hồng Chung nặng hàng tấn",
+      "Quy trình thử tiếng chuông ngân vang",
+      "Các công trình chuông chùa trên cả nước",
+    ],
+  },
+  {
+    name: "CÔNG TRÌNH ĐÚC TƯỢNG PHẬT & NHÀ CHÙA",
+    slug: "cong-trinh-duc-tuong-phat-nha-chua",
+    children: [
+      "Đúc tượng Phật Thích Ca, Quan Thế Âm Bồ Tát",
+      "Tượng Phật Di Lặc mạ vàng cỡ lớn",
+      "Công trình tượng đài tâm linh văn hóa",
+    ],
+  },
+  {
+    name: "DỰ ÁN & CÔNG TRÌNH ĐÚC ĐỒNG",
+    slug: "du-an-cong-trinh-duc-dong",
+    children: [
+      "Dự án tượng danh nhân lịch sử",
+      "Đúc tượng Bác Hồ, tượng Đại tướng",
+      "Trống đồng cỡ đại cho tập đoàn và đại hội",
+    ],
+  },
+  {
+    name: "DỰ ÁN & CÔNG TRÌNH TIÊU BIỂU",
+    slug: "du-an-cong-trinh-tieu-bieu",
+    children: [
+      "Công trình tiêu biểu đền miếu, từ đường",
+      "Dự án quà tặng đối tác ngoại giao cấp cao",
     ],
   },
   {
@@ -119,6 +181,24 @@ export default function AdminArticlesPage() {
   });
   const [showAddCat, setShowAddCat] = useState(false);
   const [customCatName, setCustomCatName] = useState("");
+
+  // Dynamically merge any categories present on existing articles so none are ever lost or missing
+  const allAvailableCategories = useMemo(() => {
+    const definedNames = new Set(ARTICLE_CATEGORIES_TREE.map((c) => c.name));
+    const dynamicCats: { name: string; slug: string; children: string[] }[] = [...ARTICLE_CATEGORIES_TREE];
+
+    articles.forEach((a) => {
+      if (a.category && !definedNames.has(a.category)) {
+        definedNames.add(a.category);
+        dynamicCats.push({
+          name: a.category,
+          slug: a.category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-"),
+          children: [],
+        });
+      }
+    });
+    return dynamicCats;
+  }, [articles]);
 
   const handleUploadThumbnail = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -368,7 +448,7 @@ export default function AdminArticlesPage() {
             className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-3 py-2.5 rounded-xl focus:outline-none cursor-pointer"
           >
             <option value="ALL">Tất Cả Chuyên Mục</option>
-            {ARTICLE_CATEGORIES_TREE.map((c) => (
+            {allAvailableCategories.map((c) => (
               <option key={c.name} value={c.name}>
                 {c.name}
               </option>
@@ -736,7 +816,7 @@ export default function AdminArticlesPage() {
                     </div>
 
                     <div className="p-3 max-h-64 overflow-y-auto space-y-1.5 custom-scrollbar text-xs">
-                      {ARTICLE_CATEGORIES_TREE.map((main) => {
+                      {allAvailableCategories.map((main) => {
                         const isMainActive = formData.category === main.name;
                         const hasActiveChild = main.children.some(
                           (ch) => formData.category === ch || formData.tags.includes(ch)

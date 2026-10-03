@@ -16,13 +16,40 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const hasPerm =
+    session.role === "SUPER_ADMIN" ||
+    session.role === "ADMIN" ||
+    (session.permissions &&
+      (session.permissions.includes("products") ||
+        session.permissions.includes("articles")));
+  if (!hasPerm) {
+    return NextResponse.json(
+      { success: false, message: "Bạn không có quyền tải video lên." },
+      { status: 403 }
+    );
+  }
+
   try {
     const body = await req.json();
-    const { uploadId, filename, mimeType, size, totalChunks } = body;
+    const { uploadId, filename, mimeType, totalChunks } = body;
 
-    if (!uploadId || !filename || !totalChunks) {
+    if (!uploadId || !filename || typeof totalChunks !== "number" || totalChunks <= 0 || totalChunks > 250) {
       return NextResponse.json(
-        { success: false, message: "Thiếu thông tin hoàn tất tải video." },
+        { success: false, message: "Thiếu hoặc sai thông tin hoàn tất tải video (uploadId, filename, totalChunks hợp lệ)." },
+        { status: 400 }
+      );
+    }
+
+    // Validate video extension
+    const ALLOWED_VIDEO_EXTS: Record<string, string> = {
+      ".mp4": "video/mp4",
+      ".webm": "video/webm",
+      ".mov": "video/quicktime",
+    };
+    const originalExt = path.extname(filename).toLowerCase();
+    if (!ALLOWED_VIDEO_EXTS[originalExt]) {
+      return NextResponse.json(
+        { success: false, message: "Định dạng video không được hỗ trợ (chỉ chấp nhận .mp4, .webm, .mov)." },
         { status: 400 }
       );
     }
@@ -33,7 +60,7 @@ export async function POST(req: NextRequest) {
       orderBy: { chunkIndex: "asc" },
     });
 
-    if (chunks.length < totalChunks) {
+    if (chunks.length !== totalChunks) {
       return NextResponse.json(
         {
           success: false,
@@ -43,12 +70,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Verify contiguous sequence of chunks from 0 to totalChunks - 1
+    for (let i = 0; i < totalChunks; i++) {
+      if (chunks[i].chunkIndex !== i) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Thiếu hoặc sai thứ tự phần video thứ ${i + 1}.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Stitch all chunks into one complete buffer
     const fullBuffer = Buffer.concat(chunks.map((c) => c.data));
 
     // Sanitize extension and filename for safe URL
-    const originalExt = path.extname(filename) || ".mp4";
-    const cleanExt = originalExt.toLowerCase();
+    const cleanExt = originalExt;
     const cleanBase = path
       .basename(filename, originalExt)
       .normalize("NFD")

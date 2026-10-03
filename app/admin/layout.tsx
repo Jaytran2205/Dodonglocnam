@@ -181,16 +181,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { href: "/admin", label: "Tổng Quan & Báo Cáo", icon: LayoutDashboard },
-    { href: "/admin/products", label: "Quản Lý Sản Phẩm", icon: Package },
-    { href: "/admin/categories", label: "Danh Mục & Thẻ Con", icon: Layers },
-    { href: "/admin/landing-page", label: "Giao Diện & Trang Chủ", icon: Sliders },
-    { href: "/admin/orders", label: "Quản Lý Đơn Hàng", icon: ShoppingCart, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null },
-    { href: "/admin/articles", label: "Bài Viết Chuẩn SEO", icon: FileText },
-    { href: "/admin/videos", label: "Kho Video Tải Lên", icon: Film },
-    { href: "/admin/customers", label: "Khách Hàng & Liên Hệ", icon: Users },
-    { href: "/admin/users", label: "Tài Khoản & Phân Quyền", icon: ShieldCheck },
-    { href: "/admin/logs", label: "Lịch Sử Hoạt Động", icon: History },
+    { href: "/admin/products", label: "Quản Lý Sản Phẩm", icon: Package, permission: "products" },
+    { href: "/admin/categories", label: "Danh Mục & Thẻ Con", icon: Layers, permission: "categories" },
+    { href: "/admin/landing-page", label: "Giao Diện & Trang Chủ", icon: Sliders, permission: "landing" },
+    { href: "/admin/orders", label: "Quản Lý Đơn Hàng", icon: ShoppingCart, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null, permission: "orders" },
+    { href: "/admin/articles", label: "Bài Viết Chuẩn SEO", icon: FileText, permission: "articles" },
+    { href: "/admin/videos", label: "Kho Video Tải Lên", icon: Film, permission: "articles" },
+    { href: "/admin/customers", label: "Khách Hàng & Liên Hệ", icon: Users, permission: "customers" },
+    { href: "/admin/users", label: "Tài Khoản & Phân Quyền", icon: ShieldCheck, permission: "users" },
+    { href: "/admin/logs", label: "Lịch Sử Hoạt Động", icon: History, permission: "logs" },
   ];
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (!item.permission) return true;
+    if (!adminUser) return true;
+    const role = (adminUser.role || "").toUpperCase();
+    if (role === "SUPER_ADMIN" || role === "ADMIN") return true;
+    return Array.isArray(adminUser.permissions) && adminUser.permissions.includes(item.permission);
+  });
 
   return (
     <div className="min-h-screen bg-[#070c14] text-[#f1f5f9] flex flex-col md:flex-row antialiased selection:bg-[#d4af37] selection:text-[#070c14]">
@@ -223,7 +231,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="text-[11px] font-serif font-bold text-[#d4af37]/70 uppercase tracking-widest px-3 py-2">
               Quản Trị Hệ Thống
             </div>
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href;
               return (
@@ -364,7 +372,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Mobile Navigation Drawer */}
         {mobileOpen && (
           <div className="md:hidden bg-[#0c1420] border-b-2 border-[#d4af37]/30 p-4 space-y-2 shadow-2xl">
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href;
               return (

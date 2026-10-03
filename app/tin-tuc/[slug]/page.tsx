@@ -12,6 +12,7 @@ import { Calendar, Clock, ChevronRight, Phone, MessageCircle, BookOpen, Tag } fr
 import prisma from "@/lib/prisma";
 import { ArticleVideoPlayer } from "@/components/common/ArticleVideoPlayer";
 import { isRawFilename } from "@/lib/videoUtils";
+import { isSafeUrl } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
@@ -236,6 +237,9 @@ function renderArticleText(text: string): React.ReactNode {
     if (mdLink) {
       const label = mdLink[1];
       const url = mdLink[2].trim();
+      if (!isSafeUrl(url)) {
+        return <span key={i}>{renderArticleText(label)}</span>;
+      }
       const isExternal = url.startsWith("http://") || url.startsWith("https://");
       return (
         <a
@@ -255,6 +259,9 @@ function renderArticleText(text: string): React.ReactNode {
     if (htmlLink) {
       const url = htmlLink[1].trim();
       const label = htmlLink[2];
+      if (!isSafeUrl(url)) {
+        return <span key={i}>{renderArticleText(label)}</span>;
+      }
       const isExternal = url.startsWith("http://") || url.startsWith("https://");
       return (
         <a

@@ -114,14 +114,17 @@ export function checkUserPermission(
   userPermissionsJson: string | null | undefined,
   requiredPermission: string
 ): boolean {
-  if (userRole === "SUPER_ADMIN") return true;
-  if (userRole === "ADMIN") return true;
+  const normRole = (userRole || "").trim().toUpperCase();
+  if (normRole === "SUPER_ADMIN" || normRole === "ADMIN") return true;
 
-  const perms = parsePermissions(userPermissionsJson);
-  if (perms.length === 0) {
-    const roleKey = userRole as RoleType;
+  // Unconfigured permissions (null or undefined) fallback to role defaults.
+  // Explicitly configured empty permissions ("[]") mean the user has NO permissions.
+  if (userPermissionsJson === null || userPermissionsJson === undefined) {
+    const roleKey = normRole as RoleType;
     const defaultPerms = ROLE_DEFAULT_PERMISSIONS[roleKey] || [];
     return defaultPerms.includes(requiredPermission);
   }
+
+  const perms = parsePermissions(userPermissionsJson);
   return perms.includes(requiredPermission);
 }

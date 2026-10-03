@@ -53,15 +53,36 @@ export async function GET(req: NextRequest) {
     const deliveredOrders = Number(statRow.delivered_orders) || 0;
     const cancelledOrders = Number(statRow.cancelled_orders) || 0;
 
-    // Monthly revenue 6-month breakdown for chart
-    const monthlyRevenue: { [key: string]: number } = {
-      "T4": 0,
-      "T5": 0,
-      "T6": 0,
-      "T7": 0,
-      "T8": 0,
-      "T9": totalRevenue
-    };
+    // Monthly revenue rolling 6-month breakdown from actual orders
+    const now = new Date();
+    const monthKeys: string[] = [];
+    const monthlyRevenue: { [key: string]: number } = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `T${d.getMonth() + 1}`;
+      monthKeys.push(key);
+      monthlyRevenue[key] = 0;
+    }
+
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1, 0, 0, 0, 0);
+    const completedOrders = await prisma.order.findMany({
+      where: {
+        status: { in: ["DELIVERED", "PROCESSING"] },
+        createdAt: { gte: sixMonthsAgo }
+      },
+      select: {
+        totalPrice: true,
+        createdAt: true
+      }
+    });
+
+    for (const ord of completedOrders) {
+      const d = new Date(ord.createdAt);
+      const key = `T${d.getMonth() + 1}`;
+      if (monthlyRevenue[key] !== undefined) {
+        monthlyRevenue[key] += Number(ord.totalPrice) || 0;
+      }
+    }
 
     return NextResponse.json(
       {

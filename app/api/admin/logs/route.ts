@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
-import { HIDDEN_SUPER_ADMIN, isHiddenSuperAdmin } from "@/lib/permissions";
+import { HIDDEN_SUPER_ADMIN, isHiddenSuperAdmin, checkUserPermission } from "@/lib/permissions";
 import { getExcludedSuperAdminFilter, logActivity } from "@/lib/activity-logger";
 
 // GET: Retrieve activity logs with filtering and pagination
@@ -12,10 +12,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  if (!checkUserPermission(session.role, session.permissions ? JSON.stringify(session.permissions) : null, "logs")) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền xem nhật ký hoạt động." }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.min(100, Math.max(10, parseInt(searchParams.get("limit") || "25", 10)));
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+    const limit = Math.min(100, Math.max(10, parseInt(searchParams.get("limit") || "25", 10) || 25));
     const search = searchParams.get("search")?.trim();
     const entity = searchParams.get("entity")?.trim();
     const action = searchParams.get("action")?.trim();
@@ -216,6 +220,12 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const days = parseInt(searchParams.get("days") || "90", 10);
+    if (isNaN(days) || days < 7) {
+      return NextResponse.json(
+        { success: false, message: "Số ngày dọn dẹp không hợp lệ (tối thiểu là 7 ngày)." },
+        { status: 400 }
+      );
+    }
     const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const result = await prisma.activityLog.deleteMany({

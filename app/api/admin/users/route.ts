@@ -12,12 +12,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const isCallerSuperAdmin =
-      isHiddenSuperAdmin(session.email) ||
-      isHiddenSuperAdmin(session.name) ||
-      ((session as any).username && isHiddenSuperAdmin((session as any).username));
+  const isCallerSuperAdmin =
+    session.role === "SUPER_ADMIN" ||
+    isHiddenSuperAdmin(session.email) ||
+    isHiddenSuperAdmin(session.name) ||
+    ((session as any).username && isHiddenSuperAdmin((session as any).username));
 
+  const hasUsersPerm = session.role === "ADMIN" || isCallerSuperAdmin || (session.permissions && session.permissions.includes("users"));
+  if (!hasUsersPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền xem danh sách tài khoản." }, { status: 403 });
+  }
+
+  try {
     // If caller is NOT jaytran225, strictly exclude jaytran225 at DB query level
     const where: any = {};
     if (!isCallerSuperAdmin) {
@@ -76,8 +82,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  // Only SUPER_ADMIN and ADMIN can create accounts
-  if (session.role !== "SUPER_ADMIN" && session.role !== "ADMIN") {
+  const isSuperAdmin =
+    session.role === "SUPER_ADMIN" ||
+    isHiddenSuperAdmin(session.email) ||
+    isHiddenSuperAdmin(session.name);
+
+  const hasUsersPerm = session.role === "ADMIN" || isSuperAdmin || (session.permissions && session.permissions.includes("users"));
+  if (!hasUsersPerm) {
     return NextResponse.json({ success: false, message: "Bạn không có quyền tạo tài khoản." }, { status: 403 });
   }
 
@@ -93,6 +104,15 @@ export async function POST(req: NextRequest) {
     }
     if (!password || password.length < 6) {
       return NextResponse.json({ success: false, message: "Mật khẩu phải có ít nhất 6 ký tự." }, { status: 400 });
+    }
+
+    const normRole = (typeof role === "string" ? role : "STAFF").trim().toUpperCase();
+    if (!["SUPER_ADMIN", "ADMIN", "EDITOR", "STAFF"].includes(normRole)) {
+      return NextResponse.json({ success: false, message: "Vai trò không hợp lệ." }, { status: 400 });
+    }
+
+    if (normRole === "SUPER_ADMIN" && !isSuperAdmin) {
+      return NextResponse.json({ success: false, message: "Chỉ Siêu Quản Trị mới có thể tạo tài khoản SUPER_ADMIN." }, { status: 403 });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -128,7 +148,7 @@ export async function POST(req: NextRequest) {
         email: cleanEmail,
         username: cleanUsername,
         password: hashedPassword,
-        role: role.toUpperCase(),
+        role: normRole,
         permissions: permissionsStr,
         phone: phone.trim() || null,
         isActive: true,
@@ -176,6 +196,13 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  const isSuperAdmin =
+    session.role === "SUPER_ADMIN" ||
+    isHiddenSuperAdmin(session.email) ||
+    isHiddenSuperAdmin(session.name);
+
+  const hasUsersPerm = session.role === "ADMIN" || isSuperAdmin || (session.permissions && session.permissions.includes("users"));
+
   try {
     const body = await req.json();
     const { id, name, email, role, permissions, phone, isActive, newPassword } = body;
@@ -194,15 +221,43 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Bạn không có quyền chỉnh sửa tài khoản này." }, { status: 403 });
     }
 
-    // Regular users cannot grant SUPER_ADMIN
-    if (role === "SUPER_ADMIN" && !isHiddenSuperAdmin(session.email)) {
-      return NextResponse.json({ success: false, message: "Chỉ Siêu Quản Trị mới có thể cấp quyền SUPER_ADMIN." }, { status: 403 });
+    // If target is SUPER_ADMIN, only SUPER_ADMIN can edit them
+    if (targetUser.role === "SUPER_ADMIN" && !isSuperAdmin) {
+      return NextResponse.json({ success: false, message: "Bạn không có quyền chỉnh sửa tài khoản Quản Trị Cấp Cao." }, { status: 403 });
+    }
+
+    // If caller is updating another user, caller MUST have users permission
+    if (targetUser.id !== session.userId && !hasUsersPerm) {
+      return NextResponse.json({ success: false, message: "Bạn không có quyền chỉnh sửa tài khoản người khác." }, { status: 403 });
+    }
+
+    // If caller is updating themselves without users permission, they cannot alter role, permissions, or isActive
+    if (targetUser.id === session.userId && !hasUsersPerm) {
+      if (role !== undefined || permissions !== undefined || isActive !== undefined) {
+        return NextResponse.json({ success: false, message: "Bạn không thể tự thay đổi vai trò, quyền hạn hoặc trạng thái tài khoản." }, { status: 403 });
+      }
     }
 
     const updateData: any = {};
     if (name) updateData.name = name.trim();
     if (email) updateData.email = email.trim().toLowerCase();
-    if (role) updateData.role = role.toUpperCase();
+
+    if (role !== undefined) {
+      const normRole = (typeof role === "string" ? role : "").trim().toUpperCase();
+      if (!["SUPER_ADMIN", "ADMIN", "EDITOR", "STAFF"].includes(normRole)) {
+        return NextResponse.json({ success: false, message: "Vai trò không hợp lệ." }, { status: 400 });
+      }
+      // Non-superadmin cannot grant SUPER_ADMIN
+      if (normRole === "SUPER_ADMIN" && !isSuperAdmin) {
+        return NextResponse.json({ success: false, message: "Chỉ Siêu Quản Trị mới có thể cấp quyền SUPER_ADMIN." }, { status: 403 });
+      }
+      // Non-superadmin cannot elevate themselves
+      if (targetUser.id === session.userId && normRole !== targetUser.role && !isSuperAdmin) {
+        return NextResponse.json({ success: false, message: "Bạn không thể tự nâng cấp vai trò của chính mình." }, { status: 403 });
+      }
+      updateData.role = normRole;
+    }
+
     if (phone !== undefined) updateData.phone = phone ? phone.trim() : null;
     if (isActive !== undefined) updateData.isActive = Boolean(isActive);
 
@@ -265,8 +320,13 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  // Only SUPER_ADMIN and ADMIN can delete accounts
-  if (session.role !== "SUPER_ADMIN" && session.role !== "ADMIN") {
+  const isSuperAdmin =
+    session.role === "SUPER_ADMIN" ||
+    isHiddenSuperAdmin(session.email) ||
+    isHiddenSuperAdmin(session.name);
+
+  const hasUsersPerm = session.role === "ADMIN" || isSuperAdmin || (session.permissions && session.permissions.includes("users"));
+  if (!hasUsersPerm) {
     return NextResponse.json({ success: false, message: "Bạn không có quyền xóa tài khoản." }, { status: 403 });
   }
 
@@ -291,6 +351,11 @@ export async function DELETE(req: NextRequest) {
     // Protection 2: Cannot delete yourself
     if (targetUser.id === session.userId) {
       return NextResponse.json({ success: false, message: "Bạn không thể tự xóa tài khoản của chính mình." }, { status: 400 });
+    }
+
+    // Protection 3: Only SUPER_ADMIN can delete a SUPER_ADMIN
+    if (targetUser.role === "SUPER_ADMIN" && !isSuperAdmin) {
+      return NextResponse.json({ success: false, message: "Bạn không có quyền xóa tài khoản Quản Trị Cấp Cao." }, { status: 403 });
     }
 
     await prisma.user.delete({ where: { id } });

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ArticleVideoPlayer } from "@/components/common/ArticleVideoPlayer";
 import { isRawFilename } from "@/lib/videoUtils";
+import { isSafeUrl } from "@/lib/security";
 
 interface ProductStructuredDescriptionProps {
   description?: string | null;
@@ -274,6 +275,9 @@ export function renderFormattedInline(text: string): React.ReactNode {
     if (mdLinkMatch) {
       const label = mdLinkMatch[1];
       const url = mdLinkMatch[2].trim();
+      if (!isSafeUrl(url)) {
+        return <span key={i}>{renderFormattedInline(label)}</span>;
+      }
       const isExternal = url.startsWith("http://") || url.startsWith("https://");
       return (
         <a
@@ -293,6 +297,9 @@ export function renderFormattedInline(text: string): React.ReactNode {
     if (htmlLinkMatch) {
       const url = htmlLinkMatch[1].trim();
       const label = htmlLinkMatch[2];
+      if (!isSafeUrl(url)) {
+        return <span key={i}>{renderFormattedInline(label)}</span>;
+      }
       const isExternal = url.startsWith("http://") || url.startsWith("https://");
       return (
         <a

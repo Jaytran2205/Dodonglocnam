@@ -1,54 +1,78 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 
+const defaultCollectionCategories = [
+  {
+    id: "trong-dong",
+    title: "TRỐNG ĐỒNG",
+    subtitle: "Trống đồng lưu niệm, quà tặng ngoại giao",
+    image: "/images/collections/cat_trong_dong.jpg?v=clean_cat_v6",
+    href: "/san-pham/trong-dong",
+  },
+  {
+    id: "tranh-dong",
+    title: "TRANH ĐỒNG CAO CẤP",
+    subtitle: "Tranh Thuận Buồm Xuôi Gió mạ vàng 24k",
+    image: "/images/collections/cat_tranh_dong.jpg?v=clean_cat_v6",
+    href: "/san-pham/tranh-dong",
+  },
+  {
+    id: "tuong-dong",
+    title: "TƯỢNG ĐỒNG",
+    subtitle: "Tượng Phật Bà Quan Âm mạ vàng tòa sen",
+    image: "/images/collections/cat_tuong_dong.jpg?v=clean_cat_v6",
+    href: "/san-pham/tuong-dong",
+  },
+  {
+    id: "do-tho",
+    title: "ĐỒ THỜ CÚNG",
+    subtitle: "Đỉnh đồng, tam sự, ngũ sự gia truyền",
+    image: "/images/collections/cat_do_tho.jpg?v=clean_cat_v6",
+    href: "/san-pham/do-tho-cung",
+  },
+  {
+    id: "qua-tang",
+    title: "QUÀ TẶNG DOANH NGHIỆP",
+    subtitle: "Mô hình thuyền buồm mạ vàng, quà tặng đối tác",
+    image: "/images/collections/cat_cup_golf.jpg?v=clean_cat_v6",
+    href: "/san-pham/qua-tang-dong",
+  },
+  {
+    id: "linh-vat-12-con-giap",
+    title: "LINH VẬT 12 CON GIÁP",
+    subtitle: "Bộ tượng phong thủy, mã thượng phong hầu",
+    image: "/images/collections/cat_linh_vat_12_con_giap.jpg?v=clean_cat_v6",
+    href: "/san-pham/tuong-dong?sub=linh-vat-12-con-giap",
+  },
+];
+
 export function LocNamCategories() {
-  const collectionCategories = [
-    {
-      id: "trong-dong",
-      title: "TRỐNG ĐỒNG",
-      subtitle: "Trống đồng lưu niệm, quà tặng ngoại giao",
-      image: "/images/collections/cat_trong_dong.jpg?v=clean_cat_v6",
-      href: "/san-pham/trong-dong",
-    },
-    {
-      id: "tranh-dong",
-      title: "TRANH ĐỒNG CAO CẤP",
-      subtitle: "Tranh Thuận Buồm Xuôi Gió mạ vàng 24k",
-      image: "/images/collections/cat_tranh_dong.jpg?v=clean_cat_v6",
-      href: "/san-pham/tranh-dong",
-    },
-    {
-      id: "tuong-dong",
-      title: "TƯỢNG ĐỒNG",
-      subtitle: "Tượng Phật Bà Quan Âm mạ vàng tòa sen",
-      image: "/images/collections/cat_tuong_dong.jpg?v=clean_cat_v6",
-      href: "/san-pham/tuong-dong",
-    },
-    {
-      id: "do-tho",
-      title: "ĐỒ THỜ CÚNG",
-      subtitle: "Đỉnh đồng, tam sự, ngũ sự gia truyền",
-      image: "/images/collections/cat_do_tho.jpg?v=clean_cat_v6",
-      href: "/san-pham/do-tho-cung",
-    },
-    {
-      id: "qua-tang",
-      title: "QUÀ TẶNG DOANH NGHIỆP",
-      subtitle: "Mô hình thuyền buồm mạ vàng, quà tặng đối tác",
-      image: "/images/collections/cat_cup_golf.jpg?v=clean_cat_v6",
-      href: "/san-pham/qua-tang-dong",
-    },
-    {
-      id: "linh-vat-12-con-giap",
-      title: "LINH VẬT 12 CON GIÁP",
-      subtitle: "Bộ tượng phong thủy, mã thượng phong hầu",
-      image: "/images/collections/cat_linh_vat_12_con_giap.jpg?v=clean_cat_v6",
-      href: "/san-pham/tuong-dong?sub=linh-vat-12-con-giap",
-    },
-  ];
+  const [collectionCategories, setCollectionCategories] = useState(defaultCollectionCategories);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.settings) {
+          const s = data.settings;
+          const dynamicCats = defaultCollectionCategories.map((cat, idx) => {
+            const i = idx + 1;
+            return {
+              ...cat,
+              title: s[`cat${i}_title`] || cat.title,
+              subtitle: s[`cat${i}_desc`] || s[`cat${i}_subtitle`] || cat.subtitle,
+              image: s[`cat${i}_image`] || cat.image,
+              href: s[`cat${i}_link`] || s[`cat${i}_href`] || cat.href,
+            };
+          });
+          setCollectionCategories(dynamicCats);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <section className="bg-[#fcfaf6] py-10 sm:py-12 px-4 sm:px-6 lg:px-8 border-b border-[#ece5d8]">

@@ -13,6 +13,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  const hasPerm =
+    session.role === "SUPER_ADMIN" ||
+    session.role === "ADMIN" ||
+    (session.permissions &&
+      (session.permissions.includes("products") ||
+        session.permissions.includes("articles") ||
+        session.permissions.includes("landing")));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền tải tệp lên." }, { status: 403 });
+  }
+
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -23,16 +34,28 @@ export async function POST(req: NextRequest) {
 
     const originalExt = path.extname(file.name) || ".jpg";
     const cleanExt = originalExt.toLowerCase();
-    
-    const ALLOWED_IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"];
-    const ALLOWED_VIDEO_EXTS = [".mp4", ".webm", ".mov"];
 
-    const isVideo = file.type?.startsWith("video/") || ALLOWED_VIDEO_EXTS.includes(cleanExt);
-    const isImage = file.type?.startsWith("image/") || ALLOWED_IMAGE_EXTS.includes(cleanExt);
+    const ALLOWED_IMAGE_MAP: Record<string, string[]> = {
+      ".jpg": ["image/jpeg", "image/jpg"],
+      ".jpeg": ["image/jpeg", "image/jpg"],
+      ".png": ["image/png"],
+      ".webp": ["image/webp"],
+      ".gif": ["image/gif"],
+    };
+
+    const ALLOWED_VIDEO_MAP: Record<string, string[]> = {
+      ".mp4": ["video/mp4"],
+      ".webm": ["video/webm"],
+      ".mov": ["video/quicktime", "video/mp4"],
+    };
+
+    const fileType = (file.type || "").toLowerCase();
+    const isImage = cleanExt in ALLOWED_IMAGE_MAP && ALLOWED_IMAGE_MAP[cleanExt].includes(fileType);
+    const isVideo = cleanExt in ALLOWED_VIDEO_MAP && ALLOWED_VIDEO_MAP[cleanExt].includes(fileType);
 
     if (!isImage && !isVideo) {
       return NextResponse.json(
-        { success: false, message: "Định dạng tệp không được hỗ trợ. Chỉ chấp nhận ảnh (JPG, PNG, WebP, GIF) hoặc video (MP4, WebM)." },
+        { success: false, message: "Định dạng tệp không được hỗ trợ hoặc phần mở rộng không khớp với loại MIME. Chỉ chấp nhận ảnh (JPG, PNG, WebP, GIF) hoặc video (MP4, WebM, MOV)." },
         { status: 400 }
       );
     }
@@ -57,6 +80,19 @@ export async function POST(req: NextRequest) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    if (isImage) {
+      const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+      const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+      const isGif = buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46;
+      const isWebp = buffer.length > 12 && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+      if (!isJpeg && !isPng && !isGif && !isWebp) {
+        return NextResponse.json(
+          { success: false, message: "Tệp tin không đúng định dạng ảnh thực tế (magic bytes không khớp)." },
+          { status: 400 }
+        );
+      }
+    }
 
     const prefix = isVideo ? "video" : "img";
     const safeName = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${cleanExt}`;

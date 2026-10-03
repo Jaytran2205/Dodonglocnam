@@ -3,8 +3,14 @@ import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { logActivity } from "@/lib/activity-logger";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const session = await getAdminSession(req);
+  const where: any = {};
+  if (!session) {
+    where.isPublished = true;
+  }
   const articles = await prisma.article.findMany({
+    where,
     orderBy: { publishedAt: "desc" }
   });
   return NextResponse.json({ success: true, articles });
@@ -14,6 +20,11 @@ export async function POST(req: NextRequest) {
   const session = await getAdminSession(req);
   if (!session) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("articles"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền tạo bài viết." }, { status: 403 });
   }
 
   try {
@@ -69,6 +80,11 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("articles"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền chỉnh sửa bài viết." }, { status: 403 });
+  }
+
   try {
     const { id, title, summary, content, thumbnail, category, subCategoryId, categoryIds, subCategoryIds, tags, isPublished } = await req.json();
     if (!id || !title) {
@@ -112,6 +128,11 @@ export async function DELETE(req: NextRequest) {
   const session = await getAdminSession(req);
   if (!session) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("articles"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền xóa bài viết." }, { status: 403 });
   }
 
   try {

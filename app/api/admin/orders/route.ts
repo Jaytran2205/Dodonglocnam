@@ -3,10 +3,17 @@ import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { logActivity } from "@/lib/activity-logger";
 
+const VALID_ORDER_STATUSES = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPING", "DELIVERED", "CANCELLED"];
+
 export async function GET(req: NextRequest) {
   const session = await getAdminSession(req);
   if (!session) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("orders"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền xem đơn hàng." }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -30,10 +37,19 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("orders"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền cập nhật đơn hàng." }, { status: 403 });
+  }
+
   try {
     const { id, status } = await req.json();
     if (!id || !status) {
       return NextResponse.json({ success: false, message: "Thiếu ID hoặc trạng thái đơn hàng." }, { status: 400 });
+    }
+
+    if (!VALID_ORDER_STATUSES.includes(status)) {
+      return NextResponse.json({ success: false, message: `Trạng thái đơn hàng không hợp lệ. Phải thuộc: ${VALID_ORDER_STATUSES.join(", ")}` }, { status: 400 });
     }
 
     const order = await prisma.order.update({
@@ -62,6 +78,11 @@ export async function DELETE(req: NextRequest) {
   const session = await getAdminSession(req);
   if (!session) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
+  const hasPerm = session.role === "SUPER_ADMIN" || session.role === "ADMIN" || (session.permissions && session.permissions.includes("orders"));
+  if (!hasPerm) {
+    return NextResponse.json({ success: false, message: "Bạn không có quyền xóa đơn hàng." }, { status: 403 });
   }
 
   try {

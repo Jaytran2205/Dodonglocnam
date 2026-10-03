@@ -94,43 +94,6 @@ export default function AdminOrdersPage() {
     });
   };
 
-  const exportCSV = () => {
-    const headers = [
-      "Mã Đơn Hàng",
-      "Khách Hàng",
-      "Số Điện Thoại",
-      "Email",
-      "Địa Chỉ Giao Hàng",
-      "Tổng Tiền (VNĐ)",
-      "Trạng Thái",
-      "Ngày Đặt"
-    ];
-    const rows = orders.map((o) => [
-      o.orderCode,
-      `"${o.customerName}"`,
-      `"${o.phone}"`,
-      `"${o.email || ""}"`,
-      `"${o.address}"`,
-      o.totalPrice,
-      o.status,
-      new Date(o.createdAt).toLocaleDateString("vi-VN")
-    ]);
-
-    const csvContent =
-      "data:text/csv;charset=utf-8,\uFEFF" +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `Don_Hang_Do_Dong_Loc_Nam_${new Date().toISOString().slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const statusConfig: Record<string, { label: string; bg: string; icon: any }> = {
     PENDING: { label: "Chờ Xử Lý", bg: "bg-amber-500/15 text-amber-300 border-amber-500/40", icon: Clock },
     PROCESSING: { label: "Đang Chuẩn Bị", bg: "bg-blue-500/15 text-blue-300 border-blue-500/40", icon: Sparkles },
@@ -150,6 +113,59 @@ export default function AdminOrdersPage() {
         o.address.toLowerCase().includes(q)
     );
   }, [orders, search]);
+
+  const exportCSV = () => {
+    if (filteredOrders.length === 0) {
+      toastInfo("Không có đơn hàng nào để xuất.", "Thông báo");
+      return;
+    }
+
+    const escapeCsv = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val);
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    const headers = [
+      "Mã Đơn Hàng",
+      "Khách Hàng",
+      "Số Điện Thoại",
+      "Email",
+      "Địa Chỉ Giao Hàng",
+      "Tổng Tiền (VNĐ)",
+      "Trạng Thái",
+      "Ngày Đặt"
+    ];
+
+    const rows = filteredOrders.map((o) => [
+      escapeCsv(o.orderCode),
+      escapeCsv(o.customerName),
+      escapeCsv(o.phone),
+      escapeCsv(o.email || ""),
+      escapeCsv(o.address),
+      escapeCsv(o.totalPrice),
+      escapeCsv(statusConfig[o.status]?.label || o.status),
+      escapeCsv(new Date(o.createdAt).toLocaleDateString("vi-VN"))
+    ]);
+
+    const csvContent =
+      "\uFEFF" +
+      [headers.map(escapeCsv).join(","), ...rows.map((e) => e.join(","))].join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `Don_Hang_Do_Dong_Loc_Nam_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toastSuccess(`Đã xuất ${filteredOrders.length} đơn hàng thành công!`, "Xuất CSV");
+  };
 
   return (
     <div className="space-y-6">
