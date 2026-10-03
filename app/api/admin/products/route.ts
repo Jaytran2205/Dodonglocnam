@@ -40,19 +40,24 @@ export async function POST(req: NextRequest) {
 
   try {
     const data = await req.json();
-    const { name, price, originalPrice, material, dimensions, weight, shortDescription, description, images, isFeatured, inStock, categoryId, subCategoryId, categoryIds, subCategoryIds, tags } = data;
+    const { name, slug: clientSlug, price, originalPrice, material, dimensions, weight, shortDescription, description, images, isFeatured, inStock, categoryId, subCategoryId, categoryIds, subCategoryIds, tags } = data;
 
     if (!name || !categoryId) {
       return NextResponse.json({ success: false, message: "Tên sản phẩm và danh mục là bắt buộc." }, { status: 400 });
     }
 
-    const slug = name
+    const rawSlug = (clientSlug || name)
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[đĐ]/g, "d")
       .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-") + "-" + Date.now().toString().slice(-4);
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+
+    const existingProductWithSlug = await prisma.product.findUnique({ where: { slug: rawSlug } });
+    const slug = existingProductWithSlug ? `${rawSlug}-${Date.now().toString().slice(-4)}` : rawSlug;
 
     const product = await prisma.product.create({
       data: {
@@ -144,6 +149,24 @@ export async function PUT(req: NextRequest) {
       updateData.subCategoryIds = data.subCategoryIds ? (typeof data.subCategoryIds === "string" ? data.subCategoryIds : JSON.stringify(data.subCategoryIds)) : null;
     }
     if (data.tags !== undefined) updateData.tags = data.tags || null;
+    if (data.slug !== undefined && typeof data.slug === "string" && data.slug.trim()) {
+      const cleanSlug = data.slug
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[đĐ]/g, "d")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
+
+      const existingProductWithSlug = await prisma.product.findFirst({
+        where: { slug: cleanSlug, NOT: { id } },
+      });
+      if (!existingProductWithSlug) {
+        updateData.slug = cleanSlug;
+      }
+    }
 
     const product = await prisma.product.update({
       where: { id },

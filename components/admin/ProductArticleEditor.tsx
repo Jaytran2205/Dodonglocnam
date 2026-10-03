@@ -38,6 +38,14 @@ import {
   Type,
   Search,
   RefreshCw,
+  Table as TableIcon,
+  Highlighter,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  ChevronDown,
+  Wand2,
 } from "lucide-react";
 import { ProductStructuredDescription } from "@/components/product/ProductStructuredDescription";
 import { useToast } from "@/components/admin/AdminToast";
@@ -46,6 +54,38 @@ interface ProductArticleEditorProps {
   value: string;
   onChange: (val: string) => void;
   productName?: string;
+}
+
+// Table parser from Markdown to HTML for WYSIWYG
+export function parseMarkdownTableToHtml(tableLines: string[], formatInlineFn: (t: string) => string): string {
+  if (tableLines.length < 2) return `<p>${tableLines.join("<br/>")}</p>`;
+  const parseRow = (line: string) =>
+    line.split("|").slice(1, -1).map((c) => c.trim());
+
+  const headers = parseRow(tableLines[0]);
+  const isDivider = (line: string) => /^\s*\|?(\s*:?-+:?\s*\|)+\s*$/.test(line);
+  const startRow = isDivider(tableLines[1]) ? 2 : 1;
+  const rows = tableLines.slice(startRow).map(parseRow);
+
+  let html = `<div class="overflow-x-auto my-4"><table class="w-full text-left border-collapse border border-slate-300 rounded-lg overflow-hidden text-xs sm:text-sm">`;
+  if (headers.length > 0) {
+    html += `<thead><tr class="bg-amber-100/90 text-amber-950 font-bold border-b border-slate-300">`;
+    headers.forEach((h) => {
+      html += `<th class="p-2.5 sm:p-3 border border-slate-300 font-bold">${formatInlineFn(h)}</th>`;
+    });
+    html += `</tr></thead>`;
+  }
+  html += `<tbody class="divide-y divide-slate-200">`;
+  rows.forEach((r, idx) => {
+    const bg = idx % 2 === 1 ? "bg-slate-50" : "bg-white";
+    html += `<tr class="${bg}">`;
+    r.forEach((c) => {
+      html += `<td class="p-2.5 sm:p-3 border border-slate-300">${formatInlineFn(c)}</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,6 +113,22 @@ export function markdownToHtml(md: string): string {
 
   const formatInline = (text: string): string => {
     let res = text;
+
+    // Highlight / Bút dạ quang: [highlight=#fef08a]text[/highlight] or ==text==
+    res = res.replace(
+      /\[highlight=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/highlight\]/gi,
+      '<mark style="background-color: $1; padding: 2px 6px; border-radius: 4px; font-weight: 600;">$2</mark>'
+    );
+    res = res.replace(
+      /==([\s\S]*?)==/g,
+      '<mark style="background-color: #fef08a; padding: 2px 6px; border-radius: 4px; font-weight: 600;">$1</mark>'
+    );
+
+    // Font size: [size=18]text[/size]
+    res = res.replace(
+      /\[size=(\d+)(?:px)?\]([\s\S]*?)\[\/size\]/gi,
+      '<span style="font-size: $1px;">$2</span>'
+    );
 
     // Color tags: [color=#hex]text[/color]
     res = res.replace(
@@ -122,6 +178,36 @@ export function markdownToHtml(md: string): string {
   for (let i = 0; i < lines.length; i++) {
     const rawLine = lines[i];
     const trimmed = rawLine.trim();
+
+    // Table parsing: | header 1 | header 2 |
+    if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+      flushList();
+      const tableLines: string[] = [trimmed];
+      while (i + 1 < lines.length && lines[i + 1].trim().startsWith("|") && lines[i + 1].trim().endsWith("|")) {
+        i++;
+        tableLines.push(lines[i].trim());
+      }
+      const parsedTable = parseMarkdownTableToHtml(tableLines, formatInline);
+      htmlBlocks.push(parsedTable);
+      continue;
+    }
+
+    // HTML table or container
+    if (trimmed.startsWith("<table") || (trimmed.startsWith("<div") && trimmed.includes("<table"))) {
+      flushList();
+      htmlBlocks.push(trimmed);
+      continue;
+    }
+
+    // Text align: <p style="text-align: ...">
+    const alignMatch = trimmed.match(/^<p style="text-align:\s*(center|justify|right|left);?">([\s\S]*?)<\/p>$/i);
+    if (alignMatch) {
+      flushList();
+      htmlBlocks.push(
+        `<p style="text-align: ${alignMatch[1]};" class="my-2.5 leading-relaxed text-slate-800">${formatInline(alignMatch[2])}</p>`
+      );
+      continue;
+    }
 
     // Check for callout box [box=gold]...[/box]
     const boxStartMatch = trimmed.match(/^\[box=([a-zA-Z0-9_-]+)\]$/i);
@@ -378,6 +464,38 @@ export function htmlToMarkdown(html: string): string {
       return `\n\n![${alt}](${src})\n\n`;
     }
 
+    if (tag === "table") {
+      const rows = Array.from(el.querySelectorAll("tr"));
+      if (rows.length === 0) return "";
+      const mdRows: string[] = [];
+      rows.forEach((tr, rIdx) => {
+        const cells = Array.from(tr.querySelectorAll("th, td"));
+        const rowStr =
+          "| " +
+          cells
+            .map((c) =>
+              Array.from(c.childNodes)
+                .map(nodeToMd)
+                .join("")
+                .replace(/\|/g, "\\|")
+                .trim()
+            )
+            .join(" | ") +
+          " |";
+        mdRows.push(rowStr);
+        if (rIdx === 0) {
+          const sepStr = "| " + cells.map(() => "---").join(" | ") + " |";
+          mdRows.push(sepStr);
+        }
+      });
+      return `\n\n${mdRows.join("\n")}\n\n`;
+    }
+
+    if (tag === "mark") {
+      const bg = el.style.backgroundColor || "#fef08a";
+      return `[highlight=${bg}]${childrenMd}[/highlight]`;
+    }
+
     if (tag === "li") {
       const text = childrenMd.trim();
       return text ? `\n* ${text}` : "";
@@ -385,24 +503,36 @@ export function htmlToMarkdown(html: string): string {
     if (tag === "ul" || tag === "ol") {
       return `\n${childrenMd}\n\n`;
     }
-    if (tag === "p") {
+    if (tag === "p" || tag === "div") {
       const text = childrenMd.trim();
-      return text ? `\n\n${text}\n\n` : "";
+      if (!text) return "";
+      const align = el.style.textAlign;
+      if (align && (align === "center" || align === "justify" || align === "right" || align === "left")) {
+        return `\n\n<p style="text-align: ${align};">${text}</p>\n\n`;
+      }
+      return `\n\n${text}\n\n`;
     }
     if (tag === "br") {
       return "\n";
     }
-    if (tag === "div") {
-      const text = childrenMd.trim();
-      return text ? `\n\n${text}\n\n` : "";
-    }
 
-    // Color span
+    // Color, highlight, or font-size span
     if (tag === "span" || tag === "font") {
+      let res = childrenMd;
       const color = el.style.color || el.getAttribute("color");
+      const bg = el.style.backgroundColor;
+      const fs = el.style.fontSize;
       if (color) {
-        return `[color=${color}]${childrenMd}[/color]`;
+        res = `[color=${color}]${res}[/color]`;
       }
+      if (bg) {
+        res = `[highlight=${bg}]${res}[/highlight]`;
+      }
+      if (fs) {
+        const px = parseInt(fs);
+        if (px) res = `[size=${px}]${res}[/size]`;
+      }
+      return res;
     }
 
     return childrenMd;
@@ -431,6 +561,9 @@ export function ProductArticleEditor({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showBoxPicker, setShowBoxPicker] = useState(false);
+  const [showFontSizePicker, setShowFontSizePicker] = useState(false);
+  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+  const [showTablePicker, setShowTablePicker] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -602,6 +735,319 @@ export function ProductArticleEditor({
       wrapSelection(`[color=${hex}]`, `[/color]`, "văn bản màu sắc");
     }
     setShowColorPicker(false);
+  };
+
+  // Word-like Font Size Handler
+  const applyFontSize = (sizePx: number) => {
+    if (activeTab === "visual" || activeTab === "split") {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+        toastWarning("Vui lòng bôi đen đoạn chữ cần đổi cỡ chữ!");
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      const span = document.createElement("span");
+      span.style.fontSize = `${sizePx}px`;
+      try {
+        const content = range.extractContents();
+        span.appendChild(content);
+        range.insertNode(span);
+        sel.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        sel.addRange(newRange);
+        handleVisualInput();
+        toastSuccess(`Đã đặt cỡ chữ ${sizePx}px`);
+      } catch (e) {
+        console.error("Font size error:", e);
+      }
+    } else {
+      wrapSelection(`[size=${sizePx}]`, `[/size]`, "văn bản đổi cỡ");
+    }
+    setShowFontSizePicker(false);
+  };
+
+  // Word-like Highlight (Bút dạ quang) Handler
+  const applyHighlight = (hex: string) => {
+    if (hex === "none") {
+      if (activeTab === "visual" || activeTab === "split") {
+        document.execCommand("removeFormat");
+        handleVisualInput();
+      }
+      setShowHighlightPicker(false);
+      return;
+    }
+    if (activeTab === "visual" || activeTab === "split") {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+        toastWarning("Vui lòng bôi đen đoạn chữ cần bôi màu điểm nhấn!");
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      const mark = document.createElement("mark");
+      mark.style.backgroundColor = hex;
+      mark.style.padding = "2px 6px";
+      mark.style.borderRadius = "4px";
+      mark.style.fontWeight = "600";
+      mark.style.color = "#0f172a";
+      try {
+        const content = range.extractContents();
+        mark.appendChild(content);
+        range.insertNode(mark);
+        sel.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(mark);
+        sel.addRange(newRange);
+        handleVisualInput();
+        toastSuccess("Đã bôi màu điểm nhấn!");
+      } catch (e) {
+        console.error("Highlight error:", e);
+      }
+    } else {
+      wrapSelection(`[highlight=${hex}]`, `[/highlight]`, "ý chính nổi bật");
+    }
+    setShowHighlightPicker(false);
+  };
+
+  // Word-like Text Align Handler
+  const applyTextAlign = (align: "left" | "center" | "justify") => {
+    if (activeTab === "visual" || activeTab === "split") {
+      if (align === "center") execVisualCmd("justifyCenter");
+      else if (align === "justify") execVisualCmd("justifyFull");
+      else execVisualCmd("justifyLeft");
+    } else {
+      wrapSelection(`<p style="text-align: ${align};">`, `</p>`, "đoạn căn lề");
+    }
+  };
+
+  // Word-like Table Inserter
+  const insertTable = (type: "specs" | "compare" | "custom_2x3" | "custom_3x3") => {
+    let tableHtml = "";
+    let tableMd = "";
+
+    if (type === "specs") {
+      tableHtml = `
+<div class="overflow-x-auto my-4">
+  <table class="w-full text-left border-collapse border border-slate-300 rounded-lg overflow-hidden text-xs sm:text-sm">
+    <thead>
+      <tr class="bg-amber-100/90 text-amber-950 font-bold border-b border-slate-300">
+        <th class="p-2.5 sm:p-3 border border-slate-300 w-1/3">Thông Số Kỹ Thuật</th>
+        <th class="p-2.5 sm:p-3 border border-slate-300 w-2/3">Chi Tiết Tác Phẩm</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-200">
+      <tr class="bg-white">
+        <td class="p-2.5 sm:p-3 border border-slate-300 font-semibold">Tên tác phẩm</td>
+        <td class="p-2.5 sm:p-3 border border-slate-300">${productName}</td>
+      </tr>
+      <tr class="bg-slate-50">
+        <td class="p-2.5 sm:p-3 border border-slate-300 font-semibold">Chất liệu chế tác</td>
+        <td class="p-2.5 sm:p-3 border border-slate-300">Đồng nguyên chất thanh khiết chuẩn tuổi Ý Yên</td>
+      </tr>
+      <tr class="bg-white">
+        <td class="p-2.5 sm:p-3 border border-slate-300 font-semibold">Kích thước</td>
+        <td class="p-2.5 sm:p-3 border border-slate-300">Cao ...cm, ngang ...cm (Chuẩn phong thủy thước Lỗ Ban)</td>
+      </tr>
+      <tr class="bg-slate-50">
+        <td class="p-2.5 sm:p-3 border border-slate-300 font-semibold">Trọng lượng</td>
+        <td class="p-2.5 sm:p-3 border border-slate-300">Khoảng ...kg</td>
+      </tr>
+      <tr class="bg-white">
+        <td class="p-2.5 sm:p-3 border border-slate-300 font-semibold">Quy cách chế tác</td>
+        <td class="p-2.5 sm:p-3 border border-slate-300">Đúc thủ công nguyên khối, chạm tay tinh xảo, phủ bóng 2K</td>
+      </tr>
+      <tr class="bg-slate-50">
+        <td class="p-2.5 sm:p-3 border border-slate-300 font-semibold">Xuất xứ xưởng đúc</td>
+        <td class="p-2.5 sm:p-3 border border-slate-300">Đồ Đồng Lộc Nam - Ý Yên, Nam Định</td>
+      </tr>
+      <tr class="bg-white">
+        <td class="p-2.5 sm:p-3 border border-slate-300 font-semibold">Chính sách bảo hành</td>
+        <td class="p-2.5 sm:p-3 border border-slate-300">Bảo hành trọn đời chất lượng phôi đồng thanh khiết</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p><br></p>
+`;
+      tableMd = `
+| Thông Số Kỹ Thuật | Chi Tiết Tác Phẩm |
+| --- | --- |
+| **Tên tác phẩm** | ${productName} |
+| **Chất liệu chế tác** | Đồng nguyên chất thanh khiết chuẩn tuổi Ý Yên |
+| **Kích thước** | Cao ...cm, ngang ...cm (Chuẩn phong thủy thước Lỗ Ban) |
+| **Trọng lượng** | Khoảng ...kg |
+| **Quy cách chế tác** | Đúc thủ công nguyên khối, chạm tay tinh xảo, phủ bóng 2K |
+| **Xuất xứ xưởng đúc** | Đồ Đồng Lộc Nam - Ý Yên, Nam Định |
+| **Chính sách bảo hành** | Bảo hành trọn đời chất lượng phôi đồng thanh khiết |
+`;
+    } else if (type === "compare") {
+      tableHtml = `
+<div class="overflow-x-auto my-4">
+  <table class="w-full text-left border-collapse border border-slate-300 rounded-lg overflow-hidden text-xs sm:text-sm">
+    <thead>
+      <tr class="bg-amber-100/90 text-amber-950 font-bold border-b border-slate-300">
+        <th class="p-2.5 border border-slate-300">Tiêu Chí Đánh Giá</th>
+        <th class="p-2.5 border border-slate-300">Hàng Thị Trường Phổ Thông</th>
+        <th class="p-2.5 border border-slate-300 text-amber-900 font-extrabold">Đồ Đồng Lộc Nam</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-200">
+      <tr class="bg-white">
+        <td class="p-2.5 border border-slate-300 font-semibold">Chất lượng phôi đồng</td>
+        <td class="p-2.5 border border-slate-300">Đồng pha tạp, mỏng nhẹ, dễ xỉn</td>
+        <td class="p-2.5 border border-slate-300 font-bold text-amber-800">Đồng thanh khiết dày dặn, đúc đặc</td>
+      </tr>
+      <tr class="bg-slate-50">
+        <td class="p-2.5 border border-slate-300 font-semibold">Độ tinh xảo hoa văn</td>
+        <td class="p-2.5 border border-slate-300">Đúc máy công nghiệp, mờ nhạt</td>
+        <td class="p-2.5 border border-slate-300 font-bold text-amber-800">Nghệ nhân chạm tay tỉ mỉ, có hồn</td>
+      </tr>
+      <tr class="bg-white">
+        <td class="p-2.5 border border-slate-300 font-semibold">Bảo hành phôi đồng</td>
+        <td class="p-2.5 border border-slate-300">Không bảo hành hoặc 6-12 tháng</td>
+        <td class="p-2.5 border border-slate-300 font-bold text-amber-800">Cam kết bảo hành trọn đời</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p><br></p>
+`;
+      tableMd = `
+| Tiêu Chí Đánh Giá | Hàng Thị Trường Phổ Thông | Đồ Đồng Lộc Nam |
+| --- | --- | --- |
+| **Chất lượng phôi đồng** | Đồng pha tạp, mỏng nhẹ, dễ xỉn | Đồng thanh khiết dày dặn, đúc đặc |
+| **Độ tinh xảo hoa văn** | Đúc máy công nghiệp, mờ nhạt | Nghệ nhân chạm tay tỉ mỉ, có hồn |
+| **Bảo hành phôi đồng** | Không bảo hành hoặc 6-12 tháng | Cam kết bảo hành trọn đời |
+`;
+    } else if (type === "custom_2x3") {
+      tableHtml = `
+<div class="overflow-x-auto my-4">
+  <table class="w-full text-left border-collapse border border-slate-300 rounded-lg overflow-hidden text-xs sm:text-sm">
+    <thead>
+      <tr class="bg-amber-100/90 text-amber-950 font-bold border-b border-slate-300">
+        <th class="p-2.5 border border-slate-300">Cột 1</th>
+        <th class="p-2.5 border border-slate-300">Cột 2</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-200">
+      <tr class="bg-white">
+        <td class="p-2.5 border border-slate-300">Nội dung 1</td>
+        <td class="p-2.5 border border-slate-300">Nội dung 2</td>
+      </tr>
+      <tr class="bg-slate-50">
+        <td class="p-2.5 border border-slate-300">Nội dung 3</td>
+        <td class="p-2.5 border border-slate-300">Nội dung 4</td>
+      </tr>
+      <tr class="bg-white">
+        <td class="p-2.5 border border-slate-300">Nội dung 5</td>
+        <td class="p-2.5 border border-slate-300">Nội dung 6</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p><br></p>
+`;
+      tableMd = `
+| Cột 1 | Cột 2 |
+| --- | --- |
+| Nội dung 1 | Nội dung 2 |
+| Nội dung 3 | Nội dung 4 |
+| Nội dung 5 | Nội dung 6 |
+`;
+    } else if (type === "custom_3x3") {
+      tableHtml = `
+<div class="overflow-x-auto my-4">
+  <table class="w-full text-left border-collapse border border-slate-300 rounded-lg overflow-hidden text-xs sm:text-sm">
+    <thead>
+      <tr class="bg-amber-100/90 text-amber-950 font-bold border-b border-slate-300">
+        <th class="p-2.5 border border-slate-300">Cột 1</th>
+        <th class="p-2.5 border border-slate-300">Cột 2</th>
+        <th class="p-2.5 border border-slate-300">Cột 3</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-200">
+      <tr class="bg-white">
+        <td class="p-2.5 border border-slate-300">Nội dung 1</td>
+        <td class="p-2.5 border border-slate-300">Nội dung 2</td>
+        <td class="p-2.5 border border-slate-300">Nội dung 3</td>
+      </tr>
+      <tr class="bg-slate-50">
+        <td class="p-2.5 border border-slate-300">Nội dung 4</td>
+        <td class="p-2.5 border border-slate-300">Nội dung 5</td>
+        <td class="p-2.5 border border-slate-300">Nội dung 6</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p><br></p>
+`;
+      tableMd = `
+| Cột 1 | Cột 2 | Cột 3 |
+| --- | --- | --- |
+| Nội dung 1 | Nội dung 2 | Nội dung 3 |
+| Nội dung 4 | Nội dung 5 | Nội dung 6 |
+`;
+    }
+
+    if (activeTab === "visual" || activeTab === "split") {
+      visualEditorRef.current?.focus();
+      document.execCommand("insertHTML", false, tableHtml);
+      handleVisualInput();
+    } else {
+      insertAtCursor(`\n${tableMd.trim()}\n\n`);
+    }
+    setShowTablePicker(false);
+    toastSuccess("Đã chèn bảng thành công!");
+  };
+
+  // Quick Editorial Template Inserter (Inspired by Dodongyyen & authentic craft style)
+  const applyStandardEditorialTemplate = () => {
+    showConfirm({
+      title: "Áp dụng Mẫu Bài Viết Chuẩn",
+      message:
+        "Bạn có muốn áp dụng Mẫu Bài Viết Chuẩn Đồ Đồng Ý Yên không? Mẫu này gồm đầy đủ đoạn mở bài cảm quan nghệ thuật, bảng thông số kỹ thuật, ưu điểm nổi bật, hướng dẫn phong thủy và cam kết bảo hành.",
+      onConfirm: () => {
+        const templateMd = `*Tác phẩm **${productName}** là kiệt tác nghệ thuật đúc đồng thủ công truyền thống của cơ sở **Đồ Đồng Lộc Nam - Ý Yên, Nam Định**, hội tụ vẻ đẹp tôn nghiêm, phong thái uy nghi và giá trị phong thủy chiêu tài tấn bảo sâu sắc.*
+
+### Mô Tả Thông Tin Chi Tiết Tác Phẩm
+| Thông Số Kỹ Thuật | Quy Cách Chi Tiết |
+| --- | --- |
+| **Tên tác phẩm** | ${productName} |
+| **Nguyên liệu chế tác** | Đồng nguyên chất thanh khiết chuẩn tuổi Ý Yên |
+| **Kích thước** | Chuẩn thước Lỗ Ban phong thủy (Cao ...cm, Ngang ...cm) |
+| **Trọng lượng** | Khoảng ...kg |
+| **Phương thức chế tác** | Đúc thủ công liền khối, đục chạm hoa văn thủ công 100% |
+| **Xử lý bề mặt** | Làm màu cổ kính uy nghiêm, phủ bóng 2K chống oxy hóa |
+| **Bảo hành** | Trọn đời chất lượng phôi đồng thanh khiết |
+
+### Ưu Điểm Nổi Bật Của Tác Phẩm
+Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từng đường nét bởi đôi bàn tay tài hoa của các nghệ nhân làng nghề đúc đồng truyền thống Ý Yên - Nam Định.
+
+* **Nguồn đồng chuẩn thanh khiết:** Tuyển chọn kỹ lưỡng, đúc dày dặn chắc chắn, tiếng chuông đồng ngân vang, tuyệt đối không pha tạp chất xỉ.
+* **Đường nét đục chạm tinh hoa:** Từng đường nét họa tiết được chăm chút tỉ mỉ, độ nông sâu biến hóa sinh động mang lại chiều sâu nghệ thuật và thần thái uy nghi.
+* **Bền đẹp trường tồn cùng năm tháng:** Toàn bộ bề mặt được xử lý nhẵn mịn, phủ lớp bảo vệ 2K trong suốt giúp chống oxy hóa vượt trội, bền đẹp truyền đời.
+
+[box=gold]
+Đồ Đồng Lộc Nam cam kết 100% sản phẩm được đúc từ nguồn đồng chuẩn thanh khiết tại làng nghề truyền thống Ý Yên - Nam Định. Quý khách hàng trên toàn quốc được quyền mở hàng kiểm tra ưng ý trước khi thanh toán.
+[/box]
+
+### Vị Trí & Hướng Dẫn Bài Trí Chuẩn Phong Thủy
+Để tác phẩm kích hoạt tối đa vượng khí và thu hút năng lượng cát lành, gia chủ nên an vị tại vị trí trang trọng trong không gian phòng khách, phòng thờ hoặc phòng làm việc, hướng nhìn ra cửa chính hoặc các phương vị cung Tài Lộc.
+
+---
+**CƠ SỞ ĐÚC ĐỒNG MỸ NGHỆ LỘC NAM**
+* Hotline/Zalo tư vấn: **0912 417 168 - 0971 401 879**
+* Địa chỉ: Khu công nghiệp làng nghề đúc đồng Ý Yên, Nam Định
+* Bảo hành: Cam kết bảo hành trọn đời chất lượng phôi đồng
+`;
+
+        onChange(templateMd);
+        if (visualEditorRef.current) {
+          visualEditorRef.current.innerHTML = markdownToHtml(templateMd);
+        }
+        toastSuccess("Đã áp dụng mẫu bài viết chuẩn thành công!");
+      },
+    });
   };
 
   const applyBox = (type: string, placeholder: string) => {
@@ -1165,6 +1611,74 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
             </button>
           </div>
 
+          {/* Font Size Dropdown (Word-like Cỡ Chữ) */}
+          <div className="relative flex items-center pr-2 border-r border-[#202f45]">
+            <button
+              type="button"
+              onClick={() => {
+                setShowFontSizePicker(!showFontSizePicker);
+                setShowColorPicker(false);
+                setShowBoxPicker(false);
+                setShowHighlightPicker(false);
+                setShowTablePicker(false);
+              }}
+              className={`p-1.5 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors ${
+                showFontSizePicker
+                  ? "bg-[#ffd700] text-black"
+                  : "text-gray-200 hover:text-[#ffd700] hover:bg-[#16253b]"
+              }`}
+              title="Chọn cỡ chữ chuẩn Word (13px, 15px, 18px, 22px, 26px)"
+            >
+              <Type className="w-4 h-4 text-[#ffd700]" />
+              <span className="text-[11px] font-semibold">Cỡ Chữ</span>
+              <ChevronDown className="w-3 h-3 opacity-70" />
+            </button>
+
+            {showFontSizePicker && (
+              <div className="absolute top-full left-0 mt-2 z-50 p-2 bg-[#0c1825] border border-[#ffd700]/40 rounded-xl shadow-2xl w-48 space-y-1">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 py-1 border-b border-[#1e344d]">
+                  Cỡ Chữ Chuẩn Word
+                </div>
+                <button
+                  type="button"
+                  onClick={() => applyFontSize(13)}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-[#16253b] text-xs text-gray-300 flex items-center justify-between"
+                >
+                  <span style={{ fontSize: "13px" }}>13px - Nhỏ (Ghi chú)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyFontSize(15)}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-[#16253b] text-xs text-white font-medium flex items-center justify-between"
+                >
+                  <span style={{ fontSize: "15px" }}>15px - Tiêu Chuẩn</span>
+                  <span className="text-[10px] text-emerald-400">Mặc định</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyFontSize(18)}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-[#16253b] text-xs text-amber-300 font-semibold flex items-center justify-between"
+                >
+                  <span style={{ fontSize: "18px" }}>18px - Vừa (Đoạn nhấn)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyFontSize(22)}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-[#16253b] text-xs text-[#ffd700] font-bold flex items-center justify-between"
+                >
+                  <span style={{ fontSize: "20px" }}>22px - Lớn (Tiểu mục)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyFontSize(26)}
+                  className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-[#16253b] text-xs text-[#ffd700] font-bold flex items-center justify-between"
+                >
+                  <span style={{ fontSize: "24px" }}>26px - Rất Lớn (Tiêu đề)</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Inline Styles (Bold, Italic, Underline, Strike) */}
           <div className="flex items-center gap-0.5 pr-2 border-r border-[#202f45]">
             <button
@@ -1219,12 +1733,95 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
             </button>
           </div>
 
+          {/* Highlight / Bút Dạ Quang Dropdown (Điểm Nhấn Ý Chính) */}
+          <div className="relative flex items-center pr-2 border-r border-[#202f45]">
+            <button
+              type="button"
+              onClick={() => {
+                setShowHighlightPicker(!showHighlightPicker);
+                setShowFontSizePicker(false);
+                setShowColorPicker(false);
+                setShowBoxPicker(false);
+                setShowTablePicker(false);
+              }}
+              className={`p-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors ${
+                showHighlightPicker
+                  ? "bg-amber-400 text-black shadow"
+                  : "text-amber-300 hover:bg-[#16253b]"
+              }`}
+              title="Bôi màu điểm nhấn ý chính (Highlight / Bút dạ quang chuẩn Word)"
+            >
+              <Highlighter className="w-4 h-4" />
+              <span>Điểm Nhấn</span>
+              <ChevronDown className="w-3 h-3 opacity-70" />
+            </button>
+
+            {showHighlightPicker && (
+              <div className="absolute top-full left-0 mt-2 z-50 p-2.5 bg-[#0c1825] border border-amber-400/40 rounded-xl shadow-2xl w-56 space-y-1.5">
+                <div className="text-[10px] font-bold text-amber-300 uppercase tracking-wider px-2 py-1 border-b border-[#1e344d]">
+                  Bút Dạ Quang Điểm Nhấn
+                </div>
+                <button
+                  type="button"
+                  onClick={() => applyHighlight("#fef08a")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-200 text-xs font-semibold flex items-center gap-2 border border-yellow-400/30"
+                >
+                  <span className="w-3.5 h-3.5 rounded bg-[#fef08a] border border-yellow-500" />
+                  <span>🟡 Vàng Hoàng Kim (Nổi bật)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyHighlight("#bbf7d0")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-emerald-400/20 hover:bg-emerald-400/30 text-emerald-200 text-xs font-semibold flex items-center gap-2 border border-emerald-400/30"
+                >
+                  <span className="w-3.5 h-3.5 rounded bg-[#bbf7d0] border border-emerald-500" />
+                  <span>🟢 Ngọc Bích Cát Lành</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyHighlight("#bae6fd")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-sky-400/20 hover:bg-sky-400/30 text-sky-200 text-xs font-semibold flex items-center gap-2 border border-sky-400/30"
+                >
+                  <span className="w-3.5 h-3.5 rounded bg-[#bae6fd] border border-sky-500" />
+                  <span>🔵 Thiên Thanh Thanh Thoát</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyHighlight("#fed7aa")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-orange-400/20 hover:bg-orange-400/30 text-orange-200 text-xs font-semibold flex items-center gap-2 border border-orange-400/30"
+                >
+                  <span className="w-3.5 h-3.5 rounded bg-[#fed7aa] border border-orange-500" />
+                  <span>🟠 Cam Hoàng Thổ</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyHighlight("#fecdd3")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-rose-400/20 hover:bg-rose-400/30 text-rose-200 text-xs font-semibold flex items-center gap-2 border border-rose-400/30"
+                >
+                  <span className="w-3.5 h-3.5 rounded bg-[#fecdd3] border border-rose-500" />
+                  <span>🔴 Son Đỏ Cát Tường</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyHighlight("none")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/10 text-gray-400 text-xs font-medium flex items-center gap-2 border border-dashed border-gray-600"
+                >
+                  <X className="w-3.5 h-3.5 text-gray-400" />
+                  <span>⚪ Xóa Bôi Màu (Mặc Định)</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Color & Tone Palette */}
           <div className="relative flex items-center pr-2 border-r border-[#202f45]">
             <button
               type="button"
               onClick={() => {
                 setShowColorPicker(!showColorPicker);
+                setShowFontSizePicker(false);
+                setShowHighlightPicker(false);
+                setShowTablePicker(false);
                 setShowBoxPicker(false);
               }}
               className={`p-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors ${
@@ -1354,13 +1951,104 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
             )}
           </div>
 
+          {/* Alignment Tools (Căn Lề Trái, Giữa, Căn Đều Chuẩn Word) */}
+          <div className="flex items-center gap-0.5 pr-2 border-r border-[#202f45]">
+            <button
+              type="button"
+              onClick={() => applyTextAlign("left")}
+              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#16253b]"
+              title="Căn trái văn bản"
+            >
+              <AlignLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => applyTextAlign("center")}
+              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#16253b]"
+              title="Căn giữa (Ảnh, tiêu đề, câu đối)"
+            >
+              <AlignCenter className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => applyTextAlign("justify")}
+              className="p-1.5 rounded-lg text-gray-300 hover:text-[#ffd700] hover:bg-[#16253b]"
+              title="Căn đều 2 bên (Phong cách báo chí chuẩn Dodongyyen)"
+            >
+              <AlignJustify className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Table / Cột Kẻ Inserter Dropdown (Chèn Bảng Chuẩn Word) */}
+          <div className="relative flex items-center pr-2 border-r border-[#202f45]">
+            <button
+              type="button"
+              onClick={() => {
+                setShowTablePicker(!showTablePicker);
+                setShowFontSizePicker(false);
+                setShowColorPicker(false);
+                setShowBoxPicker(false);
+                setShowHighlightPicker(false);
+              }}
+              className={`p-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors ${
+                showTablePicker
+                  ? "bg-[#38bdf8] text-black"
+                  : "text-[#38bdf8] hover:bg-[#16253b]"
+              }`}
+              title="Chèn bảng / cột kẻ thông số kỹ thuật chuẩn Word"
+            >
+              <TableIcon className="w-4 h-4" />
+              <span>Chèn Bảng</span>
+              <ChevronDown className="w-3 h-3 opacity-70" />
+            </button>
+
+            {showTablePicker && (
+              <div className="absolute top-full left-0 mt-2 z-50 p-2.5 bg-[#0c1825] border border-[#38bdf8]/40 rounded-xl shadow-2xl w-64 space-y-1.5">
+                <div className="text-[10px] font-bold text-[#38bdf8] uppercase tracking-wider px-2 py-1 border-b border-[#1e344d]">
+                  Chèn Bảng / Cột Kẻ Chuẩn
+                </div>
+                <button
+                  type="button"
+                  onClick={() => insertTable("specs")}
+                  className="w-full text-left p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold"
+                >
+                  📋 Bảng Thông Số Kỹ Thuật (2 Cột Chuẩn Lộc Nam)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertTable("compare")}
+                  className="w-full text-left p-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-300 text-xs font-semibold"
+                >
+                  📊 Bảng So Sánh 3 Cột (Chất lượng vs Thị trường)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertTable("custom_2x3")}
+                  className="w-full text-left p-2 rounded-lg hover:bg-[#16253b] text-gray-300 text-xs flex items-center gap-2 border border-slate-700"
+                >
+                  <span>▦ Bảng Trống 2 Cột x 3 Dòng</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertTable("custom_3x3")}
+                  className="w-full text-left p-2 rounded-lg hover:bg-[#16253b] text-gray-300 text-xs flex items-center gap-2 border border-slate-700"
+                >
+                  <span>▦ Bảng Trống 3 Cột x 3 Dòng</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Callout Boxes (Khung Tông Màu) */}
           <div className="relative flex items-center pr-2 border-r border-[#202f45]">
             <button
               type="button"
               onClick={() => {
                 setShowBoxPicker(!showBoxPicker);
+                setShowFontSizePicker(false);
                 setShowColorPicker(false);
+                setShowHighlightPicker(false);
+                setShowTablePicker(false);
               }}
               className={`p-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors ${
                 showBoxPicker
@@ -1466,6 +2154,19 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               title="Danh sách gạch đầu dòng"
             >
               <List className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Quick Editorial Template Button */}
+          <div className="ml-auto flex items-center pl-2">
+            <button
+              type="button"
+              onClick={applyStandardEditorialTemplate}
+              className="p-1.5 px-2.5 rounded-lg bg-gradient-to-r from-[#d4af37]/20 to-[#ffd700]/20 hover:from-[#d4af37] hover:to-[#ffd700] text-[#ffd700] hover:text-[#070c14] border border-[#ffd700]/40 font-bold text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+              title="Áp dụng mẫu bài viết đúc đồng chuẩn Ý Yên (Đầy đủ mở bài, bảng thông số, ưu điểm, bài trí phong thủy, bảo hành)"
+            >
+              <Sparkles className="w-3.5 h-3.5 fill-current" />
+              <span className="hidden sm:inline">Mẫu Bài Viết Chuẩn</span>
             </button>
           </div>
         </div>

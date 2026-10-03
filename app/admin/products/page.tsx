@@ -45,7 +45,7 @@ import {
   getSubCatInfoForProduct,
   removeVietnameseTones,
 } from "@/lib/subcategories-data";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, slugify } from "@/lib/utils";
 import { useToast } from "@/components/admin/AdminToast";
 
 export default function AdminProductsPage() {
@@ -55,6 +55,8 @@ export default function AdminProductsPage() {
   const [catalog, setCatalog] = useState<MainCategoryData[]>(DEFAULT_HIERARCHICAL_CATEGORIES);
   const [loading, setLoading] = useState(true);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [customSlug, setCustomSlug] = useState<string>("");
+  const [isEditingSlug, setIsEditingSlug] = useState<boolean>(false);
 
   // Filters State
   const [search, setSearch] = useState("");
@@ -92,6 +94,25 @@ export default function AdminProductsPage() {
   // Selected Finishing Surfaces
   const [selectedSurfaces, setSelectedSurfaces] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Active Category & Real-time Permalink Slug
+  const activeCatSlug = useMemo(() => {
+    return (
+      categories.find((c) => c.id === formData.categoryId)?.slug ||
+      editingProduct?.category?.slug ||
+      "tuong-dong"
+    );
+  }, [categories, formData.categoryId, editingProduct]);
+
+  const liveSlug = useMemo(() => {
+    if (customSlug && customSlug.trim()) {
+      return slugify(customSlug);
+    }
+    if (formData.name && formData.name.trim()) {
+      return slugify(formData.name);
+    }
+    return editingProduct?.slug || "duong-dan-san-pham";
+  }, [customSlug, formData.name, editingProduct]);
 
   // Fetch Categories & Catalog
   const fetchCatalog = async () => {
@@ -237,6 +258,8 @@ export default function AdminProductsPage() {
   const openCreateModal = () => {
     setLastSavedAt(null);
     setEditingProduct(null);
+    setCustomSlug("");
+    setIsEditingSlug(false);
     const initialCatId = categories[0]?.id || "";
     setFormData({
       name: "",
@@ -270,6 +293,8 @@ export default function AdminProductsPage() {
   const openEditModal = (prod: any) => {
     setLastSavedAt(null);
     setEditingProduct(prod);
+    setCustomSlug(prod.slug || "");
+    setIsEditingSlug(false);
 
     let parsedImgs: string[] = [];
     try {
@@ -416,6 +441,7 @@ export default function AdminProductsPage() {
         originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
         images: JSON.stringify(imageList),
         id: editingProduct?.id,
+        slug: liveSlug,
       };
 
       const res = await fetch("/api/admin/products", {
@@ -689,11 +715,6 @@ export default function AdminProductsPage() {
 
     return list;
   }, [products, search, selectedCat, selectedSubCat, stockFilter, sortBy, availableSubcategoriesForFilter, catalog]);
-
-  const activeCatSlug =
-    categories.find((c) => c.id === formData.categoryId)?.slug ||
-    editingProduct?.category?.slug ||
-    "tuong-dong";
 
   return (
     <div className="space-y-6">
@@ -1033,41 +1054,100 @@ export default function AdminProductsPage() {
                       />
                     </div>
 
-                    {/* URL Permalink display */}
-                    {editingProduct && (
-                      <div className="p-3 bg-[#070c14] rounded-lg border border-[#1b283d] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
-                        <div className="flex items-center gap-1.5 min-w-0 text-gray-300">
-                          <Link2 className="w-3.5 h-3.5 text-[#d4af37] shrink-0" />
-                          <span className="text-gray-400 font-semibold">Liên kết cố định:</span>
-                          <span className="font-mono text-amber-300 truncate">
-                            {`/san-pham/${activeCatSlug}/${editingProduct.slug}`}
-                          </span>
+                    {/* URL Permalink display - Real-time on every keystroke */}
+                    <div className="p-3.5 bg-[#070c14] rounded-xl border border-[#1b283d] space-y-2 text-[11px] shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2 min-w-0 text-gray-300">
+                          <div className="w-6 h-6 rounded-lg bg-[#ffd700]/10 border border-[#ffd700]/30 flex items-center justify-center shrink-0">
+                            <Link2 className="w-3.5 h-3.5 text-[#ffd700]" />
+                          </div>
+                          <div className="min-w-0 flex flex-wrap items-center gap-1.5">
+                            <span className="text-gray-400 font-semibold whitespace-nowrap">Đường dẫn cố định (URL):</span>
+                            <span className="font-mono text-[#ffd700] bg-black/50 px-2 py-0.5 rounded border border-[#202f45] truncate max-w-full sm:max-w-md">
+                              {`/san-pham/${activeCatSlug}/${liveSlug}`}
+                            </span>
+                            {formData.name && !customSlug && (
+                              <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-medium">
+                                ● Tự sinh theo tên
+                              </span>
+                            )}
+                            {customSlug && (
+                              <span className="text-[10px] text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20 font-medium">
+                                ✏️ Đã chỉnh thủ công
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+
+                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                           <button
                             type="button"
                             onClick={() => {
-                              const fullUrl = `${window.location.origin}/san-pham/${activeCatSlug}/${editingProduct.slug}`;
+                              const fullUrl = `${window.location.origin}/san-pham/${activeCatSlug}/${liveSlug}`;
                               navigator.clipboard.writeText(fullUrl);
-                              toastSuccess("Đã sao chép liên kết bài viết vào bộ nhớ tạm!", "Đã sao chép 📋");
+                              toastSuccess(`Đã sao chép liên kết bài viết: ${fullUrl}`, "Đã sao chép 📋");
                             }}
-                            className="px-2.5 py-1 bg-[#152236] hover:bg-[#1d2f4a] text-[#d4af37] border border-[#d4af37]/30 rounded text-[11px] font-semibold flex items-center gap-1"
+                            className="px-2.5 py-1 bg-[#152236] hover:bg-[#1d2f4a] text-[#ffd700] border border-[#ffd700]/30 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all active:scale-95"
+                            title="Sao chép toàn bộ đường dẫn"
                           >
                             <Copy className="w-3 h-3" />
                             <span>Sao chép</span>
                           </button>
-                          <a
-                            href={`/san-pham/${activeCatSlug}/${editingProduct.slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-2.5 py-1 bg-gradient-to-r from-[#d4af37] to-[#e5b869] text-[#070c14] hover:brightness-110 rounded text-[11px] font-bold flex items-center gap-1"
+
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingSlug(!isEditingSlug)}
+                            className="px-2.5 py-1 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 hover:text-white border border-[#202f45] rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all"
+                            title="Tùy chỉnh đường dẫn URL chuẩn SEO"
                           >
-                            <ExternalLink className="w-3 h-3" />
-                            <span>Xem thực tế</span>
-                          </a>
+                            <Edit2 className="w-3 h-3" />
+                            <span>{isEditingSlug ? "Đóng" : "Sửa slug"}</span>
+                          </button>
+
+                          {editingProduct ? (
+                            <a
+                              href={`/san-pham/${activeCatSlug}/${liveSlug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 bg-gradient-to-r from-[#d4af37] to-[#e5b869] text-[#070c14] hover:brightness-110 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow transition-all active:scale-95"
+                              title="Xem bài viết sản phẩm thực tế trên website"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Xem thực tế</span>
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-gray-500 italic px-1">
+                              (Khả dụng sau khi lưu)
+                            </span>
+                          )}
                         </div>
                       </div>
-                    )}
+
+                      {/* Optional Custom Slug Input Drawer */}
+                      {isEditingSlug && (
+                        <div className="pt-2 border-t border-[#1b283d] flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                          <span className="text-gray-400 text-[11px] shrink-0 font-medium">Slug tùy chỉnh:</span>
+                          <input
+                            type="text"
+                            value={customSlug || liveSlug}
+                            onChange={(e) => setCustomSlug(e.target.value)}
+                            placeholder="nhap-duong-dan-tuy-chinh-chuan-seo"
+                            className="flex-1 bg-[#111c2e] border border-[#202f45] focus:border-[#ffd700] text-[#ffd700] font-mono text-[11px] px-2.5 py-1 rounded-lg focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomSlug("");
+                              setIsEditingSlug(false);
+                              toastInfo("Đã đặt lại slug tự động đồng bộ theo tiêu đề bài viết!");
+                            }}
+                            className="px-2 py-1 bg-[#152236] hover:bg-[#1f314d] text-gray-300 text-[11px] rounded-lg border border-[#202f45]"
+                          >
+                            Đồng bộ theo tên
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* BOX 2: FULL PRODUCT ARTICLE & RICH DESCRIPTION */}
@@ -1217,7 +1297,7 @@ export default function AdminProductsPage() {
                   {/* BOX 6: RANK MATH SEO AUDIT (From screenshot 4 & 5) */}
                   <ProductSeoBox
                     title={formData.name}
-                    slug={editingProduct?.slug || ""}
+                    slug={liveSlug}
                     categoryName={categories.find((c) => c.id === formData.categoryId)?.name}
                     shortDescription={formData.shortDescription}
                     description={formData.description}

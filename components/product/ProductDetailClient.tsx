@@ -553,39 +553,20 @@ export function ProductDetailClient({
                 </div>
               </div>
 
-              {/* 2. Hình Ảnh Sản Phẩm & Bài Viết Chi Tiết */}
-              <div className="space-y-6 text-[#cbd5e1] text-xs sm:text-sm leading-relaxed">
-                <h3 className="font-serif text-base sm:text-lg font-black text-[#ffd700] uppercase tracking-wide">
-                  Hình ảnh sản phẩm & Quy trình chế tác:
-                </h3>
+              {/* 2. Bài Viết Chi Tiết & Quy Cách Tác Phẩm */}
+              <div className="pt-2 text-[#cbd5e1] text-xs sm:text-sm leading-relaxed">
+                <ProductStructuredDescription
+                  description={product.description}
+                  productName={product.name}
+                />
 
-                {/* Primary Embedded Showcase Photo */}
-                <div className="relative rounded-xl overflow-hidden border border-[#1c2c3d] bg-[#070e17] flex items-center justify-center p-4">
-                  <img
-                    src={currentImage}
-                    alt={product.name}
-                    loading="lazy"
-                    decoding="async"
-                    className="max-h-[500px] w-auto object-contain rounded-lg"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (!target.src.includes("hero_golden_ship")) {
-                        target.src = "/images/hero_golden_ship.jpg";
-                      }
-                    }}
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <ProductStructuredDescription
-                    description={product.description}
-                    productName={product.name}
-                  />
-                </div>
-
-                  {/* Secondary Photo Showcase */}
-                  {images.length > 1 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                {/* Secondary Photo Showcase if article has no embedded images */}
+                {images.length > 1 && !product.description?.includes("![") && (
+                  <div className="pt-8 border-t border-[#1c2c3d]/60 mt-8">
+                    <h4 className="font-serif text-sm sm:text-base font-bold text-[#ffd700] uppercase tracking-wide mb-4">
+                      Hình ảnh chi tiết các góc chụp tại xưởng:
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {images.slice(1, 3).map((img, i) => (
                         <div
                           key={i}
@@ -607,8 +588,9 @@ export function ProductDetailClient({
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+              </div>
 
               {/* Gradient overlay when collapsed */}
               {!isExpanded && (

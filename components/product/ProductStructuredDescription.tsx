@@ -10,9 +10,6 @@ import {
   CheckCircle2,
   Play,
   Video,
-  Info,
-  Layers,
-  ChevronRight,
 } from "lucide-react";
 import { ArticleVideoPlayer } from "@/components/common/ArticleVideoPlayer";
 import { isRawFilename } from "@/lib/videoUtils";
@@ -85,6 +82,50 @@ function parseBoxTag(text: string): { type: string; content: string } | null {
   return null;
 }
 
+// Parse markdown table to responsive, luxury React table
+export function parseMarkdownTableToReact(tableLines: string[]): React.ReactNode {
+  if (tableLines.length < 2) return null;
+  const parseRow = (line: string) =>
+    line.split("|").slice(1, -1).map((c) => c.trim());
+
+  const headers = parseRow(tableLines[0]);
+  const isDivider = (line: string) => /^\s*\|?(\s*:?-+:?\s*\|)+\s*$/.test(line);
+  const startRow = isDivider(tableLines[1]) ? 2 : 1;
+  const rows = tableLines.slice(startRow).map(parseRow);
+
+  return (
+    <div className="overflow-x-auto my-6 rounded-xl border border-[#22384f] bg-[#070e17]/95 shadow-xl">
+      <table className="w-full text-left border-collapse text-xs sm:text-sm">
+        {headers.length > 0 && (
+          <thead>
+            <tr className="bg-[#122234] border-b border-[#22384f] text-[#ffd700] font-serif font-bold">
+              {headers.map((h, i) => (
+                <th key={i} className="p-3 sm:p-3.5 border-r border-[#22384f] last:border-r-0 tracking-wide">
+                  {renderFormattedInline(h)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody className="divide-y divide-[#1c2c3d]/60">
+          {rows.map((row, rIdx) => (
+            <tr
+              key={rIdx}
+              className={rIdx % 2 === 1 ? "bg-[#0b1422]/60 hover:bg-[#122234]/50 transition-colors" : "bg-[#070e17] hover:bg-[#122234]/50 transition-colors"}
+            >
+              {row.map((cell, cIdx) => (
+                <td key={cIdx} className="p-3 sm:p-3.5 border-r border-[#1c2c3d]/60 last:border-r-0 text-[#cbd5e1] leading-relaxed">
+                  {renderFormattedInline(cell)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // High-Performance YouTube Facade: Zero iframes loaded until clicked!
 function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -93,7 +134,7 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
   if (ytId) {
     if (isPlaying) {
       return (
-        <div className="my-5 aspect-video w-full rounded-2xl overflow-hidden border border-[#ffd700]/30 shadow-2xl bg-black">
+        <div className="my-6 aspect-video w-full rounded-2xl overflow-hidden border border-[#ffd700]/30 shadow-2xl bg-black">
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`}
             title={title || "Video sản phẩm Đồ Đồng Lộc Nam"}
@@ -108,7 +149,7 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
     const showCaption = Boolean(title && !isRawFilename(title));
 
     return (
-      <div className="my-5 w-full">
+      <div className="my-6 w-full">
         <div
           onClick={() => setIsPlaying(true)}
           className="group relative aspect-video w-full rounded-2xl overflow-hidden border border-[#1e344d] hover:border-[#ffd700] transition-all duration-300 cursor-pointer shadow-2xl bg-[#060c14] flex items-center justify-center"
@@ -156,14 +197,79 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
   return <ArticleVideoPlayer url={url} title={title} />;
 }
 
-// Inline Formatter supporting bold, italic, colors, underlines
+// Inline Formatter supporting bold, italic, highlights, font-sizes, colors, links, underlines
 export function renderFormattedInline(text: string): React.ReactNode {
-  const regex = /(\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/color\]|\[(gold|bronze|jade|sky|red|white)\][\s\S]*?\[\/\2\]|<span style="color:\s*([^"]+)">[\s\S]*?<\/span>|\[[^\]]+\]\([^)]+\)|<a\s+[^>]*>[\s\S]*?<\/a>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|<b>[\s\S]*?<\/b>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<i>[\s\S]*?<\/i>|<u>[\s\S]*?<\/u>|~~[\s\S]*?~~|<s>[\s\S]*?<\/s>|<del>[\s\S]*?<\/del>)/g;
+  if (!text) return null;
+
+  const regex = /(<mark(?:\s+style=["'][^"']*["'])?>[\s\S]*?<\/mark>|\[highlight=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/highlight\]|==[\s\S]*?==|\[size=\d+(?:px)?\][\s\S]*?\[\/size\]|<span\s+style=["'][^"']*font-size:\s*\d+px;?[^"']*["']>[\s\S]*?<\/span>|\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/color\]|\[(gold|bronze|jade|sky|red|white)\][\s\S]*?\[\/\2\]|<span\s+style=["'][^"']*color:\s*[^"']+["']>[\s\S]*?<\/span>|\[[^\]]+\]\([^)]+\)|<a\s+[^>]*>[\s\S]*?<\/a>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|<b>[\s\S]*?<\/b>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<i>[\s\S]*?<\/i>|<u>[\s\S]*?<\/u>|~~[\s\S]*?~~|<s>[\s\S]*?<\/s>|<del>[\s\S]*?<\/del>)/gi;
 
   const parts = text.split(regex).filter(Boolean);
 
   return parts.map((part, i) => {
-    // Markdown link: [text](url)
+    // 1. Highlight / Bút dạ quang: [highlight=#fef08a]text[/highlight]
+    const hlMatch = part.match(/^\[highlight=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/highlight\]$/i);
+    if (hlMatch) {
+      return (
+        <mark
+          key={i}
+          style={{ backgroundColor: hlMatch[1], color: "#0f172a" }}
+          className="px-1.5 py-0.5 rounded font-semibold inline"
+        >
+          {renderFormattedInline(hlMatch[2])}
+        </mark>
+      );
+    }
+
+    // 2. Highlight shortcut: ==text==
+    if (part.startsWith("==") && part.endsWith("==") && part.length >= 4) {
+      return (
+        <mark
+          key={i}
+          className="bg-[#fef08a] text-[#0f172a] px-1.5 py-0.5 rounded font-semibold inline"
+        >
+          {renderFormattedInline(part.slice(2, -2))}
+        </mark>
+      );
+    }
+
+    // 3. HTML mark tag: <mark ...>text</mark>
+    const markTagMatch = part.match(/^<mark(?:\s+style=["'](?:background-color:\s*)?([^"']+)["'])?>([\s\S]*?)<\/mark>$/i);
+    if (markTagMatch) {
+      const bg = markTagMatch[1] || "#fef08a";
+      return (
+        <mark
+          key={i}
+          style={{ backgroundColor: bg, color: "#0f172a" }}
+          className="px-1.5 py-0.5 rounded font-semibold inline"
+        >
+          {renderFormattedInline(markTagMatch[2])}
+        </mark>
+      );
+    }
+
+    // 4. Font size tag: [size=18]text[/size] or [size=22px]text[/size]
+    const sizeMatch = part.match(/^\[size=(\d+)(?:px)?\]([\s\S]*?)\[\/size\]$/i);
+    if (sizeMatch) {
+      const px = parseInt(sizeMatch[1]);
+      return (
+        <span key={i} style={{ fontSize: `${px}px` }} className="inline">
+          {renderFormattedInline(sizeMatch[2])}
+        </span>
+      );
+    }
+
+    // 5. HTML font-size span: <span style="font-size: 18px">text</span>
+    const spanSizeMatch = part.match(/^<span\s+style=["'][^"']*font-size:\s*(\d+)px;?[^"']*["']>([\s\S]*?)<\/span>$/i);
+    if (spanSizeMatch) {
+      const px = parseInt(spanSizeMatch[1]);
+      return (
+        <span key={i} style={{ fontSize: `${px}px` }} className="inline">
+          {renderFormattedInline(spanSizeMatch[2])}
+        </span>
+      );
+    }
+
+    // 6. Markdown link: [text](url)
     const mdLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (mdLinkMatch) {
       const label = mdLinkMatch[1];
@@ -182,7 +288,7 @@ export function renderFormattedInline(text: string): React.ReactNode {
       );
     }
 
-    // HTML link: <a href="url"...>label</a>
+    // 7. HTML link: <a href="url"...>label</a>
     const htmlLinkMatch = part.match(/^<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>$/i);
     if (htmlLinkMatch) {
       const url = htmlLinkMatch[1].trim();
@@ -201,31 +307,31 @@ export function renderFormattedInline(text: string): React.ReactNode {
       );
     }
 
-    // Custom color tag: [color=#ffd700]content[/color]
+    // 8. Custom color tag: [color=#ffd700]content[/color]
     const colorMatch = part.match(/^\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/color\]$/i);
     if (colorMatch) {
       const colorVal = colorMatch[1];
       const content = colorMatch[2];
       return (
-        <span key={i} style={{ color: colorVal }} className="font-semibold">
+        <span key={i} style={{ color: colorVal }} className="font-semibold inline">
           {renderFormattedInline(content)}
         </span>
       );
     }
 
-    // HTML span color: <span style="color: #hex">content</span>
-    const spanColorMatch = part.match(/^<span style="color:\s*([^"]+)">([\s\S]*?)<\/span>$/i);
+    // 9. HTML span color: <span style="color: #hex">content</span>
+    const spanColorMatch = part.match(/^<span\s+style=["'][^"']*color:\s*([^"']+)["']>([\s\S]*?)<\/span>$/i);
     if (spanColorMatch) {
       const colorVal = spanColorMatch[1];
       const content = spanColorMatch[2];
       return (
-        <span key={i} style={{ color: colorVal }} className="font-semibold">
+        <span key={i} style={{ color: colorVal }} className="font-semibold inline">
           {renderFormattedInline(content)}
         </span>
       );
     }
 
-    // Color preset tags: [gold], [bronze], [jade], [sky], [red], [white]
+    // 10. Color preset tags: [gold], [bronze], [jade], [sky], [red], [white]
     const presetMatch = part.match(/^\[(gold|bronze|jade|sky|red|white)\]([\s\S]*?)\[\/\1\]$/i);
     if (presetMatch) {
       const preset = presetMatch[1].toLowerCase();
@@ -239,13 +345,13 @@ export function renderFormattedInline(text: string): React.ReactNode {
         white: "#ffffff",
       };
       return (
-        <span key={i} style={{ color: colorMap[preset] || "#ffd700" }} className="font-semibold">
+        <span key={i} style={{ color: colorMap[preset] || "#ffd700" }} className="font-semibold inline">
           {renderFormattedInline(content)}
         </span>
       );
     }
 
-    // Bold: **content** or <strong>content</strong> or <b>content</b>
+    // 11. Bold: **content** or <strong>content</strong> or <b>content</b>
     if (
       (part.startsWith("**") && part.endsWith("**") && part.length >= 4) ||
       (part.startsWith("<strong>") && part.endsWith("</strong>")) ||
@@ -257,13 +363,13 @@ export function renderFormattedInline(text: string): React.ReactNode {
         ? part.slice(8, -9)
         : part.slice(3, -4);
       return (
-        <strong key={i} className="text-[#ffd700] font-bold">
+        <strong key={i} className="text-[#f1f5f9] font-bold">
           {renderFormattedInline(inner)}
         </strong>
       );
     }
 
-    // Italic: *content* or <em>content</em> or <i>content</i>
+    // 12. Italic: *content* or <em>content</em> or <i>content</i>
     if (
       (part.startsWith("*") && part.endsWith("*") && part.length >= 2 && !part.startsWith("**")) ||
       (part.startsWith("<em>") && part.endsWith("</em>")) ||
@@ -275,13 +381,13 @@ export function renderFormattedInline(text: string): React.ReactNode {
         ? part.slice(4, -5)
         : part.slice(3, -4);
       return (
-        <em key={i} className="text-[#f1f5f9] italic">
+        <em key={i} className="text-[#e2e8f0] italic">
           {renderFormattedInline(inner)}
         </em>
       );
     }
 
-    // Underline: <u>content</u>
+    // 13. Underline: <u>content</u>
     if (part.startsWith("<u>") && part.endsWith("</u>")) {
       return (
         <u key={i} className="underline decoration-[#dfb755] underline-offset-4">
@@ -290,7 +396,7 @@ export function renderFormattedInline(text: string): React.ReactNode {
       );
     }
 
-    // Strikethrough: ~~content~~ or <s>content</s> or <del>content</del>
+    // 14. Strikethrough: ~~content~~ or <s>content</s> or <del>content</del>
     if (
       (part.startsWith("~~") && part.endsWith("~~") && part.length >= 4) ||
       (part.startsWith("<s>") && part.endsWith("</s>")) ||
@@ -312,9 +418,9 @@ export function renderFormattedInline(text: string): React.ReactNode {
   });
 }
 
-// Callout Box Component
+// Callout Box Component: Refined editorial pull-quote style
 function CalloutBox({ type, content }: { type: string; content: string }) {
-  let borderColor = "border-[#ffd700]/40";
+  let borderColor = "border-[#ffd700]";
   let bgColor = "bg-[#ffd700]/5";
   let titleColor = "text-[#ffd700]";
   let BoxIcon = Sparkles;
@@ -324,7 +430,7 @@ function CalloutBox({ type, content }: { type: string; content: string }) {
     case "jade":
     case "green":
     case "phongthuy":
-      borderColor = "border-[#10b981]/40";
+      borderColor = "border-[#10b981]";
       bgColor = "bg-[#10b981]/5";
       titleColor = "text-[#10b981]";
       BoxIcon = Star;
@@ -334,7 +440,7 @@ function CalloutBox({ type, content }: { type: string; content: string }) {
     case "ruby":
     case "camket":
     case "baohanh":
-      borderColor = "border-[#ef4444]/40";
+      borderColor = "border-[#ef4444]";
       bgColor = "bg-[#ef4444]/5";
       titleColor = "text-[#ef4444]";
       BoxIcon = ShieldCheck;
@@ -343,7 +449,7 @@ function CalloutBox({ type, content }: { type: string; content: string }) {
     case "blue":
     case "sky":
     case "thongso":
-      borderColor = "border-[#0ea5e9]/40";
+      borderColor = "border-[#0ea5e9]";
       bgColor = "bg-[#0ea5e9]/5";
       titleColor = "text-[#0ea5e9]";
       BoxIcon = Award;
@@ -351,7 +457,7 @@ function CalloutBox({ type, content }: { type: string; content: string }) {
       break;
     case "gold":
     default:
-      borderColor = "border-[#ffd700]/40";
+      borderColor = "border-[#ffd700]";
       bgColor = "bg-[#ffd700]/5";
       titleColor = "text-[#ffd700]";
       BoxIcon = Sparkles;
@@ -360,8 +466,8 @@ function CalloutBox({ type, content }: { type: string; content: string }) {
   }
 
   return (
-    <div className={`my-4 p-4 sm:p-5 rounded-2xl border ${borderColor} ${bgColor} shadow-lg space-y-2`}>
-      <div className="flex items-center gap-2 font-bold text-xs sm:text-sm uppercase tracking-wider pb-2 border-b border-white/10">
+    <div className={`my-5 p-4 sm:p-5 rounded-r-xl border-l-4 ${borderColor} ${bgColor} border-y border-r border-white/5 shadow-sm space-y-2`}>
+      <div className="flex items-center gap-2 font-serif font-bold text-xs sm:text-sm uppercase tracking-wider pb-2 border-b border-white/10">
         <BoxIcon className={`w-4 h-4 ${titleColor} shrink-0`} />
         <span className={titleColor}>{titleText}</span>
       </div>
@@ -376,15 +482,15 @@ export function ProductStructuredDescription({
   description,
   productName,
 }: ProductStructuredDescriptionProps) {
-  // Normalize and ensure full 5-section professional structure for all products
-  const formattedDescription = useMemo(() => {
+  // Normalize content: only fallback to 5-section template if description is completely empty
+  const rawText = useMemo(() => {
     if (!description || !description.trim()) {
-      return `### 1. Giới Thiệu Tác Phẩm & Cảm Quan Nghệ Thuật
+      return `## 1. Giới Thiệu Tác Phẩm & Cảm Quan Nghệ Thuật
 Tác phẩm **${productName}** được trực tiếp chế tác bởi các nghệ nhân lão luyện của thương hiệu **Đồ Đồng Lộc Nam** tại làng nghề đúc đồng truyền thống Ý Yên, Nam Định. Tác phẩm toát lên thần thái trang nghiêm, sang trọng và giá trị thẩm mỹ đỉnh cao với phom dáng cổ kính, đường nét uy nghi và hoa văn đục chạm tinh hoa sâu sắc.
 
 ---
 
-### 2. Thông Số Quy Cách & Kỹ Thuật Chế Tác
+## 2. Thông Số Quy Cách & Kỹ Thuật Chế Tác
 * **Tên tác phẩm:** ${productName}
 * **Chất liệu chế tác:** Đồng nguyên khối thanh khiết chuẩn tuổi Ý Yên
 * **Quy trình sản xuất:** Đúc thủ công liền khối, đục tỉa hoa văn thủ công, xử lý bề mặt kỹ lưỡng và phủ nano bảo vệ chống oxy hóa vượt thời gian.
@@ -392,328 +498,259 @@ Tác phẩm **${productName}** được trực tiếp chế tác bởi các ngh�
 
 ---
 
-### 3. Ý Nghĩa Phong Thủy & Giá Trị Tâm Linh
+## 3. Ý Nghĩa Phong Thủy & Giá Trị Tâm Linh
 Đồ đồng mang hành Kim vững bền, giúp dung hòa ngũ hành không gian, thu hút sinh khí đất trời, giữ cho linh khí gia tiên luôn ấm cúng, phù hộ độ trì cho gia chủ bình an, vượng tài đắc lộc và hưng thịnh đời đời.
 
 ---
 
-### 4. Vị Trí & Hướng Dẫn Bài Trí Chuẩn Phong Thủy
+## 4. Vị Trí & Hướng Dẫn Bài Trí Chuẩn Phong Thủy
 * **Vị trí bài trí:** An vị tại vị trí trang trọng trong không gian phòng khách, phòng thờ hoặc phòng làm việc theo phong thủy phương vị tài lộc.
 * **Vệ sinh bảo quản:** Dùng khăn cotton mềm, khô ráo để lau bụi định kỳ. Tránh dùng chất tẩy rửa hóa học có tính axit mạnh.
 
 ---
 
-### 5. Cam Kết Uy Tín Từ Thương Hiệu Đồ Đồng Lộc Nam
-1. **100% Đồng Chuẩn Thanh Khiết:** Cam kết đồng nguyên chất chuẩn làng nghề Ý Yên – Nam Định, bảo hành chất liệu phôi đồng trọn đời.
-2. **Kỹ Nghệ Thủ Công Tinh Hoa:** Mỗi tác phẩm là đứa con tinh thần được gọt giũa tỉ mỉ bởi các nghệ nhân giàu kinh nghiệm, đảm bảo tính độc bản và có hồn.
-3. **Giao Hàng & Kiểm Tra Tận Nơi:** Vận chuyển an toàn toàn quốc, quý khách được mở hàng kiểm tra ưng ý trước khi thanh toán.`;
+## 5. Cam Kết Uy Tín Từ Thương Hiệu Đồ Đồng Lộc Nam
+* **100% Đồng Chuẩn Thanh Khiết:** Cam kết đồng nguyên chất chuẩn làng nghề Ý Yên – Nam Định, bảo hành chất liệu phôi đồng trọn đời.
+* **Kỹ Nghệ Thủ Công Tinh Hoa:** Mỗi tác phẩm là đứa con tinh thần được gọt giũa tỉ mỉ bởi các nghệ nhân giàu kinh nghiệm, đảm bảo tính độc bản và có hồn.
+* **Giao Hàng & Kiểm Tra Tận Nơi:** Vận chuyển an toàn toàn quốc, quý khách được mở hàng kiểm tra ưng ý trước khi thanh toán.`;
     }
 
-    if (!description.includes("###")) {
-      const introText = description.trim();
-      return `### 1. Giới Thiệu Tác Phẩm & Cảm Quan Nghệ Thuật
-${introText}
-
----
-
-### 2. Thông Số Quy Cách & Kỹ Thuật Chế Tác
-* **Tên tác phẩm:** ${productName}
-* **Chất liệu chế tác:** Đồng nguyên khối thanh khiết chuẩn tuổi Ý Yên
-* **Quy trình sản xuất:** Đúc thủ công liền khối, đục tỉa hoa văn thủ công, xử lý bề mặt kỹ lưỡng và phủ nano bảo vệ chống oxy hóa vượt thời gian.
-* **Xưởng sản xuất:** Đồ Đồng Lộc Nam - Nam Định
-
----
-
-### 3. Ý Nghĩa Phong Thủy & Giá Trị Tâm Linh
-Đồ đồng mang hành Kim vững bền, giúp dung hòa ngũ hành không gian, thu hút sinh khí đất trời, giữ cho linh khí gia tiên luôn ấm cúng, phù hộ độ trì cho gia chủ bình an, vượng tài đắc lộc và hưng thịnh đời đời.
-
----
-
-### 4. Vị Trí & Hướng Dẫn Bài Trí Chuẩn Phong Thủy
-* **Vị trí bài trí:** An vị tại vị trí trang trọng trong không gian phòng khách, phòng thờ hoặc phòng làm việc theo phong thủy phương vị tài lộc.
-* **Vệ sinh bảo quản:** Dùng khăn cotton mềm, khô ráo để lau bụi định kỳ. Tránh dùng chất tẩy rửa hóa học có tính axit mạnh.
-
----
-
-### 5. Cam Kết Uy Tín Từ Thương Hiệu Đồ Đồng Lộc Nam
-1. **100% Đồng Chuẩn Thanh Khiết:** Cam kết đồng nguyên chất chuẩn làng nghề Ý Yên – Nam Định, bảo hành chất liệu phôi đồng trọn đời.
-2. **Kỹ Nghệ Thủ Công Tinh Hoa:** Mỗi tác phẩm là đứa con tinh thần được gọt giũa tỉ mỉ bởi các nghệ nhân giàu kinh nghiệm, đảm bảo tính độc bản và có hồn.
-3. **Giao Hàng & Kiểm Tra Tận Nơi:** Vận chuyển an toàn toàn quốc, quý khách được mở hàng kiểm tra ưng ý trước khi thanh toán.`;
-    }
-
-    return description;
+    return description.trim();
   }, [description, productName]);
 
-  // Parse sections based on "###" headers
-  const rawSections = formattedDescription.split(/(?=###\s+)/g).filter(Boolean);
+  // Parse lines into clean editorial blocks
+  const blocks = useMemo(() => {
+    const lines = rawText.split("\n");
+    const result: React.ReactNode[] = [];
 
-  if (rawSections.length <= 1 && !formattedDescription.includes("###")) {
-    const paragraphs = formattedDescription.split(/\n\s*\n|\n(?=[*-]\s)/g).filter((p) => p.trim());
-    return (
-      <div className="space-y-4 text-xs sm:text-sm text-[#cbd5e1] leading-relaxed">
-        {paragraphs.map((p, idx) => {
-          const trimmed = p.trim();
+    let currentList: string[] = [];
+    let currentTable: string[] = [];
+    let inBox: { type: string; lines: string[] } | null = null;
 
-          // Check if paragraph is a video
-          const videoData = parseVideoTag(trimmed);
-          if (videoData) {
-            return (
-              <OptimizedVideoPlayer
-                key={idx}
-                url={videoData.url}
-                title={videoData.title}
-              />
-            );
-          }
-
-          // Check if paragraph is an image
-          const imageData = parseImageTag(trimmed);
-          if (imageData) {
-            return (
-              <div key={idx} className="my-4 text-center">
-                <img
-                  src={imageData.url}
-                  alt={imageData.caption || productName}
-                  loading="lazy"
-                  decoding="async"
-                  className="rounded-2xl border border-[#1e344d] max-h-[550px] mx-auto object-contain shadow-2xl"
-                />
-                {imageData.caption && (
-                  <p className="text-xs text-[#94a3b8] italic mt-2">
-                    {imageData.caption}
-                  </p>
-                )}
-              </div>
-            );
-          }
-
-          // Check if paragraph is a Callout Box
-          const boxData = parseBoxTag(trimmed);
-          if (boxData) {
-            return (
-              <CalloutBox
-                key={idx}
-                type={boxData.type}
-                content={boxData.content}
-              />
-            );
-          }
-
-          // Bullet list items
-          if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
-            const items = trimmed
-              .split(/\n[*-]\s+/)
-              .map((it) => it.replace(/^[*-]\s+/, "").trim())
-              .filter(Boolean);
-            return (
-              <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 gap-2 my-2">
-                {items.map((it, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-2.5 p-3 rounded-xl bg-[#070e17]/85 border border-[#1c2c3d]"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-[#dfb755] shrink-0 mt-0.5" />
-                    <span>{renderFormattedInline(it)}</span>
-                  </div>
-                ))}
-              </div>
-            );
-          }
-
-          return (
-            <div key={idx} className="rounded-xl bg-[#070e17]/85 border border-[#1c2c3d] p-4 sm:p-5">
-              <p>{renderFormattedInline(trimmed)}</p>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // Structured multi-section rendering
-  return (
-    <div className="space-y-4">
-      {rawSections.map((sec, secIdx) => {
-        const lines = sec.trim().split("\n");
-        let headerText = "";
-        let contentLines: string[] = [];
-
-        if (lines[0].startsWith("###")) {
-          headerText = lines[0].replace(/^###\s+/, "").trim();
-          contentLines = lines.slice(1);
-        } else {
-          contentLines = lines;
-        }
-
-        const filteredContent = contentLines.filter((l) => l.trim() !== "---");
-        const hLower = headerText.toLowerCase();
-
-        let SectionIcon = Sparkles;
-        let iconColor = "text-[#ffd700]";
-        let badgeText = "Chi Tiết";
-
-        if (hLower.includes("tổng quan") || hLower.includes("giới thiệu")) {
-          SectionIcon = Sparkles;
-          iconColor = "text-[#ffd700]";
-          badgeText = "Nghệ Thuật";
-        } else if (
-          hLower.includes("chế tác") ||
-          hLower.includes("thông số") ||
-          hLower.includes("quy cách") ||
-          hLower.includes("kỹ thuật")
-        ) {
-          SectionIcon = Award;
-          iconColor = "text-[#38bdf8]";
-          badgeText = "Kỹ Thuật";
-        } else if (
-          hLower.includes("tâm linh") ||
-          hLower.includes("phong thủy") ||
-          hLower.includes("ý nghĩa") ||
-          hLower.includes("giá trị")
-        ) {
-          SectionIcon = Star;
-          iconColor = "text-[#fbbf24]";
-          badgeText = "Phong Thủy";
-        } else if (
-          hLower.includes("an vị") ||
-          hLower.includes("bài trí") ||
-          hLower.includes("vị trí") ||
-          hLower.includes("không gian")
-        ) {
-          SectionIcon = MapPin;
-          iconColor = "text-[#34d399]";
-          badgeText = "Bài Trí";
-        } else if (
-          hLower.includes("cam kết") ||
-          hLower.includes("uy tín") ||
-          hLower.includes("bảo hành")
-        ) {
-          SectionIcon = ShieldCheck;
-          iconColor = "text-[#f43f5e]";
-          badgeText = "Cam Kết";
-        }
-
-        const listItems: string[] = [];
-        const nonListBlocks: React.ReactNode[] = [];
-
-        let currentParagraph = "";
-
-        const flushParagraph = () => {
-          if (currentParagraph.trim()) {
-            const p = currentParagraph.trim();
-            const videoData = parseVideoTag(p);
-            if (videoData) {
-              nonListBlocks.push(
-                <OptimizedVideoPlayer
-                  key={`v-${nonListBlocks.length}`}
-                  url={videoData.url}
-                  title={videoData.title}
-                />
-              );
-            } else {
-              const imageData = parseImageTag(p);
-              if (imageData) {
-                nonListBlocks.push(
-                  <div key={`img-${nonListBlocks.length}`} className="my-4 text-center">
-                    <img
-                      src={imageData.url}
-                      alt={imageData.caption || productName}
-                      loading="lazy"
-                      decoding="async"
-                      className="rounded-2xl border border-[#1e344d] max-h-[550px] mx-auto object-contain shadow-2xl"
-                    />
-                    {imageData.caption && (
-                      <p className="text-xs text-[#94a3b8] italic mt-2">
-                        {imageData.caption}
-                      </p>
-                    )}
-                  </div>
-                );
-              } else {
-                const boxData = parseBoxTag(p);
-                if (boxData) {
-                  nonListBlocks.push(
-                    <CalloutBox
-                      key={`box-${nonListBlocks.length}`}
-                      type={boxData.type}
-                      content={boxData.content}
-                    />
-                  );
-                } else {
-                  nonListBlocks.push(
-                    <p key={`p-${nonListBlocks.length}`} className="leading-relaxed">
-                      {renderFormattedInline(p)}
-                    </p>
-                  );
-                }
-              }
-            }
-            currentParagraph = "";
-          }
-        };
-
-        for (const line of filteredContent) {
-          const t = line.trim();
-          if (!t) {
-            flushParagraph();
-            continue;
-          }
-
-          if (t.startsWith("* ") || t.startsWith("- ")) {
-            flushParagraph();
-            listItems.push(t.replace(/^[*-]\s+/, ""));
-          } else {
-            if (parseVideoTag(t) || parseImageTag(t) || parseBoxTag(t)) {
-              flushParagraph();
-              currentParagraph = t;
-              flushParagraph();
-            } else {
-              if (currentParagraph) currentParagraph += " " + t;
-              else currentParagraph = t;
-            }
-          }
-        }
-        flushParagraph();
-
-        return (
-          <div
-            key={secIdx}
-            className="rounded-2xl bg-[#070e17]/85 border border-[#1c2c3d] p-5 sm:p-6 shadow-md hover:border-[#dfb755]/50 transition-colors"
+    const flushList = () => {
+      if (currentList.length > 0) {
+        result.push(
+          <ul
+            key={`list-${result.length}`}
+            className="my-3 space-y-2.5 pl-2 text-xs sm:text-[15px] text-[#cbd5e1] leading-relaxed"
           >
-            {headerText && (
-              <div className="flex items-center justify-between gap-3 pb-3 mb-4 border-b border-[#1c2c3d]">
-                <h4 className="font-serif font-bold text-sm sm:text-base text-[#ffd700] flex items-center gap-2">
-                  <SectionIcon className={`w-4 h-4 ${iconColor} shrink-0`} />
-                  <span>{headerText}</span>
-                </h4>
-                <span className="text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#122234] border border-[#1c2c3d] text-[#94a3b8] font-semibold hidden sm:inline-block">
-                  {badgeText}
-                </span>
-              </div>
-            )}
+            {currentList.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#dfb755] shrink-0 mt-2" />
+                <span className="flex-1">{renderFormattedInline(item)}</span>
+              </li>
+            ))}
+          </ul>
+        );
+        currentList = [];
+      }
+    };
 
-            {nonListBlocks.length > 0 && (
-              <div className="space-y-3 text-xs sm:text-sm text-[#cbd5e1] leading-relaxed mb-3">
-                {nonListBlocks}
-              </div>
-            )}
+    const flushTable = () => {
+      if (currentTable.length > 0) {
+        const tableNode = parseMarkdownTableToReact(currentTable);
+        if (tableNode) {
+          result.push(
+            <React.Fragment key={`table-${result.length}`}>
+              {tableNode}
+            </React.Fragment>
+          );
+        }
+        currentTable = [];
+      }
+    };
 
-            {listItems.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-[#cbd5e1] pt-1">
-                {listItems.map((item, itIdx) => (
-                  <div
-                    key={itIdx}
-                    className="flex items-start gap-2.5 p-3 rounded-xl bg-[#0b1422]/80 border border-[#1c2c3d]/60 hover:border-[#ffd700]/30 transition-colors"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#dfb755] shrink-0 mt-0.5" />
-                    <span className="leading-snug">{renderFormattedInline(item)}</span>
-                  </div>
-                ))}
-              </div>
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      // Empty line
+      if (!trimmed) {
+        flushList();
+        flushTable();
+        continue;
+      }
+
+      // 1. Table rows: | col 1 | col 2 |
+      if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+        flushList();
+        currentTable.push(trimmed);
+        continue;
+      } else {
+        flushTable();
+      }
+
+      // 2. Callout Box: [box=gold] ... [/box]
+      const boxStart = trimmed.match(/^\[box=([a-zA-Z0-9_-]+)\]$/i);
+      if (boxStart) {
+        flushList();
+        inBox = { type: boxStart[1].toLowerCase(), lines: [] };
+        continue;
+      }
+      if (trimmed === "[/box]" && inBox) {
+        result.push(
+          <CalloutBox
+            key={`box-${result.length}`}
+            type={inBox.type}
+            content={inBox.lines.join("\n")}
+          />
+        );
+        inBox = null;
+        continue;
+      }
+      if (inBox) {
+        inBox.lines.push(line);
+        continue;
+      }
+
+      // 3. Single-line Callout Box: [box=gold]content[/box]
+      const singleBox = parseBoxTag(trimmed);
+      if (singleBox) {
+        flushList();
+        result.push(
+          <CalloutBox
+            key={`box-${result.length}`}
+            type={singleBox.type}
+            content={singleBox.content}
+          />
+        );
+        continue;
+      }
+
+      // 4. Standalone Video
+      const videoData = parseVideoTag(trimmed);
+      if (videoData) {
+        flushList();
+        result.push(
+          <OptimizedVideoPlayer
+            key={`v-${result.length}`}
+            url={videoData.url}
+            title={videoData.title}
+          />
+        );
+        continue;
+      }
+
+      // 5. Standalone Image: ![alt](url)
+      const imageData = parseImageTag(trimmed);
+      if (imageData) {
+        flushList();
+        result.push(
+          <div key={`img-${result.length}`} className="my-6 text-center">
+            <img
+              src={imageData.url}
+              alt={imageData.caption || productName}
+              loading="lazy"
+              decoding="async"
+              className="rounded-xl border border-[#22384f] max-h-[550px] mx-auto object-contain shadow-xl"
+            />
+            {imageData.caption && (
+              <p className="text-center text-xs text-[#94a3b8] italic mt-2.5">
+                {imageData.caption}
+              </p>
             )}
           </div>
         );
-      })}
-    </div>
+        continue;
+      }
+
+      // 6. Horizontal Divider: --- or ***
+      if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
+        flushList();
+        result.push(
+          <hr key={`hr-${result.length}`} className="my-8 border-t border-[#1c2c3d]/80" />
+        );
+        continue;
+      }
+
+      // 7. Headings: #, ##, ###, ####
+      if (trimmed.startsWith("## ")) {
+        flushList();
+        const hText = trimmed.replace(/^##\s+/, "");
+        result.push(
+          <h2
+            key={`h2-${result.length}`}
+            className="font-serif font-bold text-lg sm:text-xl md:text-2xl text-[#ffd700] mt-8 mb-4 pb-2 border-b border-[#ffd700]/30 flex items-center gap-3 tracking-wide"
+          >
+            <span className="w-1.5 h-6 rounded-full bg-gradient-to-b from-[#ffd700] to-[#b8860b] shrink-0" />
+            <span>{renderFormattedInline(hText)}</span>
+          </h2>
+        );
+        continue;
+      }
+
+      if (trimmed.startsWith("### ")) {
+        flushList();
+        const hText = trimmed.replace(/^###\s+/, "");
+        result.push(
+          <h3
+            key={`h3-${result.length}`}
+            className="font-serif font-bold text-base sm:text-lg md:text-xl text-[#fce9b5] mt-6 mb-3 pb-1.5 border-b border-[#1c2c3d] flex items-center gap-2.5"
+          >
+            <span className="w-1.5 h-4 rounded-full bg-[#dfb755] shrink-0" />
+            <span>{renderFormattedInline(hText)}</span>
+          </h3>
+        );
+        continue;
+      }
+
+      if (trimmed.startsWith("#### ")) {
+        flushList();
+        const hText = trimmed.replace(/^####\s+/, "");
+        result.push(
+          <h4
+            key={`h4-${result.length}`}
+            className="font-serif font-semibold text-sm sm:text-base text-[#f1f5f9] mt-4 mb-2"
+          >
+            {renderFormattedInline(hText)}
+          </h4>
+        );
+        continue;
+      }
+
+      // 8. Bullet Lists: * item or - item
+      if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+        currentList.push(trimmed.replace(/^[\*\-]\s+/, ""));
+        continue;
+      } else {
+        flushList();
+      }
+
+      // 9. Text alignment wrapper: <p style="text-align: (center|justify|right|left)">...<\/p>
+      const alignMatch = trimmed.match(/^<p style="text-align:\s*(center|justify|right|left);?">([\s\S]*?)<\/p>$/i);
+      if (alignMatch) {
+        result.push(
+          <p
+            key={`p-align-${result.length}`}
+            style={{ textAlign: alignMatch[1] as any }}
+            className="my-3.5 leading-[1.8] text-xs sm:text-[15px] text-[#cbd5e1]"
+          >
+            {renderFormattedInline(alignMatch[2])}
+          </p>
+        );
+        continue;
+      }
+
+      // 10. Standard Paragraph
+      result.push(
+        <p
+          key={`p-${result.length}`}
+          className="my-3.5 leading-[1.8] text-xs sm:text-[15px] text-[#cbd5e1] tracking-normal"
+        >
+          {renderFormattedInline(trimmed)}
+        </p>
+      );
+    }
+
+    flushList();
+    flushTable();
+
+    return result;
+  }, [rawText, productName]);
+
+  return (
+    <article className="editorial-content max-w-none text-[#cbd5e1] selection:bg-[#dfb755]/30">
+      {blocks}
+    </article>
   );
 }
