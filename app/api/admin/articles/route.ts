@@ -78,17 +78,17 @@ export async function PUT(req: NextRequest) {
     const article = await prisma.article.update({
       where: { id },
       data: {
-        title,
-        summary,
-        content,
-        thumbnail,
-        category,
-        subCategoryId: subCategoryId || null,
-        categoryIds: categoryIds ? (typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds)) : null,
-        subCategoryIds: subCategoryIds ? (typeof subCategoryIds === "string" ? subCategoryIds : JSON.stringify(subCategoryIds)) : null,
-        tags: tags || null,
-        isPublished: isPublished !== undefined ? Boolean(isPublished) : true
-      }
+        ...(title !== undefined && { title }),
+        ...(summary !== undefined && { summary }),
+        ...(content !== undefined && { content }),
+        ...(thumbnail !== undefined && { thumbnail }),
+        ...(category !== undefined && { category }),
+        ...(subCategoryId !== undefined && { subCategoryId }),
+        ...(categoryIds !== undefined && { categoryIds: typeof categoryIds === "string" ? categoryIds : JSON.stringify(categoryIds) }),
+        ...(subCategoryIds !== undefined && { subCategoryIds: typeof subCategoryIds === "string" ? subCategoryIds : JSON.stringify(subCategoryIds) }),
+        ...(tags !== undefined && { tags }),
+        ...(isPublished !== undefined && { isPublished: Boolean(isPublished) }),
+      },
     });
 
     logActivity({

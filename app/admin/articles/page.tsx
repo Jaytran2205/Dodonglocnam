@@ -162,6 +162,20 @@ export default function AdminArticlesPage() {
     fetchArticles();
   }, []);
 
+  useEffect(() => {
+    if (articles.length === 0 || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("slug");
+    const editId = params.get("edit");
+    if (slug) {
+      const art = articles.find((a) => a.slug === slug);
+      if (art) openEdit(art);
+    } else if (editId) {
+      const art = articles.find((a) => a.id === editId);
+      if (art) openEdit(art);
+    }
+  }, [articles]);
+
   const openCreate = () => {
     setLastSavedAt(null);
     setEditingArt(null);

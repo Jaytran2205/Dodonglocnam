@@ -31,6 +31,9 @@ import {
   X,
   Clock,
   Eye,
+  BookOpen,
+  FileEdit,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "@/components/admin/AdminToast";
 
@@ -230,6 +233,114 @@ export default function AdminLandingPageManager() {
     | "general"
   >("hero");
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+
+  // 2 Facility Articles (Nghệ nhân & Xưởng đúc)
+  const [facilityArticles, setFacilityArticles] = useState<any[]>([]);
+  const [loadingArticles, setLoadingArticles] = useState(false);
+  const [editingArticleModal, setEditingArticleModal] = useState<any | null>(null);
+  const [savingArticleId, setSavingArticleId] = useState<string | null>(null);
+  const [savingModalArticle, setSavingModalArticle] = useState(false);
+
+  const fetchFacilityArticles = async () => {
+    try {
+      setLoadingArticles(true);
+      const res = await fetch("/api/admin/articles");
+      const data = await res.json();
+      if (data.success && data.articles) {
+        const filtered = data.articles.filter((a: any) =>
+          ["nghe-nhan-duong-ba-tien", "xuong-san-xuat-duc-dong-loc-nam"].includes(a.slug)
+        );
+        setFacilityArticles(filtered);
+      }
+    } catch (err) {
+      console.error("Error loading facility articles:", err);
+    } finally {
+      setLoadingArticles(false);
+    }
+  };
+
+  const handleUpdateArticleQuick = async (articleId: string, updates: Partial<any>) => {
+    setSavingArticleId(articleId);
+    try {
+      const art = facilityArticles.find((a) => a.id === articleId);
+      if (!art) return;
+
+      const payload = {
+        ...art,
+        ...updates,
+      };
+
+      const res = await fetch("/api/admin/articles", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toastSuccess(`Đã lưu bài viết "${payload.title}" thành công!`, "Cập nhật bài viết");
+        setFacilityArticles((prev) =>
+          prev.map((a) => (a.id === articleId ? { ...a, ...updates } : a))
+        );
+      } else {
+        toastError(data.message || "Không thể lưu bài viết", "Lỗi");
+      }
+    } catch {
+      toastError("Lỗi kết nối khi lưu bài viết", "Lỗi mạng");
+    } finally {
+      setSavingArticleId(null);
+    }
+  };
+
+  const handleUploadArticleThumbnail = async (articleId: string, file: File) => {
+    const uploadKey = `article_thumb_${articleId}`;
+    setUploadingKey(uploadKey);
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+    try {
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: uploadForm,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        await handleUpdateArticleQuick(articleId, { thumbnail: data.url });
+        toastSuccess(`Đã cập nhật ảnh đại diện bài viết!`, "Tải ảnh");
+      } else {
+        toastError(data.message || "Tải ảnh thất bại", "Lỗi tải ảnh");
+      }
+    } catch {
+      toastError("Lỗi tải ảnh lên máy chủ", "Lỗi mạng");
+    } finally {
+      setUploadingKey(null);
+    }
+  };
+
+  const handleSaveModalArticle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingArticleModal) return;
+    setSavingModalArticle(true);
+    try {
+      const res = await fetch("/api/admin/articles", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingArticleModal),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toastSuccess(`Đã lưu toàn bộ bài viết "${editingArticleModal.title}" thành công!`, "Cập nhật bài viết");
+        setFacilityArticles((prev) =>
+          prev.map((a) => (a.id === editingArticleModal.id ? editingArticleModal : a))
+        );
+        setEditingArticleModal(null);
+      } else {
+        toastError(data.message || "Không thể lưu bài viết", "Lỗi");
+      }
+    } catch {
+      toastError("Lỗi kết nối khi lưu bài viết", "Lỗi mạng");
+    } finally {
+      setSavingModalArticle(false);
+    }
+  };
 
   const [sliderBanners, setSliderBanners] = useState<any[]>([
     {
@@ -589,6 +700,8 @@ export default function AdminLandingPageManager() {
       })
       .catch((e) => console.error("Load settings error:", e))
       .finally(() => setLoading(false));
+
+    fetchFacilityArticles();
   }, []);
 
   const handleChange = (key: string, value: string) => {
@@ -1892,6 +2005,189 @@ export default function AdminLandingPageManager() {
                 </div>
               </div>
             </div>
+
+            {/* PHẦN 2: 2 BÀI VIẾT CHUYÊN SÂU VỀ CƠ SỞ & NGHỆ NHÂN (CẤU HÌNH LÀ TIN TỨC) */}
+            <div className="bg-[#0c1420] border border-[#d4af37]/40 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#1f2d42] pb-4">
+                <div className="flex items-center gap-2.5 text-[#d4af37]">
+                  <BookOpen className="w-5 h-5 text-[#d4af37]" />
+                  <div>
+                    <h3 className="font-serif font-bold text-sm uppercase tracking-wide text-white">
+                      2 Bài Viết Chuyên Sâu Về Cơ Sở & Nghệ Nhân (Thuộc Mục Tin Tức)
+                    </h3>
+                    <p className="text-xs text-[#94a3b8] mt-0.5">
+                      Được cấu hình trong mục Tin Tức (<span className="text-[#d4af37] font-semibold">GIỚI THIỆU CƠ SỞ & XƯỞNG ĐÚC</span>), hiển thị trực tiếp trên trang Giới Thiệu (/gioi-thieu).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={fetchFacilityArticles}
+                    className="p-2 rounded-xl bg-[#152236] hover:bg-[#1d2f4a] text-[#94a3b8] hover:text-white transition-colors"
+                    title="Tải lại bài viết"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingArticles ? "animate-spin" : ""}`} />
+                  </button>
+                  <Link
+                    href="/admin/articles"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#152236] hover:bg-[#1d2f4a] text-[#d4af37] rounded-xl text-xs font-bold border border-[#d4af37]/30 transition-all"
+                  >
+                    <span>Mở Quản Lý Bài Viết</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+
+              {loadingArticles ? (
+                <div className="py-8 text-center text-[#94a3b8]">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#d4af37] mx-auto mb-2" />
+                  <p className="text-xs">Đang tải thông tin bài viết cơ sở...</p>
+                </div>
+              ) : facilityArticles.length === 0 ? (
+                <div className="py-6 text-center text-[#94a3b8]">
+                  <p className="text-xs">Chưa tìm thấy bài viết trong cơ sở dữ liệu. Bấm nút Tải lại hoặc kiểm tra /admin/articles.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {facilityArticles.map((art, idx) => (
+                    <div
+                      key={art.id}
+                      className="bg-[#09101a] border border-[#1f2d42] hover:border-[#d4af37]/40 rounded-xl p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#d4af37]/20 border border-[#d4af37]/40 text-[#d4af37] uppercase">
+                            Bài viết {idx + 1}: {art.category || "TIN TỨC CƠ SỞ"}
+                          </span>
+                          <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            Đã xuất bản
+                          </span>
+                        </div>
+
+                        {/* Thumbnail image with upload */}
+                        <div>
+                          <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                            Ảnh Đại Diện Bài Viết:
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <div className="w-24 h-16 rounded-lg overflow-hidden bg-[#121c2b] border border-[#1f2d42] shrink-0 relative flex items-center justify-center">
+                              {art.thumbnail ? (
+                                <img src={art.thumbnail} alt={art.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <ImageIcon className="w-6 h-6 text-[#94a3b8]/40" />
+                              )}
+                            </div>
+                            <div className="flex-1 space-y-1.5">
+                              <input
+                                type="text"
+                                value={art.thumbnail || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setFacilityArticles((prev) =>
+                                    prev.map((a) => (a.id === art.id ? { ...a, thumbnail: val } : a))
+                                  );
+                                }}
+                                placeholder="/images/..."
+                                className="w-full px-2.5 py-1.5 bg-[#121c2b] border border-[#1f2d42] rounded-lg text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                              />
+                              <label className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#1f2d42] hover:bg-[#2d415f] text-white rounded-lg text-xs font-semibold cursor-pointer">
+                                {uploadingKey === `article_thumb_${art.id}` ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Upload className="w-3 h-3" />
+                                )}
+                                <span>Tải Ảnh Mới</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) handleUploadArticleThumbnail(art.id, f);
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Title input */}
+                        <div>
+                          <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                            Tiêu Đề Bài Viết:
+                          </label>
+                          <input
+                            type="text"
+                            value={art.title || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setFacilityArticles((prev) =>
+                                prev.map((a) => (a.id === art.id ? { ...a, title: val } : a))
+                              );
+                            }}
+                            className="w-full px-3 py-2 bg-[#121c2b] border border-[#1f2d42] rounded-lg text-white text-xs font-serif font-bold focus:outline-none focus:border-[#d4af37]"
+                          />
+                        </div>
+
+                        {/* Summary input */}
+                        <div>
+                          <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                            Đoạn Tóm Tắt (Hiển thị ngoài trang chủ & trang giới thiệu):
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={art.summary || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setFacilityArticles((prev) =>
+                                prev.map((a) => (a.id === art.id ? { ...a, summary: val } : a))
+                              );
+                            }}
+                            className="w-full px-3 py-2 bg-[#121c2b] border border-[#1f2d42] rounded-lg text-white text-xs focus:outline-none focus:border-[#d4af37] leading-relaxed"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Card Footer Actions */}
+                      <div className="pt-3 border-t border-[#1a2638] flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={savingArticleId === art.id}
+                            onClick={() => handleUpdateArticleQuick(art.id, { title: art.title, summary: art.summary, thumbnail: art.thumbnail })}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#d4af37] hover:bg-[#b8860b] text-[#0a111c] font-bold rounded-lg text-xs transition-all disabled:opacity-50"
+                          >
+                            {savingArticleId === art.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                            <span>Lưu Nhanh</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setEditingArticleModal(art)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#152236] hover:bg-[#1f2f47] text-[#d4af37] font-semibold rounded-lg text-xs border border-[#d4af37]/30 transition-all"
+                          >
+                            <FileEdit className="w-3.5 h-3.5" />
+                            <span>Sửa Toàn Bộ Nội Dung & Ảnh</span>
+                          </button>
+                        </div>
+
+                        <Link
+                          href={`/tin-tuc/${art.slug}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 text-xs text-[#94a3b8] hover:text-white"
+                        >
+                          <span>Xem trên web</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -2096,14 +2392,43 @@ export default function AdminLandingPageManager() {
                     placeholder="https://maps.app.goo.gl/..."
                   />
                 </div>
-                <div>
-                  <label className="block text-[#94a3b8] mb-1 font-semibold">Đường dẫn ảnh:</label>
-                  <input
-                    type="text"
-                    value={settings.factory_image || ""}
-                    onChange={(e) => handleChange("factory_image", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
-                  />
+                <div className="sm:col-span-2">
+                  <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">Hình ảnh xưởng sản xuất:</label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="w-24 h-16 rounded-xl overflow-hidden bg-[#121c2b] border border-[#1f2d42] shrink-0 relative flex items-center justify-center">
+                      {settings.factory_image ? (
+                        <img src={settings.factory_image} alt="Xưởng sản xuất" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-6 h-6 text-[#94a3b8]/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 w-full flex gap-2">
+                      <input
+                        type="text"
+                        value={settings.factory_image || ""}
+                        onChange={(e) => handleChange("factory_image", e.target.value)}
+                        placeholder="/images/..."
+                        className="flex-1 px-3 py-2 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                      />
+                      <label className="px-3 py-2 bg-[#1f2d42] hover:bg-[#2d415f] text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1 shrink-0">
+                        {uploadingKey === "factory_image" ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="w-3.5 h-3.5" />
+                        )}
+                        <span>Tải Ảnh Lên</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleUploadImage("factory_image", f);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[#94a3b8] mb-1 font-semibold">Mô tả ngắn:</label>
@@ -2163,14 +2488,43 @@ export default function AdminLandingPageManager() {
                     className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
                   />
                 </div>
-                <div>
-                  <label className="block text-[#94a3b8] mb-1 font-semibold">Đường dẫn ảnh:</label>
-                  <input
-                    type="text"
-                    value={settings.cs1_image || ""}
-                    onChange={(e) => handleChange("cs1_image", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
-                  />
+                <div className="sm:col-span-2">
+                  <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">Hình ảnh Showroom 1:</label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="w-24 h-16 rounded-xl overflow-hidden bg-[#121c2b] border border-[#1f2d42] shrink-0 relative flex items-center justify-center">
+                      {settings.cs1_image ? (
+                        <img src={settings.cs1_image} alt="Showroom 1" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-6 h-6 text-[#94a3b8]/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 w-full flex gap-2">
+                      <input
+                        type="text"
+                        value={settings.cs1_image || ""}
+                        onChange={(e) => handleChange("cs1_image", e.target.value)}
+                        placeholder="/images/..."
+                        className="flex-1 px-3 py-2 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                      />
+                      <label className="px-3 py-2 bg-[#1f2d42] hover:bg-[#2d415f] text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1 shrink-0">
+                        {uploadingKey === "cs1_image" ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="w-3.5 h-3.5" />
+                        )}
+                        <span>Tải Ảnh Lên</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleUploadImage("cs1_image", f);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[#94a3b8] mb-1 font-semibold">Mô tả ngắn:</label>
@@ -2230,14 +2584,43 @@ export default function AdminLandingPageManager() {
                     className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
                   />
                 </div>
-                <div>
-                  <label className="block text-[#94a3b8] mb-1 font-semibold">Đường dẫn ảnh:</label>
-                  <input
-                    type="text"
-                    value={settings.cs2_image || ""}
-                    onChange={(e) => handleChange("cs2_image", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
-                  />
+                <div className="sm:col-span-2">
+                  <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">Hình ảnh Showroom 2:</label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="w-24 h-16 rounded-xl overflow-hidden bg-[#121c2b] border border-[#1f2d42] shrink-0 relative flex items-center justify-center">
+                      {settings.cs2_image ? (
+                        <img src={settings.cs2_image} alt="Showroom 2" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-6 h-6 text-[#94a3b8]/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 w-full flex gap-2">
+                      <input
+                        type="text"
+                        value={settings.cs2_image || ""}
+                        onChange={(e) => handleChange("cs2_image", e.target.value)}
+                        placeholder="/images/..."
+                        className="flex-1 px-3 py-2 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                      />
+                      <label className="px-3 py-2 bg-[#1f2d42] hover:bg-[#2d415f] text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1 shrink-0">
+                        {uploadingKey === "cs2_image" ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="w-3.5 h-3.5" />
+                        )}
+                        <span>Tải Ảnh Lên</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleUploadImage("cs2_image", f);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[#94a3b8] mb-1 font-semibold">Mô tả ngắn:</label>
@@ -2297,14 +2680,43 @@ export default function AdminLandingPageManager() {
                     className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
                   />
                 </div>
-                <div>
-                  <label className="block text-[#94a3b8] mb-1 font-semibold">Đường dẫn ảnh:</label>
-                  <input
-                    type="text"
-                    value={settings.cs3_image || ""}
-                    onChange={(e) => handleChange("cs3_image", e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
-                  />
+                <div className="sm:col-span-2">
+                  <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">Hình ảnh Showroom 3:</label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="w-24 h-16 rounded-xl overflow-hidden bg-[#121c2b] border border-[#1f2d42] shrink-0 relative flex items-center justify-center">
+                      {settings.cs3_image ? (
+                        <img src={settings.cs3_image} alt="Showroom 3" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-6 h-6 text-[#94a3b8]/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 w-full flex gap-2">
+                      <input
+                        type="text"
+                        value={settings.cs3_image || ""}
+                        onChange={(e) => handleChange("cs3_image", e.target.value)}
+                        placeholder="/images/..."
+                        className="flex-1 px-3 py-2 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                      />
+                      <label className="px-3 py-2 bg-[#1f2d42] hover:bg-[#2d415f] text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1 shrink-0">
+                        {uploadingKey === "cs3_image" ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="w-3.5 h-3.5" />
+                        )}
+                        <span>Tải Ảnh Lên</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleUploadImage("cs3_image", f);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[#94a3b8] mb-1 font-semibold">Mô tả ngắn:</label>
@@ -2646,6 +3058,228 @@ export default function AdminLandingPageManager() {
                 );
               })()}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: CHỈNH SỬA TOÀN BỘ NỘI DUNG BÀI VIẾT CƠ SỞ & NGHỆ NHÂN (TIN TỨC) */}
+      {editingArticleModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-fadeIn"
+          onClick={() => setEditingArticleModal(null)}
+        >
+          <div
+            className="bg-[#0c1420] border-2 border-[#d4af37]/60 rounded-3xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#1f2d42] pb-3 shrink-0">
+              <div className="flex items-center gap-2.5 text-[#d4af37]">
+                <BookOpen className="w-5 h-5 text-[#d4af37]" />
+                <div>
+                  <h3 className="font-serif font-bold text-sm sm:text-base uppercase tracking-wider text-white">
+                    Chỉnh Sửa Bài Viết: {editingArticleModal.title}
+                  </h3>
+                  <p className="text-xs text-[#94a3b8] mt-0.5">
+                    Chuyên mục: <strong className="text-[#d4af37]">{editingArticleModal.category || "GIỚI THIỆU CƠ SỞ & XƯỞNG ĐÚC"}</strong> • Slug: <span className="font-mono text-cyan-300">/tin-tuc/{editingArticleModal.slug}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingArticleModal(null)}
+                className="w-8 h-8 rounded-full bg-[#121c2b] text-[#94a3b8] hover:text-white flex items-center justify-center border border-[#1f2d42]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleSaveModalArticle} className="flex-1 overflow-y-auto space-y-4 pr-1">
+              <div>
+                <label className="block text-[#d4af37] mb-1 font-bold text-xs uppercase tracking-wider">
+                  Tiêu Đề Bài Viết:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingArticleModal.title || ""}
+                  onChange={(e) => setEditingArticleModal({ ...editingArticleModal, title: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white font-serif font-bold text-sm focus:outline-none focus:border-[#d4af37]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                    Ảnh Đại Diện (Thumbnail):
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <div className="w-20 h-14 rounded-lg overflow-hidden bg-[#121c2b] border border-[#1f2d42] shrink-0 relative flex items-center justify-center">
+                      {editingArticleModal.thumbnail ? (
+                        <img src={editingArticleModal.thumbnail} alt="Thumbnail" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-5 h-5 text-[#94a3b8]/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <input
+                        type="text"
+                        value={editingArticleModal.thumbnail || ""}
+                        onChange={(e) => setEditingArticleModal({ ...editingArticleModal, thumbnail: e.target.value })}
+                        placeholder="/images/..."
+                        className="w-full px-2.5 py-1.5 bg-[#121c2b] border border-[#1f2d42] rounded-lg text-white text-xs focus:outline-none focus:border-[#d4af37]"
+                      />
+                      <label className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#1f2d42] hover:bg-[#2d415f] text-white rounded-lg text-xs font-semibold cursor-pointer">
+                        {uploadingKey === `modal_thumb_${editingArticleModal.id}` ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Upload className="w-3 h-3" />
+                        )}
+                        <span>Tải Ảnh Mới</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const f = e.target.files?.[0];
+                            if (f) {
+                              const uploadKey = `modal_thumb_${editingArticleModal.id}`;
+                              setUploadingKey(uploadKey);
+                              const uploadForm = new FormData();
+                              uploadForm.append("file", f);
+                              try {
+                                const res = await fetch("/api/admin/upload", { method: "POST", body: uploadForm });
+                                const data = await res.json();
+                                if (data.success && data.url) {
+                                  setEditingArticleModal((prev: any) => ({ ...prev, thumbnail: data.url }));
+                                  toastSuccess("Đã tải ảnh đại diện lên thành công!", "Tải ảnh");
+                                }
+                              } catch {
+                                toastError("Lỗi tải ảnh lên", "Lỗi");
+                              } finally {
+                                setUploadingKey(null);
+                              }
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                    Chuyên Mục (Cấu hình là Tin Tức):
+                  </label>
+                  <input
+                    type="text"
+                    value={editingArticleModal.category || "GIỚI THIỆU CƠ SỞ & XƯỞNG ĐÚC"}
+                    onChange={(e) => setEditingArticleModal({ ...editingArticleModal, category: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-[#d4af37]"
+                  />
+                  <span className="text-[10px] text-[#94a3b8] block mt-1">
+                    Thuộc danh mục Tin tức giới thiệu xưởng Lộc Nam
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[#94a3b8] mb-1 font-semibold text-xs">
+                  Đoạn Tóm Tắt Ngắn:
+                </label>
+                <textarea
+                  rows={3}
+                  value={editingArticleModal.summary || ""}
+                  onChange={(e) => setEditingArticleModal({ ...editingArticleModal, summary: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-[#121c2b] border border-[#1f2d42] rounded-xl text-white text-xs leading-relaxed focus:outline-none focus:border-[#d4af37]"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[#d4af37] font-bold text-xs uppercase tracking-wider">
+                    Nội Dung Bài Viết Chi Tiết (Hỗ trợ Markdown & Thẻ Video/Ảnh):
+                  </label>
+                  <div className="flex items-center gap-1.5 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sampleHeading = "\n\n## Tiêu Đề Mục Mới\nNội dung chi tiết mục...";
+                        setEditingArticleModal({
+                          ...editingArticleModal,
+                          content: (editingArticleModal.content || "") + sampleHeading,
+                        });
+                      }}
+                      className="px-2 py-0.5 rounded bg-[#1a2638] text-[#d4af37] hover:bg-[#24354e]"
+                    >
+                      + Thêm Mục ##
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sampleImg = "\n\n![Mô tả hình ảnh](/images/xuong_duc.jpg)\n";
+                        setEditingArticleModal({
+                          ...editingArticleModal,
+                          content: (editingArticleModal.content || "") + sampleImg,
+                        });
+                      }}
+                      className="px-2 py-0.5 rounded bg-[#1a2638] text-cyan-300 hover:bg-[#24354e]"
+                    >
+                      + Thêm Ảnh
+                    </button>
+                  </div>
+                </div>
+
+                <textarea
+                  rows={14}
+                  value={editingArticleModal.content || ""}
+                  onChange={(e) => setEditingArticleModal({ ...editingArticleModal, content: e.target.value })}
+                  placeholder="Nhập toàn bộ nội dung bài viết..."
+                  className="w-full p-3.5 bg-[#080e18] border border-[#1f2d42] rounded-xl text-gray-200 text-xs font-mono leading-relaxed focus:outline-none focus:border-[#d4af37]"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 border-t border-[#1f2d42] flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingArticleModal(null)}
+                  className="px-4 py-2.5 rounded-xl bg-[#152236] hover:bg-[#1d2f4a] text-white text-xs font-semibold transition-all"
+                >
+                  Hủy Bỏ
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/tin-tuc/${editingArticleModal.slug}`}
+                    target="_blank"
+                    className="inline-flex items-center gap-1 px-4 py-2.5 rounded-xl bg-[#152236] text-[#d4af37] text-xs font-semibold hover:bg-[#1d2f4a] border border-[#d4af37]/30 transition-all"
+                  >
+                    <span>Xem Trang Hiện Tại</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+
+                  <button
+                    type="submit"
+                    disabled={savingModalArticle}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#dfb755] to-[#b8860b] hover:brightness-110 text-[#0c1420] font-serif font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md disabled:opacity-50"
+                  >
+                    {savingModalArticle ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Đang lưu...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>Lưu Toàn Bộ Bài Viết</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

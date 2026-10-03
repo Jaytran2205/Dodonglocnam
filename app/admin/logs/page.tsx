@@ -395,13 +395,15 @@ export default function AdminActivityLogsPage() {
               }}
               className="w-full px-3 py-2 bg-[#111c2e] border border-[#d4af37]/20 rounded-xl text-xs text-[#94a3b8] font-semibold focus:outline-none focus:border-[#d4af37]"
             >
-              <option value="ALL">Tất Cả Hành Động</option>
+              <option value="ALL">Tất Cả Hành Động Chính (Mặc định)</option>
               <option value="CREATE">Thêm Mới (CREATE)</option>
               <option value="UPDATE">Cập Nhật (UPDATE)</option>
               <option value="DELETE">Xóa (DELETE)</option>
               <option value="STATUS_CHANGE">Đổi Trạng Thái</option>
               <option value="SETTINGS_CHANGE">Đổi Thiết Lập</option>
               <option value="LOGIN">Đăng Nhập (LOGIN)</option>
+              <option value="CLICK">Thao Tác Click Nút & Thẻ (CLICK)</option>
+              <option value="NAVIGATE">Truy Cập Trang (NAVIGATE)</option>
             </select>
           </div>
 

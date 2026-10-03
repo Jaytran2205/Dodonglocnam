@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   History,
   X,
@@ -11,6 +11,7 @@ import {
   Sparkles,
   Sliders,
   Laptop,
+  Smartphone,
   Clock,
   Shield,
   MousePointer,
@@ -25,7 +26,11 @@ import {
   Package,
   ShoppingCart,
   Layers,
-  FileText
+  FileText,
+  ChevronDown,
+  Info,
+  CheckCircle2,
+  Calendar
 } from "lucide-react";
 import { isHiddenSuperAdmin } from "@/lib/permissions";
 
@@ -64,6 +69,22 @@ interface JourneyStats {
   lastUserAgent?: string | null;
 }
 
+interface SessionGroup {
+  id: string;
+  ipAddress: string;
+  userAgent: string;
+  browser: string;
+  os: string;
+  deviceType: "desktop" | "mobile" | "tablet";
+  startTime: string;
+  endTime: string;
+  totalCount: number;
+  logins: LogItem[];
+  modifications: LogItem[];
+  clicks: LogItem[];
+  navigation: LogItem[];
+}
+
 interface UserJourneyModalProps {
   user: UserJourneyTarget | null;
   onClose: () => void;
@@ -75,18 +96,27 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const limit = 15;
+  const limit = 50;
 
   // Filter tabs: "ALL" | "LOGIN" | "MODIFY" | "CLICK"
   const [actionGroup, setActionGroup] = useState<"ALL" | "LOGIN" | "MODIFY" | "CLICK">("ALL");
   const [dateRange, setDateRange] = useState("all");
   const [search, setSearch] = useState("");
+  
+  // View mode: "SESSIONS" (grouped by device/session - default as requested) | "TIMELINE"
+  const [viewMode, setViewMode] = useState<"SESSIONS" | "TIMELINE">("SESSIONS");
+
+  // Expanded state for sessions: { [sessionId]: boolean }
+  const [expandedSessions, setExpandedSessions] = useState<Record<string, boolean>>({});
+  // Expanded state for categories inside a session: { [`${sessionId}_${category}`]: boolean }
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  // Expanded state for individual log details payload
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.email) return;
 
-    // Safety guard
+    // Safety guard: Hidden super admin must never be tracked or displayed
     if (isHiddenSuperAdmin(user.email)) {
       onClose();
       return;
@@ -99,6 +129,7 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
         params.set("userEmail", user.email);
         params.set("page", String(page));
         params.set("limit", String(limit));
+        params.set("includeClicks", "true"); // Always include user's clicks so we can group them
         if (actionGroup !== "ALL") params.set("actionGroup", actionGroup);
         if (dateRange !== "all") params.set("dateRange", dateRange);
         if (search.trim()) params.set("search", search.trim());
@@ -123,11 +154,128 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
     fetchJourney();
   }, [user?.email, page, actionGroup, dateRange]);
 
-  if (!user) return null;
+  // Helpers to parse User Agent
+  const parseBrowser = (ua?: string | null) => {
+    if (!ua) return "Trình duyệt ẩn";
+    if (ua.includes("Chrome") && !ua.includes("Edg")) return "Google Chrome";
+    if (ua.includes("Edg")) return "Microsoft Edge";
+    if (ua.includes("Firefox")) return "Mozilla Firefox";
+    if (ua.includes("Safari") && !ua.includes("Chrome")) return "Apple Safari";
+    if (ua.includes("OPR") || ua.includes("Opera")) return "Opera";
+    return "Trình duyệt Web";
+  };
 
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const parseOS = (ua?: string | null) => {
+    if (!ua) return "HĐH không rõ";
+    if (ua.includes("Windows NT 10.0")) return "Windows 10/11";
+    if (ua.includes("Windows")) return "Windows";
+    if (ua.includes("iPhone")) return "iPhone (iOS)";
+    if (ua.includes("iPad")) return "iPad (iPadOS)";
+    if (ua.includes("Android")) return "Android Phone";
+    if (ua.includes("Macintosh") || ua.includes("Mac OS")) return "macOS (Apple)";
+    if (ua.includes("Linux")) return "Linux OS";
+    return "Thiết bị khác";
+  };
 
-  // Helper format relative time
+  const getDeviceType = (ua?: string | null): "desktop" | "mobile" | "tablet" => {
+    if (!ua) return "desktop";
+    if (ua.includes("iPhone") || ua.includes("Android")) return "mobile";
+    if (ua.includes("iPad") || ua.includes("Tablet")) return "tablet";
+    return "desktop";
+  };
+
+  // Group Logs into Sessions by (IP + Device signature + Time window)
+  const sessionGroups: SessionGroup[] = useMemo(() => {
+    if (!logs || logs.length === 0) return [];
+
+    const groups: SessionGroup[] = [];
+    let currentSession: SessionGroup | null = null;
+
+    // Logs are newest first (descending).
+    // A gap > 3 hours or a change in IP/device triggers a new session card.
+    for (let i = 0; i < logs.length; i++) {
+      const log = logs[i];
+      const logTime = new Date(log.createdAt).getTime();
+      const ip = log.ipAddress || "Không rõ IP";
+      const ua = log.userAgent || "";
+
+      let shouldStartNewSession = false;
+
+      if (!currentSession) {
+        shouldStartNewSession = true;
+      } else {
+        const lastLogTime = new Date(currentSession.startTime).getTime();
+        const diffHours = Math.abs(lastLogTime - logTime) / (1000 * 60 * 60);
+
+        if (currentSession.ipAddress !== ip || diffHours > 4 || log.action === "LOGIN") {
+          shouldStartNewSession = true;
+        }
+      }
+
+      if (shouldStartNewSession) {
+        const sid = `sess_${groups.length}_${log.id}`;
+        currentSession = {
+          id: sid,
+          ipAddress: ip,
+          userAgent: ua,
+          browser: parseBrowser(ua),
+          os: parseOS(ua),
+          deviceType: getDeviceType(ua),
+          startTime: log.createdAt,
+          endTime: log.createdAt,
+          totalCount: 0,
+          logins: [],
+          modifications: [],
+          clicks: [],
+          navigation: [],
+        };
+        groups.push(currentSession);
+      }
+
+      // Add to session
+      if (currentSession) {
+        currentSession.totalCount++;
+        currentSession.startTime = log.createdAt; // keep oldest timestamp of this session as start
+
+        if (log.action === "LOGIN" || log.action === "LOGOUT") {
+          currentSession.logins.push(log);
+        } else if (
+          ["CREATE", "UPDATE", "DELETE", "STATUS_CHANGE", "SETTINGS_CHANGE"].includes(log.action)
+        ) {
+          currentSession.modifications.push(log);
+        } else if (["CLICK", "VIEW"].includes(log.action)) {
+          currentSession.clicks.push(log);
+        } else {
+          currentSession.navigation.push(log);
+        }
+      }
+    }
+
+    return groups;
+  }, [logs]);
+
+  // Toggle session expand/collapse
+  const toggleSession = (sessionId: string) => {
+    setExpandedSessions((prev) => ({
+      ...prev,
+      [sessionId]: !prev[sessionId],
+    }));
+  };
+
+  // Toggle category inside session
+  const toggleCategory = (sessionId: string, category: string) => {
+    const key = `${sessionId}_${category}`;
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const isCategoryExpanded = (sessionId: string, category: string) => {
+    return Boolean(expandedCategories[`${sessionId}_${category}`]);
+  };
+
+  // Format relative time
   const formatRelativeTime = (isoString: string) => {
     const date = new Date(isoString);
     const now = new Date();
@@ -143,6 +291,20 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
       month: "2-digit",
       year: "numeric",
     });
+  };
+
+  const formatSessionTime = (startTime: string, endTime: string) => {
+    const s = new Date(startTime);
+    const e = new Date(endTime);
+
+    const sStr = s.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    const eStr = e.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    const dStr = s.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+    if (sStr === eStr) {
+      return `${sStr} ngày ${dStr}`;
+    }
+    return `${sStr} - ${eStr} (${dStr})`;
   };
 
   const getActionConfig = (action: string) => {
@@ -215,28 +377,85 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
     }
   };
 
-  const parseBrowser = (ua?: string | null) => {
-    if (!ua) return "Trình duyệt ẩn";
-    if (ua.includes("Chrome")) return "Chrome";
-    if (ua.includes("Firefox")) return "Firefox";
-    if (ua.includes("Safari") && !ua.includes("Chrome")) return "Safari";
-    if (ua.includes("Edge")) return "Edge";
-    return "Trình duyệt Web";
+  // Render an individual log item inside an expanded category
+  const renderLogRow = (log: LogItem) => {
+    const config = getActionConfig(log.action);
+    const ActionIcon = config.icon;
+    const isPayloadExpanded = expandedLogId === log.id;
+
+    return (
+      <div
+        key={log.id}
+        className="p-3 rounded-xl bg-[#09101a] border border-[#1f2d42] hover:border-[#d4af37]/40 transition-all text-xs"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${config.color}`}>
+              {config.label}
+            </span>
+            <span className="font-semibold text-white">{log.entity}</span>
+            {log.entityName && (
+              <span className="text-[#d4af37] font-medium truncate max-w-[200px]">
+                "{log.entityName}"
+              </span>
+            )}
+          </div>
+
+          <div className="text-[11px] text-[#94a3b8] flex items-center gap-1 shrink-0">
+            <Clock className="w-3 h-3 text-[#d4af37]" />
+            <span>
+              {new Date(log.createdAt).toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
+            </span>
+            <span className="text-[#94a3b8]/60">({formatRelativeTime(log.createdAt)})</span>
+          </div>
+        </div>
+
+        <p className="text-gray-200 font-medium break-words mt-1 leading-relaxed">
+          {log.summary}
+        </p>
+
+        {log.details && (
+          <div className="mt-2 pt-2 border-t border-[#1a2638] flex items-center justify-between">
+            <span className="text-[10px] text-[#94a3b8]">
+              {log.action === "CLICK" ? "Thao tác trên giao diện" : "Dữ liệu payload hệ thống"}
+            </span>
+            <button
+              onClick={() => setExpandedLogId(isPayloadExpanded ? null : log.id)}
+              className="text-[11px] text-[#d4af37] hover:underline flex items-center gap-1 font-semibold"
+            >
+              <Eye className="w-3 h-3" />
+              <span>{isPayloadExpanded ? "Thu gọn chi tiết" : "Xem chi tiết sửa đổi"}</span>
+            </button>
+          </div>
+        )}
+
+        {isPayloadExpanded && log.details && (
+          <div className="mt-2 p-2.5 rounded-lg bg-black/60 border border-[#d4af37]/20 text-[10px] font-mono text-emerald-300 overflow-x-auto max-h-40 animate-in fade-in duration-150">
+            <pre>
+              {(() => {
+                try {
+                  return JSON.stringify(JSON.parse(log.details), null, 2);
+                } catch {
+                  return log.details;
+                }
+              })()}
+            </pre>
+          </div>
+        )}
+      </div>
+    );
   };
 
-  const parseOS = (ua?: string | null) => {
-    if (!ua) return "HĐH không rõ";
-    if (ua.includes("Windows")) return "Windows";
-    if (ua.includes("Macintosh") || ua.includes("Mac OS")) return "macOS";
-    if (ua.includes("Android")) return "Android";
-    if (ua.includes("iPhone") || ua.includes("iPad")) return "iOS";
-    if (ua.includes("Linux")) return "Linux";
-    return "Thiết bị khác";
-  };
+  if (!user) return null;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-[#0a111c] border border-[#d4af37]/40 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-[#0a111c] border border-[#d4af37]/40 rounded-3xl w-full max-w-5xl max-h-[92vh] overflow-hidden shadow-2xl flex flex-col">
         {/* MODAL HEADER */}
         <div className="p-4 sm:p-5 border-b border-[#d4af37]/20 flex items-center justify-between bg-gradient-to-r from-[#111c2e] via-[#0d1624] to-[#0a111c] shrink-0">
           <div className="flex items-center gap-3">
@@ -268,9 +487,9 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
           </button>
         </div>
 
-        {/* STATS OVERVIEW CARDS (4 TILES) */}
-        <div className="p-4 sm:p-5 bg-[#070c14] border-b border-[#d4af37]/15 shrink-0">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        {/* 4 STATS OVERVIEW CARDS */}
+        <div className="p-3 sm:p-4 bg-[#070c14] border-b border-[#d4af37]/15 shrink-0">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {/* Tile 1: Logins */}
             <div
               onClick={() => {
@@ -287,11 +506,11 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
                 <span>Đăng Nhập</span>
                 <LogIn className="w-4 h-4 text-purple-400" />
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-white mt-1.5">
+              <div className="text-xl sm:text-2xl font-bold text-white mt-1">
                 {stats?.totalLogins ?? 0}
               </div>
               <div className="text-[10px] text-[#94a3b8] mt-0.5 truncate">
-                {stats?.lastIp ? `IP: ${stats.lastIp}` : "Ghi nhận từ hệ thống"}
+                {stats?.lastIp ? `IP gần nhất: ${stats.lastIp}` : "Ghi nhận từ hệ thống"}
               </div>
             </div>
 
@@ -311,11 +530,11 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
                 <span>Sửa & Xóa Dữ Liệu</span>
                 <Trash2 className="w-4 h-4 text-rose-400" />
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-white mt-1.5">
+              <div className="text-xl sm:text-2xl font-bold text-white mt-1">
                 {stats?.totalModifications ?? 0}
               </div>
               <div className="text-[10px] text-[#94a3b8] mt-0.5 truncate">
-                Tác động SP, danh mục, đơn...
+                Sản phẩm, danh mục, đơn hàng...
               </div>
             </div>
 
@@ -335,11 +554,11 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
                 <span>Click & Xem Trang</span>
                 <Compass className="w-4 h-4 text-cyan-400" />
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-white mt-1.5">
+              <div className="text-xl sm:text-2xl font-bold text-white mt-1">
                 {stats?.totalClicks ?? 0}
               </div>
               <div className="text-[10px] text-[#94a3b8] mt-0.5 truncate">
-                Đường dẫn & nút đã bấm
+                Đường dẫn & nút bấm giao diện
               </div>
             </div>
 
@@ -359,79 +578,44 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
                 <span>Tổng Hoạt Động</span>
                 <History className="w-4 h-4 text-[#d4af37]" />
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-white mt-1.5">
+              <div className="text-xl sm:text-2xl font-bold text-white mt-1">
                 {stats?.totalActions ?? 0}
               </div>
               <div className="text-[10px] text-[#94a3b8] mt-0.5 truncate">
                 {stats?.lastActiveAt
-                  ? `Gần nhất: ${formatRelativeTime(stats.lastActiveAt)}`
+                  ? `Hoạt động gần nhất: ${formatRelativeTime(stats.lastActiveAt)}`
                   : "Toàn bộ lịch sử"}
               </div>
             </div>
           </div>
         </div>
 
-        {/* TABS & SEARCH CONTROLS */}
+        {/* CONTROLS BAR: VIEW MODE SWITCH, TABS, SEARCH */}
         <div className="p-3 sm:p-4 bg-[#0c1420] border-b border-[#d4af37]/15 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shrink-0">
-          {/* Action Group Filter Buttons */}
-          <div className="flex items-center gap-1.5 bg-[#111c2e] p-1 rounded-xl border border-[#d4af37]/20 overflow-x-auto">
+          {/* View Mode Switcher: Sessions vs Flat Timeline */}
+          <div className="flex items-center gap-1.5 bg-[#111c2e] p-1 rounded-xl border border-[#d4af37]/20">
             <button
-              onClick={() => {
-                setActionGroup("ALL");
-                setPage(1);
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-                actionGroup === "ALL"
-                  ? "bg-[#d4af37] text-[#070c14] shadow"
+              onClick={() => setViewMode("SESSIONS")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                viewMode === "SESSIONS"
+                  ? "bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#0c1420] shadow"
                   : "text-[#94a3b8] hover:text-white"
               }`}
             >
-              Tất Cả ({stats?.totalActions ?? 0})
+              <Laptop className="w-3.5 h-3.5" />
+              <span>Gom Theo Phiên & Thiết Bị (Thu Gọn)</span>
             </button>
 
             <button
-              onClick={() => {
-                setActionGroup("LOGIN");
-                setPage(1);
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                actionGroup === "LOGIN"
-                  ? "bg-purple-600 text-white shadow"
-                  : "text-purple-300/80 hover:text-purple-200"
+              onClick={() => setViewMode("TIMELINE")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                viewMode === "TIMELINE"
+                  ? "bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#0c1420] shadow"
+                  : "text-[#94a3b8] hover:text-white"
               }`}
             >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Đăng Nhập ({stats?.totalLogins ?? 0})</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setActionGroup("MODIFY");
-                setPage(1);
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                actionGroup === "MODIFY"
-                  ? "bg-rose-600 text-white shadow"
-                  : "text-rose-300/80 hover:text-rose-200"
-              }`}
-            >
-              <FileEdit className="w-3.5 h-3.5" />
-              <span>Sửa & Xóa ({stats?.totalModifications ?? 0})</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setActionGroup("CLICK");
-                setPage(1);
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                actionGroup === "CLICK"
-                  ? "bg-cyan-600 text-white shadow"
-                  : "text-cyan-300/80 hover:text-cyan-200"
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5" />
-              <span>Click & Xem ({stats?.totalClicks ?? 0})</span>
+              <History className="w-3.5 h-3.5" />
+              <span>Dòng Thời Gian Chi Tiết</span>
             </button>
           </div>
 
@@ -467,24 +651,251 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
           </div>
         </div>
 
-        {/* TIMELINE LIST */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+        {/* MAIN CONTENT AREA */}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4">
           {loading ? (
-            <div className="py-16 text-center text-[#94a3b8]">
+            <div className="py-20 text-center text-[#94a3b8]">
               <RefreshCw className="w-8 h-8 animate-spin text-[#d4af37] mx-auto mb-3" />
-              <p className="text-xs">Đang tải toàn bộ dữ liệu hành trình...</p>
+              <p className="text-xs">Đang tải toàn bộ dữ liệu hành trình theo phiên thiết bị...</p>
             </div>
           ) : logs.length === 0 ? (
-            <div className="py-16 text-center text-[#94a3b8]">
+            <div className="py-20 text-center text-[#94a3b8]">
               <AlertCircle className="w-10 h-10 text-amber-500/50 mx-auto mb-3" />
               <p className="text-sm font-semibold text-white">
                 Không tìm thấy hoạt động nào phù hợp
               </p>
               <p className="text-xs text-[#94a3b8] mt-1">
-                Thử chọn tab khác hoặc đổi khoảng thời gian
+                Thử chọn khoảng thời gian khác hoặc kiểm tra lại từ khóa tìm kiếm
               </p>
             </div>
+          ) : viewMode === "SESSIONS" ? (
+            /* MODE 1: SESSIONS & DEVICES GROUPING WITH COLLAPSIBLE CATEGORIES (As requested by User) */
+            <div className="space-y-4">
+              <div className="text-xs text-[#94a3b8] flex items-center justify-between px-1">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Info className="w-3.5 h-3.5 text-[#d4af37]" />
+                  <span>
+                    Hoạt động đã được gom gọn theo từng thiết bị và phiên đăng nhập. Bấm "Xem chi tiết máy này" để mở rộng:
+                  </span>
+                </span>
+                <span className="font-bold text-[#d4af37]">
+                  {sessionGroups.length} Phiên làm việc
+                </span>
+              </div>
+
+              {sessionGroups.map((session, sIdx) => {
+                const isSessionExpanded = Boolean(expandedSessions[session.id]);
+                const DeviceIcon = session.deviceType === "mobile" ? Smartphone : Laptop;
+
+                return (
+                  <div
+                    key={session.id}
+                    className="rounded-2xl border border-[#d4af37]/30 bg-[#0d1624] overflow-hidden shadow-lg transition-all"
+                  >
+                    {/* SESSION HEADER / CARD */}
+                    <div
+                      onClick={() => toggleSession(session.id)}
+                      className="p-4 sm:p-4.5 flex flex-col md:flex-row md:items-center justify-between gap-3 cursor-pointer hover:bg-[#121c2e] transition-colors border-b border-[#1f2d42]"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-2xl bg-[#152236] border border-[#d4af37]/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-sm">
+                          <DeviceIcon className="w-5 h-5 text-cyan-400" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-white text-sm">
+                              {session.os} • {session.browser}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-950/60 border border-cyan-500/40 text-cyan-300">
+                              IP: {session.ipAddress}
+                            </span>
+                            {sIdx === 0 && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 border border-emerald-500/40 text-emerald-300">
+                                Mới nhất
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#94a3b8] flex items-center gap-1.5 mt-1">
+                            <Clock className="w-3.5 h-3.5 text-[#d4af37]" />
+                            <span>{formatSessionTime(session.startTime, session.endTime)}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* SUMMARY BADGES */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {session.logins.length > 0 && (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-500/15 border border-purple-500/40 text-purple-300 flex items-center gap-1">
+                            <LogIn className="w-3 h-3" />
+                            {session.logins.length} Đăng nhập
+                          </span>
+                        )}
+                        {session.modifications.length > 0 && (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/15 border border-rose-500/40 text-rose-300 flex items-center gap-1">
+                            <FileEdit className="w-3 h-3" />
+                            {session.modifications.length} Sửa/Xóa dữ liệu
+                          </span>
+                        )}
+                        {session.clicks.length > 0 && (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-teal-500/15 border border-teal-500/40 text-teal-300 flex items-center gap-1">
+                            <MousePointer className="w-3 h-3" />
+                            {session.clicks.length} Lượt Click
+                          </span>
+                        )}
+                        {session.navigation.length > 0 && (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 flex items-center gap-1">
+                            <Compass className="w-3 h-3" />
+                            {session.navigation.length} Trang xem
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          className={`ml-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 shrink-0 ${
+                            isSessionExpanded
+                              ? "bg-[#d4af37] text-[#0a111c] border-[#d4af37]"
+                              : "bg-[#162234] text-[#d4af37] border-[#d4af37]/30 hover:bg-[#1f2f47]"
+                          }`}
+                        >
+                          <span>{isSessionExpanded ? "Thu gọn máy này" : "Xem chi tiết máy này"}</span>
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                              isSessionExpanded ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* INSIDE THE SESSION: COLLAPSIBLE CATEGORIES (ACCORDION) */}
+                    {isSessionExpanded && (
+                      <div className="p-4 sm:p-5 bg-[#080d15] space-y-3 animate-in fade-in duration-150">
+                        <div className="text-[11px] text-[#94a3b8] mb-2 flex items-center gap-1.5 font-medium">
+                          <Info className="w-3.5 h-3.5 text-[#d4af37]" />
+                          <span>
+                            Dưới đây là các hạng mục thao tác tại máy này. Bấm vào từng hạng mục để xem chi tiết:
+                          </span>
+                        </div>
+
+                        {/* ACCORDION 1: Đăng nhập & Xác thực */}
+                        {session.logins.length > 0 && (
+                          <div className="border border-purple-500/30 rounded-xl overflow-hidden bg-[#0c1420]">
+                            <button
+                              type="button"
+                              onClick={() => toggleCategory(session.id, "logins")}
+                              className="w-full p-3 flex items-center justify-between text-left hover:bg-purple-950/20 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <LogIn className="w-4 h-4 text-purple-400" />
+                                <span className="font-bold text-xs sm:text-sm text-purple-200">
+                                  1. Lịch sử Đăng nhập & Xác thực ({session.logins.length} lượt)
+                                </span>
+                              </div>
+                              <ChevronDown
+                                className={`w-4 h-4 text-purple-400 transition-transform duration-200 ${
+                                  isCategoryExpanded(session.id, "logins") ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {isCategoryExpanded(session.id, "logins") && (
+                              <div className="p-3 border-t border-purple-500/20 bg-black/40 space-y-2">
+                                {session.logins.map(renderLogRow)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ACCORDION 2: Thao tác Sửa, Xóa & Cập Nhật Dữ Liệu */}
+                        {session.modifications.length > 0 && (
+                          <div className="border border-rose-500/30 rounded-xl overflow-hidden bg-[#0c1420]">
+                            <button
+                              type="button"
+                              onClick={() => toggleCategory(session.id, "modifications")}
+                              className="w-full p-3 flex items-center justify-between text-left hover:bg-rose-950/20 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <FileEdit className="w-4 h-4 text-rose-400" />
+                                <span className="font-bold text-xs sm:text-sm text-rose-200">
+                                  2. Thao tác Sửa, Xóa & Cập Nhật Dữ Liệu ({session.modifications.length} thao tác)
+                                </span>
+                              </div>
+                              <ChevronDown
+                                className={`w-4 h-4 text-rose-400 transition-transform duration-200 ${
+                                  isCategoryExpanded(session.id, "modifications") ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {isCategoryExpanded(session.id, "modifications") && (
+                              <div className="p-3 border-t border-rose-500/20 bg-black/40 space-y-2">
+                                {session.modifications.map(renderLogRow)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ACCORDION 3: Chi tiết Các Nút & Thẻ Đã Bấm (Clicks) */}
+                        {session.clicks.length > 0 && (
+                          <div className="border border-teal-500/30 rounded-xl overflow-hidden bg-[#0c1420]">
+                            <button
+                              type="button"
+                              onClick={() => toggleCategory(session.id, "clicks")}
+                              className="w-full p-3 flex items-center justify-between text-left hover:bg-teal-950/20 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <MousePointer className="w-4 h-4 text-teal-400" />
+                                <span className="font-bold text-xs sm:text-sm text-teal-200">
+                                  3. Chi Tiết Các Nút & Thẻ Đã Click ({session.clicks.length} lượt click)
+                                </span>
+                              </div>
+                              <ChevronDown
+                                className={`w-4 h-4 text-teal-400 transition-transform duration-200 ${
+                                  isCategoryExpanded(session.id, "clicks") ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {isCategoryExpanded(session.id, "clicks") && (
+                              <div className="p-3 border-t border-teal-500/20 bg-black/40 space-y-2">
+                                {session.clicks.map(renderLogRow)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ACCORDION 4: Các Trang Đã Truy Cập & Xem */}
+                        {session.navigation.length > 0 && (
+                          <div className="border border-cyan-500/30 rounded-xl overflow-hidden bg-[#0c1420]">
+                            <button
+                              type="button"
+                              onClick={() => toggleCategory(session.id, "navigation")}
+                              className="w-full p-3 flex items-center justify-between text-left hover:bg-cyan-950/20 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Compass className="w-4 h-4 text-cyan-400" />
+                                <span className="font-bold text-xs sm:text-sm text-cyan-200">
+                                  4. Các Trang Đã Truy Cập & Xem ({session.navigation.length} trang)
+                                </span>
+                              </div>
+                              <ChevronDown
+                                className={`w-4 h-4 text-cyan-400 transition-transform duration-200 ${
+                                  isCategoryExpanded(session.id, "navigation") ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {isCategoryExpanded(session.id, "navigation") && (
+                              <div className="p-3 border-t border-cyan-500/20 bg-black/40 space-y-2">
+                                {session.navigation.map(renderLogRow)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           ) : (
+            /* MODE 2: FLAT TIMELINE LIST */
             <div className="relative border-l-2 border-[#d4af37]/20 ml-4 sm:ml-6 pl-4 sm:pl-6 space-y-4">
               {logs.map((log) => {
                 const config = getActionConfig(log.action);
@@ -493,14 +904,12 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
 
                 return (
                   <div key={log.id} className="relative group">
-                    {/* Circle Node on Timeline */}
                     <div
                       className={`absolute -left-[27px] sm:-left-[35px] top-1.5 w-6 h-6 rounded-full border-2 border-[#0a111c] flex items-center justify-center shadow-md ${config.color}`}
                     >
                       <ActionIcon className="w-3 h-3" />
                     </div>
 
-                    {/* Timeline Card */}
                     <div className="p-3.5 rounded-2xl bg-[#0e1726] border border-[#d4af37]/15 hover:border-[#d4af37]/40 transition-all">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1.5">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -509,11 +918,9 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
                           >
                             {config.label}
                           </span>
-
                           <span className="text-[11px] font-semibold text-white">
                             {log.entity}
                           </span>
-
                           {log.entityName && (
                             <span className="text-[11px] text-[#d4af37] font-medium truncate max-w-[220px]">
                               "{log.entityName}"
@@ -521,7 +928,6 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
                           )}
                         </div>
 
-                        {/* Timestamp */}
                         <div className="text-[11px] text-[#94a3b8] flex items-center gap-1 shrink-0">
                           <Clock className="w-3 h-3 text-[#d4af37]" />
                           <span>
@@ -540,12 +946,10 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
                         </div>
                       </div>
 
-                      {/* Main Summary */}
                       <p className="text-xs sm:text-sm text-white font-medium break-words leading-relaxed">
                         {log.summary}
                       </p>
 
-                      {/* Meta Details: IP, OS, Browser */}
                       <div className="flex items-center gap-3 text-[10px] text-[#94a3b8] mt-2 pt-2 border-t border-[#d4af37]/10 flex-wrap">
                         {log.ipAddress && (
                           <span className="flex items-center gap-1 text-[#94a3b8]/80">
@@ -556,7 +960,9 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
 
                         {log.userAgent && (
                           <span className="flex items-center gap-1 text-[#94a3b8]/70">
-                            <span>{parseOS(log.userAgent)} • {parseBrowser(log.userAgent)}</span>
+                            <span>
+                              {parseOS(log.userAgent)} • {parseBrowser(log.userAgent)}
+                            </span>
                           </span>
                         )}
 
@@ -571,12 +977,8 @@ export default function UserJourneyModal({ user, onClose }: UserJourneyModalProp
                         )}
                       </div>
 
-                      {/* Expanded JSON details */}
                       {isExpanded && log.details && (
                         <div className="mt-3 p-3 rounded-xl bg-black/50 border border-[#d4af37]/20 text-[11px] font-mono text-emerald-300 overflow-x-auto max-h-48 animate-in fade-in duration-150">
-                          <div className="text-[10px] uppercase font-bold text-[#d4af37] mb-1">
-                            Thông Số Kỹ Thuật (Payload Details):
-                          </div>
                           <pre>
                             {(() => {
                               try {

@@ -87,6 +87,32 @@ export default async function AboutPage() {
   const hotline = settingsMap.hotline || "0836 122 222";
   const hotline2 = settingsMap.hotline2 || "0846 699 997";
 
+  let facilityArticles: any[] = [];
+  try {
+    facilityArticles = await prisma.article.findMany({
+      where: {
+        slug: { in: ["nghe-nhan-duong-ba-tien", "xuong-san-xuat-duc-dong-loc-nam"] },
+        isPublished: true,
+      },
+    });
+  } catch (err) {
+    console.error("AboutPage fetch facility articles error:", err);
+  }
+
+  const artTien = facilityArticles.find((a) => a.slug === "nghe-nhan-duong-ba-tien") || {
+    slug: "nghe-nhan-duong-ba-tien",
+    title: "Nghệ Nhân Dương Bá Tiến - 40 Năm Gìn Giữ Tinh Hoa Nghề Đúc Đồng Lộc Nam",
+    summary: "Tìm hiểu về nghệ nhân Dương Bá Tiến - Bàn tay vàng với 40 năm cống hiến cho nghề đúc đồng truyền thống tại làng nghề Ý Yên, Nam Định. Gìn giữ tinh hoa nghề xưa và đưa thương hiệu Lộc Nam vươn tầm quốc gia.",
+    thumbnail: "/images/artisan-foundry.jpg",
+  };
+
+  const artXuong = facilityArticles.find((a) => a.slug === "xuong-san-xuat-duc-dong-loc-nam") || {
+    slug: "xuong-san-xuat-duc-dong-loc-nam",
+    title: "Xưởng Đúc Đồng Lộc Nam - Hệ Thống 7 Phân Xưởng Chuyên Sâu Khép Kín",
+    summary: "Khám phá xưởng đúc đồng Lộc Nam tại Ý Yên Nam Định: 3 trụ sở sản xuất quy mô lớn, 7 phân xưởng chức năng khép kín, gần 100 thợ thủ công lành nghề và công nghệ mạ dát vàng 9999 đỉnh cao.",
+    thumbnail: "/images/xuong_duc.jpg",
+  };
+
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#fbf9f5] text-[#1a1a1a]">
       {/* Breadcrumb Schema for Google */}
@@ -189,7 +215,7 @@ export default async function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Article 1: Duong Ba Tien */}
             <Link
-              href="/tin-tuc/nghe-nhan-duong-ba-tien"
+              href={`/tin-tuc/${artTien.slug}`}
               className="bg-white p-6 rounded-2xl border border-[#e2d5bd] hover:border-[#b8860b] shadow-sm hover:shadow-md transition-all group flex flex-col justify-between"
             >
               <div className="space-y-3">
@@ -197,11 +223,20 @@ export default async function AboutPage() {
                   <Award className="w-4 h-4" />
                   <span>NGHỆ NHÂN ĐÚC ĐỒNG</span>
                 </div>
+                {artTien.thumbnail && (
+                  <div className="aspect-[16/9] w-full rounded-xl overflow-hidden bg-[#FAF6ED] border border-[#e2d5bd]/60">
+                    <img
+                      src={artTien.thumbnail}
+                      alt={artTien.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                )}
                 <h3 className="font-serif font-bold text-base sm:text-lg text-[#0c1825] group-hover:text-[#b8860b] transition-colors leading-snug">
-                  Nghệ Nhân Dương Bá Tiến - 40 Năm Gìn Giữ Tinh Hoa Nghề Đúc Đồng Lộc Nam
+                  {artTien.title}
                 </h3>
                 <p className="text-xs text-[#6b7280] leading-relaxed line-clamp-3">
-                  Tìm hiểu về nghệ nhân Dương Bá Tiến - Bàn tay vàng với 40 năm cống hiến cho nghề đúc đồng truyền thống tại làng nghề Ý Yên, Nam Định. Gìn giữ tinh hoa nghề xưa và đưa thương hiệu Lộc Nam vươn tầm quốc gia.
+                  {artTien.summary}
                 </p>
               </div>
               <div className="mt-4 pt-4 border-t border-[#f0e6d2] flex items-center justify-between text-xs font-bold text-[#b8860b]">
@@ -215,7 +250,7 @@ export default async function AboutPage() {
 
             {/* Article 2: Xuong Duc Loc Nam */}
             <Link
-              href="/tin-tuc/xuong-san-xuat-duc-dong-loc-nam"
+              href={`/tin-tuc/${artXuong.slug}`}
               className="bg-white p-6 rounded-2xl border border-[#e2d5bd] hover:border-[#b8860b] shadow-sm hover:shadow-md transition-all group flex flex-col justify-between"
             >
               <div className="space-y-3">
@@ -223,11 +258,20 @@ export default async function AboutPage() {
                   <Factory className="w-4 h-4" />
                   <span>QUY MÔ CƠ SỞ SẢN XUẤT</span>
                 </div>
+                {artXuong.thumbnail && (
+                  <div className="aspect-[16/9] w-full rounded-xl overflow-hidden bg-[#FAF6ED] border border-[#e2d5bd]/60">
+                    <img
+                      src={artXuong.thumbnail}
+                      alt={artXuong.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                )}
                 <h3 className="font-serif font-bold text-base sm:text-lg text-[#0c1825] group-hover:text-[#b8860b] transition-colors leading-snug">
-                  Xưởng Đúc Đồng Lộc Nam - Hệ Thống 7 Phân Xưởng Chuyên Sâu Khép Kín
+                  {artXuong.title}
                 </h3>
                 <p className="text-xs text-[#6b7280] leading-relaxed line-clamp-3">
-                  Khám phá xưởng đúc đồng Lộc Nam tại Ý Yên Nam Định: 3 trụ sở sản xuất quy mô lớn, 7 phân xưởng chức năng khép kín, gần 100 thợ thủ công lành nghề và công nghệ mạ dát vàng 9999 đỉnh cao.
+                  {artXuong.summary}
                 </p>
               </div>
               <div className="mt-4 pt-4 border-t border-[#f0e6d2] flex items-center justify-between text-xs font-bold text-[#b8860b]">

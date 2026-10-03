@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
     }
 
     const actionGroup = searchParams.get("actionGroup")?.trim(); // "LOGIN", "MODIFY", "CLICK"
+    const includeClicks = searchParams.get("includeClicks") === "true";
 
     // 4. Action / Action Group filter
     if (actionGroup && actionGroup !== "ALL") {
@@ -58,6 +59,9 @@ export async function GET(req: NextRequest) {
       }
     } else if (action && action !== "ALL") {
       andConditions.push({ action });
+    } else if (!includeClicks && (!userEmail || userEmail === "ALL")) {
+      // By default in main logs feed, exclude raw micro-clicks to avoid table clutter
+      andConditions.push({ action: { notIn: ["CLICK", "NAVIGATE"] } });
     }
 
     // 5. User filter (must not be jaytran225)
