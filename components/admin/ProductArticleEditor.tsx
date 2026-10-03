@@ -571,6 +571,21 @@ export function ProductArticleEditor({
   const [linkUrl, setLinkUrl] = useState("");
   const [linkNewTab, setLinkNewTab] = useState(true);
   const [savedRange, setSavedRange] = useState<Range | null>(null);
+  const [linkSuccessInfo, setLinkSuccessInfo] = useState<{
+    text: string;
+    url: string;
+    newTab: boolean;
+  } | null>(null);
+
+  // Auto-dismiss link success confirmation after 5 seconds if user does not click
+  useEffect(() => {
+    if (!linkSuccessInfo) return;
+    const timer = setTimeout(() => {
+      setShowLinkModal(false);
+      setLinkSuccessInfo(null);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [linkSuccessInfo]);
 
   // Video modal form state
   const [videoTab, setVideoTab] = useState<"upload" | "gallery" | "link">("upload");
@@ -1100,11 +1115,15 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
     setLinkText(selected);
     setLinkUrl("");
     setLinkNewTab(true);
+    setLinkSuccessInfo(null);
     setShowLinkModal(true);
   };
 
-  const handleInsertLink = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleInsertLink = (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!linkUrl.trim()) {
       toastWarning("Vui lòng nhập đường dẫn liên kết (URL)!", "Thiếu đường dẫn");
       return;
@@ -1119,10 +1138,24 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
       const linkHtml = `<a href="${finalUrl}"${targetAttr} class="text-[#b45309] dark:text-[#d4af37] underline decoration-[#d4af37]/60 hover:text-[#9b6f1e] font-semibold transition-colors">${displayText}</a>`;
 
       if (savedRange) {
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(savedRange);
-        document.execCommand("insertHTML", false, linkHtml);
+        try {
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(savedRange);
+          const executed = document.execCommand("insertHTML", false, linkHtml);
+          if (!executed) {
+            const temp = document.createElement("div");
+            temp.innerHTML = linkHtml;
+            const frag = document.createDocumentFragment();
+            while (temp.firstChild) {
+              frag.appendChild(temp.firstChild);
+            }
+            savedRange.deleteContents();
+            savedRange.insertNode(frag);
+          }
+        } catch (_) {
+          document.execCommand("insertHTML", false, linkHtml);
+        }
       } else {
         document.execCommand("insertHTML", false, linkHtml);
       }
@@ -1144,8 +1177,13 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
       }
     }
 
-    setShowLinkModal(false);
-    toastSuccess(`Đã gắn link cho "${displayText}" thành công!`, "Gắn liên kết");
+    // Hiển thị Popup thông báo thành công trực quan trong modal, không đột ngột out ra
+    setLinkSuccessInfo({
+      text: displayText,
+      url: finalUrl,
+      newTab: linkNewTab,
+    });
+    toastSuccess(`Đã gắn link cho "${displayText}" thành công!`, "Gắn liên kết thành công");
   };
 
   // Fetch gallery videos from database
@@ -2798,125 +2836,231 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
       {/* ------------------------------------------------------------- */}
       {/* MODAL GẮN LIÊN KẾT / ANCHOR LINK */}
       {/* ------------------------------------------------------------- */}
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL GẮN LIÊN KẾT / ANCHOR LINK (KÈM POPUP THÀNH CÔNG)       */}
+      {/* ------------------------------------------------------------- */}
       {showLinkModal && (
         <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-xl bg-[#0c1825] border-2 border-[#d4af37]/60 rounded-2xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-[#1e344d] pb-3">
               <h3 className="font-serif font-bold text-base text-[#d4af37] uppercase tracking-wide flex items-center gap-2">
                 <LinkIcon className="w-5 h-5 text-[#d4af37]" />
-                <span>Chèn Liên Kết / Gắn Link Vào Bài Viết</span>
+                <span>
+                  {linkSuccessInfo
+                    ? "Thông Báo: Đã Chèn Liên Kết Thành Công"
+                    : "Chèn Liên Kết / Gắn Link Vào Bài Viết"}
+                </span>
               </h3>
               <button
                 type="button"
-                onClick={() => setShowLinkModal(false)}
+                onClick={() => {
+                  setShowLinkModal(false);
+                  setLinkSuccessInfo(null);
+                }}
                 className="text-gray-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleInsertLink} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white block uppercase">
-                  Văn Bản Hiển Thị (Từ Khóa Neo / Anchor Text) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={linkText}
-                  onChange={(e) => setLinkText(e.target.value)}
-                  placeholder="Ví dụ: Đúc tượng chân dung bằng đồng mạ vàng"
-                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none"
-                />
-                <span className="text-[11px] text-gray-400 block">
-                  Cụm từ được bôi đậm/gạch chân để người đọc bấm vào chuyển trang.
-                </span>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white block uppercase">
-                  Đường Dẫn Liên Kết (URL Hoặc Đường Dẫn Nội Bộ) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://quatanglocnam.com/... hoặc /san-pham/tuong-dong"
-                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none font-mono"
-                />
-              </div>
-
-              {/* Quick Presets */}
-              <div className="space-y-2 pt-1">
-                <span className="text-[11px] font-bold text-[#d4af37] uppercase tracking-wider block">
-                  ⚡ Gợi Ý Liên Kết Nhanh (Bấm Để Tự Động Điền Link):
-                </span>
-                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                  {quickLinkPresets.map((preset, pIdx) => (
-                    <button
-                      key={pIdx}
-                      type="button"
-                      onClick={() => {
-                        setLinkUrl(preset.url);
-                        if (!linkText.trim()) {
-                          setLinkText(preset.title);
-                        }
-                      }}
-                      className="px-2.5 py-1 rounded-lg bg-[#142339] hover:bg-[#1f375a] border border-[#233a59] hover:border-[#d4af37] text-gray-200 hover:text-[#d4af37] text-[11px] font-medium transition-all text-left flex items-center gap-1.5"
-                    >
-                      <span className="text-[#d4af37] font-bold">🔗</span>
-                      <span>{preset.title}</span>
-                      <span className="text-[10px] text-gray-400 font-mono">({preset.url})</span>
-                    </button>
-                  ))}
+            {linkSuccessInfo ? (
+              /* POPUP THÔNG BÁO THÀNH CÔNG */
+              <div className="py-2 text-center space-y-5 animate-in zoom-in-95 duration-200">
+                <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping opacity-30" />
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/15 border-2 border-emerald-400 flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.35)]">
+                    <CheckCircle2 className="w-9 h-9" />
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="linkNewTabCheck"
-                  checked={linkNewTab}
-                  onChange={(e) => setLinkNewTab(e.target.checked)}
-                  className="rounded border-[#1f2d42] text-[#d4af37] focus:ring-0 focus:ring-offset-0 bg-[#111c2e] cursor-pointer"
-                />
-                <label htmlFor="linkNewTabCheck" className="text-xs text-gray-300 cursor-pointer select-none">
-                  Mở liên kết trong tab mới (khuyến nghị cho trang ngoài hoặc bài viết chi tiết)
-                </label>
-              </div>
-
-              {/* Preview of the link */}
-              {linkUrl && (
-                <div className="p-3 rounded-xl bg-black/40 border border-[#1e344d] space-y-1">
-                  <span className="text-[11px] text-gray-400">Xem trước hiển thị:</span>
+                <div className="space-y-1">
+                  <h4 className="font-serif font-black text-lg sm:text-xl text-[#ffd700] uppercase tracking-wide">
+                    Chèn Liên Kết Vào Bài Viết Thành Công!
+                  </h4>
                   <p className="text-xs text-gray-300">
-                    ...{" "}
-                    <span className="text-[#d4af37] underline decoration-[#d4af37]/70 font-semibold">
-                      {linkText || linkUrl}
-                    </span>{" "}
-                    ...
+                    Từ khóa trong bài viết đã được gắn liên kết trực tiếp và lưu vào nội dung.
                   </p>
                 </div>
-              )}
 
-              <div className="pt-2 flex justify-end gap-2 border-t border-[#1e344d]">
-                <button
-                  type="button"
-                  onClick={() => setShowLinkModal(false)}
-                  className="px-4 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 rounded-xl text-xs font-bold"
-                >
-                  Hủy Bỏ
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-[#d4af37] hover:bg-[#b8860b] text-[#0a111c] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-colors"
-                >
-                  <LinkIcon className="w-4 h-4" />
-                  <span>Chèn Liên Kết Vào Bài Viết</span>
-                </button>
+                {/* Link summary box */}
+                <div className="p-4 rounded-xl bg-[#070e17] border border-[#1e344d] text-left text-xs space-y-2.5 max-w-lg mx-auto shadow-inner">
+                  <div className="flex items-start gap-3">
+                    <span className="text-gray-400 w-32 shrink-0 font-medium">Từ khóa hiển thị:</span>
+                    <span className="font-bold text-[#ffd700] break-words">
+                      {linkSuccessInfo.text}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-gray-400 w-32 shrink-0 font-medium">Đường dẫn liên kết:</span>
+                    <span className="font-mono text-emerald-400 break-all">
+                      {linkSuccessInfo.url}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="text-gray-400 w-32 shrink-0 font-medium">Cửa sổ mở liên kết:</span>
+                    <span className="text-gray-200">
+                      {linkSuccessInfo.newTab ? "Mở trong tab mới (khuyến nghị SEO)" : "Mở trong cùng tab"}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2 pt-2 border-t border-[#1e344d]/70 text-[11px] text-emerald-400 font-semibold">
+                    <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                    <span>Nội dung bài viết đã được cập nhật thành công.</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLinkText("");
+                      setLinkUrl("");
+                      setLinkSuccessInfo(null);
+                    }}
+                    className="px-4 py-2.5 bg-[#142339] hover:bg-[#1d3353] text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-[#233a59]"
+                  >
+                    + Gắn Thêm Liên Kết Khác
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowLinkModal(false);
+                      setLinkSuccessInfo(null);
+                      if (activeTab === "visual" || activeTab === "split") {
+                        visualEditorRef.current?.focus();
+                      } else {
+                        textareaRef.current?.focus();
+                      }
+                    }}
+                    className="px-6 py-2.5 bg-gradient-to-r from-[#dfb755] to-[#b8860b] hover:brightness-110 text-[#070c14] font-serif font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_25px_rgba(223,183,85,0.4)] active:scale-95 transition-all flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Tiếp Tục Soạn Thảo Bài Viết</span>
+                  </button>
+                </div>
               </div>
-            </form>
+            ) : (
+              /* INPUT FORM (using div, NOT form, to prevent outer form collision) */
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-white block uppercase">
+                    Văn Bản Hiển Thị (Từ Khóa Neo / Anchor Text) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={linkText}
+                    onChange={(e) => setLinkText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleInsertLink();
+                      }
+                    }}
+                    placeholder="Ví dụ: Đúc tượng chân dung bằng đồng mạ vàng"
+                    className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none"
+                  />
+                  <span className="text-[11px] text-gray-400 block">
+                    Cụm từ được bôi đậm/gạch chân để người đọc bấm vào chuyển trang.
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-white block uppercase">
+                    Đường Dẫn Liên Kết (URL Hoặc Đường Dẫn Nội Bộ) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleInsertLink();
+                      }
+                    }}
+                    placeholder="https://quatanglocnam.com/... hoặc /san-pham/tuong-dong"
+                    className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none font-mono"
+                  />
+                </div>
+
+                {/* Quick Presets */}
+                <div className="space-y-2 pt-1">
+                  <span className="text-[11px] font-bold text-[#d4af37] uppercase tracking-wider block">
+                    ⚡ Gợi Ý Liên Kết Nhanh (Bấm Để Tự Động Điền Link):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                    {quickLinkPresets.map((preset, pIdx) => (
+                      <button
+                        key={pIdx}
+                        type="button"
+                        onClick={() => {
+                          setLinkUrl(preset.url);
+                          if (!linkText.trim()) {
+                            setLinkText(preset.title);
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-[#142339] hover:bg-[#1f375a] border border-[#233a59] hover:border-[#d4af37] text-gray-200 hover:text-[#d4af37] text-[11px] font-medium transition-all text-left flex items-center gap-1.5"
+                      >
+                        <span className="text-[#d4af37] font-bold">🔗</span>
+                        <span>{preset.title}</span>
+                        <span className="text-[10px] text-gray-400 font-mono">({preset.url})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="linkNewTabCheck"
+                    checked={linkNewTab}
+                    onChange={(e) => setLinkNewTab(e.target.checked)}
+                    className="rounded border-[#1f2d42] text-[#d4af37] focus:ring-0 focus:ring-offset-0 bg-[#111c2e] cursor-pointer"
+                  />
+                  <label htmlFor="linkNewTabCheck" className="text-xs text-gray-300 cursor-pointer select-none">
+                    Mở liên kết trong tab mới (khuyến nghị cho trang ngoài hoặc bài viết chi tiết)
+                  </label>
+                </div>
+
+                {/* Preview of the link */}
+                {linkUrl && (
+                  <div className="p-3 rounded-xl bg-black/40 border border-[#1e344d] space-y-1">
+                    <span className="text-[11px] text-gray-400">Xem trước hiển thị:</span>
+                    <p className="text-xs text-gray-300">
+                      ...{" "}
+                      <span className="text-[#d4af37] underline decoration-[#d4af37]/70 font-semibold">
+                        {linkText || linkUrl}
+                      </span>{" "}
+                      ...
+                    </p>
+                  </div>
+                )}
+
+                <div className="pt-2 flex justify-end gap-2 border-t border-[#1e344d]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowLinkModal(false);
+                      setLinkSuccessInfo(null);
+                    }}
+                    className="px-4 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 rounded-xl text-xs font-bold"
+                  >
+                    Hủy Bỏ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleInsertLink}
+                    className="px-5 py-2 bg-[#d4af37] hover:bg-[#b8860b] text-[#0a111c] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-colors cursor-pointer"
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                    <span>Chèn Liên Kết Vào Bài Viết</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
