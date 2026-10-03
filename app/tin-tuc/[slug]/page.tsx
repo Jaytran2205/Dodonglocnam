@@ -178,6 +178,71 @@ function parseShortcodesInHtml(content: string): string {
   return res;
 }
 
+function renderArticleText(text: string): React.ReactNode {
+  if (!text) return "";
+  const regex = /(\[[^\]]+\]\([^)]+\)|<a\s+[^>]*>[\s\S]*?<\/a>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<u>[\s\S]*?<\/u>|\[color=#[a-fA-F0-9]{3,8}\][\s\S]*?\[\/color\])/g;
+  const parts = text.split(regex).filter(Boolean);
+
+  return parts.map((part, i) => {
+    // Markdown link: [text](url)
+    const mdLink = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (mdLink) {
+      const label = mdLink[1];
+      const url = mdLink[2].trim();
+      const isExternal = url.startsWith("http://") || url.startsWith("https://");
+      return (
+        <a
+          key={i}
+          href={url}
+          target={isExternal ? "_blank" : undefined}
+          rel={isExternal ? "noopener noreferrer" : undefined}
+          className="text-[#b8860b] underline decoration-[#b8860b]/60 hover:text-[#7b1e2b] hover:decoration-[#7b1e2b] font-semibold underline-offset-4 transition-colors inline cursor-pointer"
+        >
+          {renderArticleText(label)}
+        </a>
+      );
+    }
+
+    // HTML link: <a href="url"...>label</a>
+    const htmlLink = part.match(/^<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>$/i);
+    if (htmlLink) {
+      const url = htmlLink[1].trim();
+      const label = htmlLink[2];
+      const isExternal = url.startsWith("http://") || url.startsWith("https://");
+      return (
+        <a
+          key={i}
+          href={url}
+          target={isExternal ? "_blank" : undefined}
+          rel={isExternal ? "noopener noreferrer" : undefined}
+          className="text-[#b8860b] underline decoration-[#b8860b]/60 hover:text-[#7b1e2b] hover:decoration-[#7b1e2b] font-semibold underline-offset-4 transition-colors inline cursor-pointer"
+        >
+          {renderArticleText(label)}
+        </a>
+      );
+    }
+
+    // Bold: **text** or <strong>text</strong>
+    if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("<strong>") && part.endsWith("</strong>"))) {
+      const inner = part.startsWith("**") ? part.slice(2, -2) : part.slice(8, -9);
+      return <strong key={i} className="font-bold text-[#0c1825]">{renderArticleText(inner)}</strong>;
+    }
+
+    // Italic: *text* or <em>text</em>
+    if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("<em>") && part.endsWith("</em>"))) {
+      const inner = part.startsWith("*") ? part.slice(1, -1) : part.slice(4, -5);
+      return <em key={i} className="italic text-[#4b5563]">{renderArticleText(inner)}</em>;
+    }
+
+    // Underline: <u>text</u>
+    if (part.startsWith("<u>") && part.endsWith("</u>")) {
+      return <u key={i} className="underline decoration-[#b8860b]/60 underline-offset-4">{renderArticleText(part.slice(3, -4))}</u>;
+    }
+
+    return part;
+  });
+}
+
 async function getArticle(slug: string): Promise<NormalizedArticle | null> {
   const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
 
@@ -456,7 +521,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
           {/* Article Body */}
           {article.isHtml ? (
             <div
-              className="prose prose-amber max-w-none space-y-4 text-xs sm:text-sm text-[#374151] leading-relaxed [&_h2]:font-serif [&_h2]:font-bold [&_h2]:text-xl [&_h2]:text-[#0c1825] [&_h2]:pt-6 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-[#e2d5bd] [&_h3]:font-serif [&_h3]:font-bold [&_h3]:text-lg [&_h3]:text-[#b8860b] [&_img]:rounded-xl [&_img]:mx-auto [&_img]:border [&_img]:border-[#e2d5bd] [&_ul]:list-disc [&_ul]:pl-5 [&_p]:leading-relaxed"
+              className="prose prose-amber max-w-none space-y-4 text-xs sm:text-sm text-[#374151] leading-relaxed [&_h2]:font-serif [&_h2]:font-bold [&_h2]:text-xl [&_h2]:text-[#0c1825] [&_h2]:pt-6 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-[#e2d5bd] [&_h3]:font-serif [&_h3]:font-bold [&_h3]:text-lg [&_h3]:text-[#b8860b] [&_img]:rounded-xl [&_img]:mx-auto [&_img]:border [&_img]:border-[#e2d5bd] [&_ul]:list-disc [&_ul]:pl-5 [&_p]:leading-relaxed [&_a]:text-[#b8860b] [&_a]:underline [&_a]:decoration-[#b8860b]/60 [&_a]:font-semibold hover:[&_a]:text-[#7b1e2b] hover:[&_a]:decoration-[#7b1e2b] [&_a]:underline-offset-4"
               dangerouslySetInnerHTML={{ __html: article.content as string }}
             />
           ) : Array.isArray(article.content) ? (
@@ -541,7 +606,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                 if (paragraph.startsWith("> ")) {
                   return (
                     <div key={index} className="p-4 my-3 bg-[#fbf9f5] border-l-4 border-[#b8860b] rounded-r-xl text-[#4b5563] text-xs sm:text-sm italic leading-relaxed">
-                      {paragraph.replace("> ", "")}
+                      {renderArticleText(paragraph.replace("> ", ""))}
                     </div>
                   );
                 }
@@ -549,13 +614,13 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                   return (
                     <div key={index} className="flex items-start gap-2 pl-2">
                       <span className="text-[#b8860b] font-bold mt-0.5">•</span>
-                      <span>{paragraph.replace("- ", "")}</span>
+                      <span>{renderArticleText(paragraph.replace("- ", ""))}</span>
                     </div>
                   );
                 }
                 return (
                   <p key={index} className="leading-relaxed">
-                    {paragraph}
+                    {renderArticleText(paragraph)}
                   </p>
                 );
               })}

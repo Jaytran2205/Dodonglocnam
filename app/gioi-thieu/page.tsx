@@ -180,6 +180,14 @@ export default async function AboutPage() {
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
               <Link
+                href="/tin-tuc/nghe-nhan-duong-ba-tien"
+                className="inline-flex items-center gap-2 px-5 py-3 bg-[#111c2e] hover:bg-[#1a2b47] text-[#d4af37] font-serif font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-sm border border-[#d4af37]/40"
+              >
+                <BookOpen className="w-4 h-4 text-[#d4af37]" />
+                <span>ĐỌC BÀI VIẾT NGHỆ NHÂN</span>
+              </Link>
+
+              <Link
                 href="/san-pham"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#b8860b] hover:bg-[#9b6f1e] text-white font-serif font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-sm"
               >

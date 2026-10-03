@@ -101,10 +101,18 @@ export function ArtisanSection() {
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
               <Link
-                href="/gioi-thieu"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#7B1E2B] hover:bg-[#611722] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors shadow-sm"
+                href="/tin-tuc/nghe-nhan-duong-ba-tien"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#8B6B38] hover:bg-[#6E542C] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors shadow-sm"
               >
-                <span>Tìm Hiểu Về Xưởng Sản Xuất</span>
+                <span>Câu Chuyện Nghệ Nhân</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+
+              <Link
+                href="/gioi-thieu"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#7B1E2B] hover:bg-[#611722] text-white text-xs font-bold uppercase tracking-wider rounded-sm transition-colors shadow-sm"
+              >
+                <span>Hệ Thống Xưởng Sản Xuất</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
 

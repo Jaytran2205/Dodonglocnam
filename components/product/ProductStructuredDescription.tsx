@@ -158,11 +158,49 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
 
 // Inline Formatter supporting bold, italic, colors, underlines
 export function renderFormattedInline(text: string): React.ReactNode {
-  const regex = /(\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/color\]|\[(gold|bronze|jade|sky|red|white)\][\s\S]*?\[\/\2\]|<span style="color:\s*([^"]+)">[\s\S]*?<\/span>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|<b>[\s\S]*?<\/b>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<i>[\s\S]*?<\/i>|<u>[\s\S]*?<\/u>|~~[\s\S]*?~~|<s>[\s\S]*?<\/s>|<del>[\s\S]*?<\/del>)/g;
+  const regex = /(\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/color\]|\[(gold|bronze|jade|sky|red|white)\][\s\S]*?\[\/\2\]|<span style="color:\s*([^"]+)">[\s\S]*?<\/span>|\[[^\]]+\]\([^)]+\)|<a\s+[^>]*>[\s\S]*?<\/a>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|<b>[\s\S]*?<\/b>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<i>[\s\S]*?<\/i>|<u>[\s\S]*?<\/u>|~~[\s\S]*?~~|<s>[\s\S]*?<\/s>|<del>[\s\S]*?<\/del>)/g;
 
   const parts = text.split(regex).filter(Boolean);
 
   return parts.map((part, i) => {
+    // Markdown link: [text](url)
+    const mdLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (mdLinkMatch) {
+      const label = mdLinkMatch[1];
+      const url = mdLinkMatch[2].trim();
+      const isExternal = url.startsWith("http://") || url.startsWith("https://");
+      return (
+        <a
+          key={i}
+          href={url}
+          target={isExternal ? "_blank" : undefined}
+          rel={isExternal ? "noopener noreferrer" : undefined}
+          className="text-[#ffd700] hover:text-[#ffe57f] underline decoration-[#ffd700]/70 hover:decoration-[#ffe57f] underline-offset-4 font-semibold transition-all inline cursor-pointer"
+        >
+          {renderFormattedInline(label)}
+        </a>
+      );
+    }
+
+    // HTML link: <a href="url"...>label</a>
+    const htmlLinkMatch = part.match(/^<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>$/i);
+    if (htmlLinkMatch) {
+      const url = htmlLinkMatch[1].trim();
+      const label = htmlLinkMatch[2];
+      const isExternal = url.startsWith("http://") || url.startsWith("https://");
+      return (
+        <a
+          key={i}
+          href={url}
+          target={isExternal ? "_blank" : undefined}
+          rel={isExternal ? "noopener noreferrer" : undefined}
+          className="text-[#ffd700] hover:text-[#ffe57f] underline decoration-[#ffd700]/70 hover:decoration-[#ffe57f] underline-offset-4 font-semibold transition-all inline cursor-pointer"
+        >
+          {renderFormattedInline(label)}
+        </a>
+      );
+    }
+
     // Custom color tag: [color=#ffd700]content[/color]
     const colorMatch = part.match(/^\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/color\]$/i);
     if (colorMatch) {

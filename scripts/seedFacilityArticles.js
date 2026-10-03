@@ -10,7 +10,7 @@ const art1 = {
   thumbnail: "/images/artisan-foundry.jpg",
   tags: "nghệ nhân đúc đồng, dương bá tiến, nghệ nhân bàn tay vàng, đúc đồng lộc nam, làng nghề ý yên",
   isPublished: true,
-  content: `Giữa cái nôi của làng nghề đúc đồng Vạn Điểm – Ý Yên, Nam Định với lịch sử hơn 900 năm hưng thịnh, cái tên Nghệ nhân Dương Bá Tiến – người sáng lập Công ty TNHH Cơ Khí Đúc Lộc Nam đã trở thành biểu tượng cho sự bền bỉ, tài hoa và lòng tận tụy gìn giữ ngọn lửa nghề truyền thống. Với hơn bốn thập kỷ miệt mài bên khuôn đất, lò nung, người nghệ nhân mang danh hiệu 'Bàn Tay Vàng' không chỉ kế thừa tinh hoa của tiền nhân mà còn nâng tầm từng thỏi đồng thô ráp trở thành những kiệt tác đồ thờ, tượng đồng và tranh đồng mỹ nghệ mang hồn cốt dân tộc, vang danh khắp mọi miền Tổ quốc và vươn ra bạn bè quốc tế.
+  content: `Giữa cái nôi của làng nghề đúc đồng Vạn Điểm – Ý Yên, Nam Định với lịch sử hơn 900 năm hưng thịnh, cái tên Nghệ nhân Dương Bá Tiến – người sáng lập [Công ty TNHH Cơ Khí Đúc Lộc Nam](/gioi-thieu) đã trở thành biểu tượng cho sự bền bỉ, tài hoa và lòng tận tụy gìn giữ ngọn lửa nghề truyền thống. Với hơn bốn thập kỷ miệt mài bên khuôn đất, lò nung, người nghệ nhân mang danh hiệu 'Bàn Tay Vàng' không chỉ kế thừa tinh hoa của tiền nhân mà còn nâng tầm từng thỏi đồng thô ráp trở thành những kiệt tác đồ thờ, tượng đồng và tranh đồng mỹ nghệ mang hồn cốt dân tộc, vang danh khắp mọi miền Tổ quốc và vươn ra bạn bè quốc tế.
 
 ## Hành Trình 40 Năm Cống Hiến Cho Nghề Đúc Đồng
 
@@ -20,7 +20,7 @@ Những ngày đầu học nghề là chuỗi ngày gian nan thử thách bản 
 
 ![Bằng chứng nhận hoàn thành khóa đào tạo thợ cả điêu khắc thủ công mỹ nghệ quốc tế AusAID/HASMEA trao tặng Dương Bá Tiến](/images/locnam_real/chung-chi-dao-tao-dieu-khac-duong-ba-tien.png)
 
-Hơn 40 năm lao động sáng tạo không ngơi nghỉ, nghệ nhân Dương Bá Tiến đã đưa tinh hoa nghề cổ truyền bước qua thăng trầm thời đại, khẳng định chỗ đứng vững chắc của Đúc đồng Lộc Nam trên bản đồ thủ công mỹ nghệ Việt Nam.
+Hơn 40 năm lao động sáng tạo không ngơi nghỉ, nghệ nhân Dương Bá Tiến đã đưa tinh hoa nghề cổ truyền bước qua thăng trầm thời đại, khẳng định chỗ đứng vững chắc của Đúc đồng Lộc Nam trên bản đồ thủ công mỹ nghệ Việt Nam. Quý khách có thể tìm hiểu thêm về [Quy Mô Hệ Thống 7 Phân Xưởng Sản Xuất Khép Kín Của Lộc Nam](/tin-tuc/xuong-san-xuat-duc-dong-loc-nam) để thấy rõ năng lực chế tác vượt bậc.
 
 ## Danh Hiệu 'Nghệ Nhân Bàn Tay Vàng' - Niềm Tự Hào Của Làng Nghề
 
@@ -38,7 +38,7 @@ Sự tận tụy chí công vô tư và trình độ kỹ nghệ xuất sắc c�
 
 ## Công Ty TNHH Cơ Khí Đúc Lộc Nam - Nơi Hội Tụ Tinh Hoa
 
-Từ nền tảng xưởng đúc gia truyền, nghệ nhân Dương Bá Tiến đã chính thức thành lập Công ty TNHH Cơ Khí Đúc Lộc Nam, tạo nên bước ngoặt chuyển mình mạnh mẽ từ mô hình sản xuất nhỏ lẻ sang quy mô doanh nghiệp chuyên nghiệp và bài bản.
+Từ nền tảng xưởng đúc gia truyền, nghệ nhân Dương Bá Tiến đã chính thức thành lập [Công Ty TNHH Cơ Khí Đúc Lộc Nam](/gioi-thieu), tạo nên bước ngoặt chuyển mình mạnh mẽ từ mô hình sản xuất nhỏ lẻ sang quy mô doanh nghiệp chuyên nghiệp và bài bản.
 
 Lộc Nam quy tụ hệ thống nhà xưởng sản xuất quy mô lớn tại Ý Yên, được trang bị đầy đủ từ hệ thống lò nấu đồng dung tích lớn, khu tạo khuôn chuẩn chỉ cho tới phòng mạ – thếp vàng khép kín. Dưới sự dẫn dắt trực tiếp của nghệ nhân Dương Bá Tiến, công ty quy tụ đội ngũ gần 100 nghệ nhân và thợ thủ công lành nghề bậc cao.
 
@@ -47,9 +47,10 @@ Mọi sản phẩm xuất xưởng đều tuân thủ nghiêm ngặt quy trình 
 ## Sản Phẩm Đồ Đồng Lộc Nam - Tiếng Vang Khắp Cả Nước
 
 Trải qua nhiều thập kỷ khẳng định thương hiệu, các sản phẩm của Lộc Nam đã hiện diện trang trọng trong hàng vạn gia đình, đền miếu, từ đường và các công trình văn hóa tâm linh trọng điểm:
-- Đồ thờ bằng đồng cao cấp: Bộ tam sự, ngũ sự, đỉnh đồng, hạc ngự long quy, bát hương, mâm bồng đúc bằng đồng đỏ, đồng vàng thanh khiết; khảm tam khí, khảm ngũ sắc tinh xảo với độ bền truyền đời.
-- Tượng đồng mỹ thuật & danh nhân: Tượng Chủ tịch Hồ Chí Minh, tượng Đức Thánh Trần, tượng Phật Thích Ca, Quan Âm, tượng chân dung người thật đạt độ thần thái truyền thần sống động trên 95%.
-- Tranh đồng & Trống đồng phong thủy: Tranh Mã Đáo Thành Công, Thuận Buồm Xuôi Gió, Trống đồng Đông Sơn, Ngọc Lũ dát vàng 24K sang trọng, tượng trưng cho vượng khí và phú quý.
+- [Đồ thờ bằng đồng cao cấp](/san-pham/do-tho-cung): [Bộ tam sự, ngũ sự đỉnh đồng](/san-pham/do-tho-cung), [đỉnh đồng đỏ khảm ngũ sắc](/san-pham/do-tho-cung/dinh-dong), hạc ngự long quy, bát hương, mâm bồng đúc bằng đồng đỏ, đồng vàng thanh khiết với độ bền truyền đời.
+- [Tượng đồng mỹ thuật & danh nhân](/san-pham/tuong-dong): Tượng Chủ tịch Hồ Chí Minh, tượng Đức Thánh Trần, tượng Phật Thích Ca, Quan Âm; đặc biệt dịch vụ [Đúc tượng chân dung bằng đồng mạ vàng](/san-pham/tuong-dong) đạt độ thần thái truyền thần sống động trên 95%.
+- [Tranh đồng & Trống đồng phong thủy](/san-pham/trong-dong): Tranh Mã Đáo Thành Công, Thuận Buồm Xuôi Gió, [Trống đồng Đông Sơn & Ngọc Lũ](/san-pham/trong-dong) dát vàng 24K sang trọng, tượng trưng cho vượng khí và phú quý.
+- [Quà tặng bằng đồng đối ngoại](/qua-tang): Biểu trưng trống đồng mạ vàng, tranh chữ tri ân mạ vàng 24K làm quà tặng lưu niệm cao cấp cho doanh nghiệp và cơ quan nhà nước.
 
 Mỗi sản phẩm mang thương hiệu Lộc Nam luôn khẳng định uy tín bằng ba yếu tố cốt lõi: Đồng nguyên chất không pha tạp - Hoa văn chạm khắc thủ công sắc sảo - Bảo hành độ bền trọn đời. Nhờ đó, sản phẩm không chỉ được săn đón tại Hà Nội, TP. Hồ Chí Minh, Đà Nẵng mà còn được kiều bào tại Mỹ, Pháp, Úc, Nhật Bản trân trọng đặt hàng mang ra nước ngoài.
 
@@ -81,13 +82,13 @@ const art2 = {
   thumbnail: "/images/xuong_duc.jpg",
   tags: "xưởng đúc đồng, sản xuất đồ đồng, xưởng đồng lộc nam, đúc đồng trực tiếp, quy trình đúc đồng, mạ vàng 9999, thợ đúc đồng, xưởng đồng nam định, đúc đồng ý yên",
   isPublished: true,
-  content: `Trong bối cảnh thị trường thủ công mỹ nghệ xuất hiện nhiều đơn vị thương mại trung gian phân phối hàng gia công trôi nổi, Xưởng đúc đồng Lộc Nam tự hào khẳng định vị thế xưởng sản xuất trực tiếp hàng đầu tại làng nghề truyền thống Ý Yên, Nam Định. Với hệ thống 3 cơ sở sản xuất quy mô bề thế, đội ngũ gần 100 công nhân viên kỹ thuật cao và dây chuyền 7 phân xưởng chức năng riêng biệt, Lộc Nam tự chủ 100% quy trình sản xuất từ khâu đắp mẫu đất sét ban đầu đến khi xuất xưởng những tuyệt tác mạ vàng 9999 hoàn mỹ.
+  content: `Trong bối cảnh thị trường thủ công mỹ nghệ xuất hiện nhiều đơn vị thương mại trung gian phân phối hàng gia công trôi nổi, Xưởng đúc đồng Lộc Nam tự hào khẳng định vị thế xưởng sản xuất trực tiếp hàng đầu tại làng nghề truyền thống Ý Yên, Nam Định. Dưới sự sáng lập và dẫn dắt tài hoa của [Nghệ Nhân Dương Bá Tiến - Bàn Tay Vàng 40 Năm Nghề](/tin-tuc/nghe-nhan-duong-ba-tien), Lộc Nam sở hữu hệ thống 3 cơ sở sản xuất quy mô bề thế, đội ngũ gần 100 công nhân viên kỹ thuật cao và dây chuyền 7 phân xưởng chức năng riêng biệt, tự chủ 100% quy trình sản xuất từ khâu đắp mẫu đất sét ban đầu đến khi xuất xưởng những tuyệt tác mạ vàng 9999 hoàn mỹ.
 
 ![Toàn cảnh không gian sản xuất quy mô lớn tại hệ thống xưởng đúc đồng Lộc Nam Ý Yên Nam Định](/images/xuong_duc.jpg)
 
 ## Quy Mô Xưởng Sản Xuất Hiện Đại Tại Cái Nôi Ý Yên
 
-Tọa lạc tại vùng lõi của làng nghề đúc đồng nức tiếng Nam Định, cơ ngơi sản xuất của Công ty TNHH Cơ Khí Đúc Lộc Nam được đầu tư bài bản trên diện tích hàng trăm mét vuông, bao gồm 3 trụ sở xưởng sản xuất đồng bộ và hệ thống cửa hàng showroom trưng bày sản phẩm khang trang.
+Tọa lạc tại vùng lõi của làng nghề đúc đồng nức tiếng Nam Định, cơ ngơi sản xuất của [Công ty TNHH Cơ Khí Đúc Lộc Nam](/gioi-thieu) được đầu tư bài bản trên diện tích hàng trăm mét vuông, bao gồm 3 trụ sở xưởng sản xuất đồng bộ và hệ thống cửa hàng showroom trưng bày sản phẩm khang trang.
 
 Xưởng được trang bị hệ thống giàn cẩu trục chịu tải hàng chục tấn, các cụm lò luyện đồng công suất lớn, máy nén khí, máy cắt Plasma cùng hệ thống xử lý khói bụi đảm bảo an toàn lao động và bảo vệ môi trường làng nghề. Quy mô vững chắc cùng sự quy tụ của gần 100 công nhân viên có tay nghề bậc cao chính là năng lực cốt lõi giúp Lộc Nam sẵn sàng đảm đương những dự án đúc tượng đài vĩ mô hàng chục tấn lẫn các đơn hàng quà tặng doanh nghiệp hàng nghìn sản phẩm theo tiến độ chuẩn xác.
 
@@ -107,28 +108,30 @@ Làm khuôn là khâu then chốt quyết định sự thành bại của mẻ �
 ![Công đoạn rót đồng sôi đỏ rực ở nhiệt độ trên 1200 độ C vào khuôn đúc thủ công](/images/artisan-foundry.jpg)
 
 ### Phân Xưởng 4: Khu Vực Đúc Đồng Công Nghiệp & Khuôn Mẫu Cháy Hiện Đại
-Bên cạnh phương pháp đúc thủ công cho các sản phẩm đơn chiếc, Lộc Nam tiên phong ứng dụng công nghệ đúc khuôn mẫu cháy và máy móc hỗ trợ đúc áp lực cao. Phân xưởng này chuyên trách gia công hàng loạt các dòng sản phẩm quà tặng hội nghị, biểu trưng đại hội, linh vật phong thủy với độ đồng đều kích thước tuyệt đối đến từng milimet, bề mặt mịn màng và năng suất vượt trội.
+Bên cạnh phương pháp đúc thủ công cho các sản phẩm đơn chiếc, Lộc Nam tiên phong ứng dụng công nghệ đúc khuôn mẫu cháy và máy móc hỗ trợ đúc áp lực cao. Phân xưởng này chuyên trách gia công hàng loạt các dòng [quà tặng bằng đồng lưu niệm](/qua-tang), biểu trưng đại hội, linh vật phong thủy với độ đồng đều kích thước tuyệt đối đến từng milimet, bề mặt mịn màng và năng suất vượt trội.
 
 ### Phân Xưởng 5: Khu Vực Gia Công Nguội & Chạm Khảm Tinh Xảo
-Sau khi dỡ khuôn và phá bỏ lớp đất bám ngoài, phôi đồng trần được chuyển về xưởng nguội. Tại đây, những người thợ chạm bậc thầy dùng búa, ve đục chuyên dụng để mài nhẵn bavia thừa, đục rãnh và tiến hành nghệ thuật khảm tam khí (bạc, đồng đỏ, đồng vàng) hoặc khảm ngũ sắc (thêm vàng 9999 và đồng xanh). Từng sợi bạc trắng, chỉ vàng 24K được nạm sâu vào thớ đồng, miết chặt phẳng lì, tạo nên những bức họa đồ lộng lẫy và sống động.
+Sau khi dỡ khuôn và phá bỏ lớp đất bám ngoài, phôi đồng trần được chuyển về xưởng nguội. Tại đây, những người thợ chạm bậc thầy dùng búa, ve đục chuyên dụng để mài nhẵn bavia thừa, đục rãnh và tiến hành nghệ thuật khảm tam khí (bạc, đồng đỏ, đồng vàng) hoặc khảm ngũ sắc (thêm vàng 9999 và đồng xanh). Từng sợi bạc trắng, chỉ vàng 24K được nạm sâu vào thớ đồng, miết chặt phẳng lì, tạo nên những bức họa đồ lộng lẫy và sống động cho các [Bộ đồ thờ bằng đồng ngũ sự](/san-pham/do-tho-cung).
 
 ### Phân Xưởng 6: Khu Vực Hoàn Thiện Bề Mặt & Tạo Màu Cổ Truyền
 Sản phẩm sau khi chạm khắc được đưa vào quy trình đánh bóng cơ học bằng quả phớt nỉ và bột cát chuyên dụng. Tiếp đó, thợ tạo màu sẽ áp dụng các phương pháp hun màu gia truyền để tạo nên những gam màu trầm mặc cổ kính như: màu cánh gián, màu hun đen giả cổ, màu xanh rêu phong ba hoặc màu đồng đỏ nguyên bản. Cuối cùng, toàn bộ bề mặt được phủ 2 lớp sơn bảo vệ 2K bóng mờ cao cấp, chống oxy hóa, ngăn chặn tuyệt đối tình trạng ố xanh do thời tiết nóng ẩm tại Việt Nam.
 
 ### Phân Xưởng 7: Khu Vực Mạ Vàng Điện Phân & Thếp Vàng Quỳ 9999
-Phân xưởng khép kín đạt tiêu chuẩn cao cấp chuyên phục vụ các đơn hàng xa xỉ. Lộc Nam ứng dụng công nghệ mạ vàng điện phân nhúng bể 24K đa lớp giúp vàng bám sâu, bóng mịn không tì vết. Đối với đồ thờ cúng và tượng tâm linh, các nghệ nhân tiến hành dán thếp từng lá vàng quỳ 9999 thủ công truyền thống, mang lại sắc vàng rực rỡ, ánh kim ấm áp và linh khí tôn nghiêm trường tồn cùng thời gian.
+Phân xưởng khép kín đạt tiêu chuẩn cao cấp chuyên phục vụ các đơn hàng xa xỉ. Lộc Nam ứng dụng công nghệ mạ vàng điện phân nhúng bể 24K đa lớp giúp vàng bám sâu, bóng mịn không tì vết. Đối với [Đồ thờ cúng mạ vàng 24K](/san-pham/do-tho-cung) và tượng tâm linh, các nghệ nhân tiến hành dán thếp từng lá vàng quỳ 9999 thủ công truyền thống, mang lại sắc vàng rực rỡ, ánh kim ấm áp và linh khí tôn nghiêm trường tồn cùng thời gian.
 
 ![Sản phẩm đỉnh đồng ngũ sự mạ vàng dát vàng 9999 hoàn thiện sáng bóng lộng lẫy](/images/bo-do-tho-ma-vang.jpg)
 
 ## Đội Ngũ 100 Công Nhân Viên Lành Nghề & Đầy Nhiệt Huyết
 
-Tài sản lớn nhất làm nên uy tín thương hiệu Lộc Nam chính là con người. Xưởng quy tụ gần 100 công nhân viên, trong đó có hơn 20 nghệ nhân kinh nghiệm trên 20 - 30 năm tuổi nghề. Đội ngũ thợ của Lộc Nam được đào tạo bài bản từ cốt cách làng nghề, luôn làm việc với tinh thần tôn kính tâm linh và trách nhiệm cao nhất với từng nét chạm trổ. Sự kết hợp bền chặt giữa thế hệ nghệ nhân gạo cội giàu kinh nghiệm và thế hệ thợ trẻ nhiệt huyết, tinh thông công nghệ đã tạo nên sức mạnh tổng hòa vượt bậc cho xưởng.
+Tài sản lớn nhất làm nên uy tín thương hiệu Lộc Nam chính là con người. Xưởng quy tụ gần 100 công nhân viên, trong đó có hơn 20 nghệ nhân kinh nghiệm trên 20 - 30 năm tuổi nghề dưới sự chỉ đạo của [Nghệ Nhân Bàn Tay Vàng Dương Bá Tiến](/tin-tuc/nghe-nhan-duong-ba-tien). Đội ngũ thợ của Lộc Nam được đào tạo bài bản từ cốt cách làng nghề, luôn làm việc với tinh thần tôn kính tâm linh và trách nhiệm cao nhất với từng nét chạm trổ.
 
-## Máy Móc Thiết Bị Hiện Đại Hỗ Trợ Đắc Lực
-- Hệ thống lò đúc công nghiệp công suất cao, kiểm soát nhiệt độ điện tử chính xác.
-- Máy mài nhẵn, máy đánh bóng bề mặt đa năng giúp bề mặt phôi đồng đạt độ nhẵn mịn lý tưởng.
-- Bể mạ điện phân hiện đại với hệ thống khuấy hóa chất và kiểm soát dòng điện tự động.
-- Thiết bị kiểm tra quang phổ kim loại, bảo đảm tỷ lệ đồng nguyên chất và tuổi vàng đạt chuẩn tuyệt đối trước khi bàn giao.
+## Danh Mục Tác Phẩm Chế Tác Trực Tiếp Tại Xưởng
+- [Đồ thờ bằng đồng cao cấp](/san-pham/do-tho-cung): Bộ ngũ sự, tam sự, đỉnh đồng đỏ khảm tam khí, khảm ngũ sắc.
+- [Tượng đồng & Tượng Phật](/san-pham/tuong-dong): Tượng Thích Ca Mâu Ni, Quan Thế Âm Bồ Tát, tượng danh nhân, tượng chân dung thếp vàng 9999.
+- [Trống đồng Đông Sơn & Ngọc Lũ](/san-pham/trong-dong): Đúc thủ công chuẩn hoa văn di sản văn hóa Việt Nam.
+- [Tranh đồng phong thủy mỹ nghệ](/san-pham/tranh-dong): Tranh Vinh Quy Bái Tổ, Đồng Quê, Bát Mã Truy Phong khảm vàng bạc.
+- [Đại Hồng Chung & Chuông đồng](/san-pham/dai-hong-chung): Đúc chuông chùa đại hồng chung nặng từ vài trăm kg đến hàng chục tấn, âm thanh ngân vang thanh thoát.
+- [Quà tặng đối ngoại & phong thủy](/qua-tang): Tượng linh vật mạ vàng 24K, đĩa đồng lưu niệm chạm khắc theo yêu cầu.
 
 ## Cam Kết Chất Lượng Vàng Từ Đơn Vị Sản Xuất Trực Tiếp
 - Sản xuất trực tiếp tại xưởng: Không qua bất kỳ khâu trung gian thương mại nào, tiết kiệm 15 - 30% chi phí cho khách hàng.
@@ -143,19 +146,22 @@ Tài sản lớn nhất làm nên uy tín thương hiệu Lộc Nam chính là c
 };
 
 async function seed() {
-  console.log("Seeding facility articles into database...");
+  console.log("Seeding facility articles with rich internal links into database...");
   for (const art of [art1, art2]) {
-    const existing = await prisma.article.findUnique({
+    const upserted = await prisma.article.upsert({
       where: { slug: art.slug },
+      update: {
+        title: art.title,
+        summary: art.summary,
+        content: art.content,
+        thumbnail: art.thumbnail,
+        category: art.category,
+        tags: art.tags,
+        isPublished: true,
+      },
+      create: art,
     });
-    if (!existing) {
-      const created = await prisma.article.create({
-        data: art,
-      });
-      console.log(`[CREATED] ${created.title} (id: ${created.id})`);
-    } else {
-      console.log(`[EXISTS] ${existing.title} (id: ${existing.id})`);
-    }
+    console.log(`[UPSERTED] ${upserted.title} (id: ${upserted.id})`);
   }
 }
 

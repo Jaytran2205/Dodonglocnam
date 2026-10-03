@@ -36,6 +36,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useToast } from "@/components/admin/AdminToast";
+import { ProductArticleEditor } from "@/components/admin/ProductArticleEditor";
 
 export default function AdminLandingPageManager() {
   const { toastSuccess, toastError, toastWarning, confirm: showConfirm } = useToast();
@@ -3069,7 +3070,7 @@ export default function AdminLandingPageManager() {
           onClick={() => setEditingArticleModal(null)}
         >
           <div
-            className="bg-[#0c1420] border-2 border-[#d4af37]/60 rounded-3xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col"
+            className="bg-[#0c1420] border-2 border-[#d4af37]/60 rounded-3xl max-w-6xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[94vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -3197,47 +3198,20 @@ export default function AdminLandingPageManager() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-[#d4af37] font-bold text-xs uppercase tracking-wider">
-                    Nội Dung Bài Viết Chi Tiết (Hỗ trợ Markdown & Thẻ Video/Ảnh):
-                  </label>
-                  <div className="flex items-center gap-1.5 text-[11px]">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const sampleHeading = "\n\n## Tiêu Đề Mục Mới\nNội dung chi tiết mục...";
-                        setEditingArticleModal({
-                          ...editingArticleModal,
-                          content: (editingArticleModal.content || "") + sampleHeading,
-                        });
-                      }}
-                      className="px-2 py-0.5 rounded bg-[#1a2638] text-[#d4af37] hover:bg-[#24354e]"
-                    >
-                      + Thêm Mục ##
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const sampleImg = "\n\n![Mô tả hình ảnh](/images/xuong_duc.jpg)\n";
-                        setEditingArticleModal({
-                          ...editingArticleModal,
-                          content: (editingArticleModal.content || "") + sampleImg,
-                        });
-                      }}
-                      className="px-2 py-0.5 rounded bg-[#1a2638] text-cyan-300 hover:bg-[#24354e]"
-                    >
-                      + Thêm Ảnh
-                    </button>
-                  </div>
-                </div>
+                <label className="block text-[#d4af37] font-bold text-xs uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span>Nội Dung Bài Viết Chi Tiết:</span>
+                  <span className="text-[11px] text-gray-400 font-normal">
+                    Hỗ trợ soạn thảo trực quan (WYSIWYG), Gắn Link SEO, Chèn Video/Ảnh & Markdown
+                  </span>
+                </label>
 
-                <textarea
-                  rows={14}
-                  value={editingArticleModal.content || ""}
-                  onChange={(e) => setEditingArticleModal({ ...editingArticleModal, content: e.target.value })}
-                  placeholder="Nhập toàn bộ nội dung bài viết..."
-                  className="w-full p-3.5 bg-[#080e18] border border-[#1f2d42] rounded-xl text-gray-200 text-xs font-mono leading-relaxed focus:outline-none focus:border-[#d4af37]"
-                />
+                <div className="bg-[#080e18] border border-[#1f2d42] rounded-2xl overflow-hidden p-2">
+                  <ProductArticleEditor
+                    value={editingArticleModal.content || ""}
+                    onChange={(val) => setEditingArticleModal({ ...editingArticleModal, content: val })}
+                    productName={editingArticleModal.title || "Bài viết cơ sở"}
+                  />
+                </div>
               </div>
 
               {/* Action Buttons */}

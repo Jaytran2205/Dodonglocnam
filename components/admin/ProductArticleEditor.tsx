@@ -107,6 +107,13 @@ export function markdownToHtml(md: string): string {
     // Strikethrough: ~~text~~
     res = res.replace(/~~([\s\S]*?)~~/g, '<s class="line-through text-slate-400">$1</s>');
 
+    // Links: [anchor text](url) (excluding images ![alt](url) which start with !)
+    res = res.replace(/(^|[^\!])\[([^\]]+)\]\(([^)]+)\)/g, (match, prefix, linkText, url) => {
+      const isExternal = url.startsWith("http://") || url.startsWith("https://");
+      const targetAttr = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+      return `${prefix}<a href="${url}"${targetAttr} class="text-[#b45309] dark:text-[#d4af37] underline decoration-[#d4af37]/60 hover:text-[#9b6f1e] font-semibold transition-colors">${linkText}</a>`;
+    });
+
     return res;
   };
 
@@ -358,6 +365,13 @@ export function htmlToMarkdown(html: string): string {
       return `~~${childrenMd}~~`;
     }
 
+    if (tag === "a") {
+      const href = el.getAttribute("href") || "";
+      const text = childrenMd.trim() || href;
+      if (!href) return text;
+      return `[${text}](${href})`;
+    }
+
     if (tag === "img") {
       const src = el.getAttribute("src") || "";
       const alt = el.getAttribute("alt") || "";
@@ -419,6 +433,11 @@ export function ProductArticleEditor({
   const [showBoxPicker, setShowBoxPicker] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkText, setLinkText] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkNewTab, setLinkNewTab] = useState(true);
+  const [savedRange, setSavedRange] = useState<Range | null>(null);
 
   // Video modal form state
   const [videoTab, setVideoTab] = useState<"upload" | "gallery" | "link">("upload");
@@ -595,6 +614,92 @@ export function ProductArticleEditor({
       insertAtCursor(`\n\n[box=${type}]\n${placeholder}\n[/box]\n\n`);
     }
     setShowBoxPicker(false);
+  };
+
+  // Quick link suggestions for Loc Nam bronze website
+  const quickLinkPresets = [
+    { title: "Trang Chủ", url: "/", category: "Hệ thống" },
+    { title: "Giới Thiệu Cơ Sở Lộc Nam", url: "/gioi-thieu", category: "Giới thiệu" },
+    { title: "Bộ Đồ Thờ Cúng Bằng Đồng", url: "/san-pham/do-tho-cung", category: "Danh mục sản phẩm" },
+    { title: "Đỉnh Đồng Thờ Cúng", url: "/san-pham/do-tho-cung/dinh-dong", category: "Danh mục sản phẩm" },
+    { title: "Tượng Đồng & Tượng Phật", url: "/san-pham/tuong-dong", category: "Danh mục sản phẩm" },
+    { title: "Đúc Tượng Chân Dung Bằng Đồng", url: "/san-pham/tuong-dong/tuong-chan-dung", category: "Danh mục sản phẩm" },
+    { title: "Trống Đồng Đông Sơn & Ngọc Lũ", url: "/san-pham/trong-dong", category: "Danh mục sản phẩm" },
+    { title: "Tranh Đồng Phong Thủy", url: "/san-pham/tranh-dong", category: "Danh mục sản phẩm" },
+    { title: "Đại Hồng Chung & Chuông Đồng", url: "/san-pham/dai-hong-chung", category: "Danh mục sản phẩm" },
+    { title: "Quà Tặng Bằng Đồng Cao Cấp", url: "/qua-tang", category: "Danh mục sản phẩm" },
+    { title: "Cẩm Nang & Tin Tức Đồ Đồng", url: "/tin-tuc", category: "Bài viết" },
+    { title: "Nghệ Nhân Dương Bá Tiến", url: "/tin-tuc/nghe-nhan-duong-ba-tien", category: "Bài viết nghệ nhân" },
+    { title: "Xưởng Đúc Đồng Lộc Nam", url: "/tin-tuc/xuong-san-xuat-duc-dong-loc-nam", category: "Bài viết cơ sở" },
+  ];
+
+  const openLinkModal = () => {
+    let selected = "";
+    if (activeTab === "visual" || activeTab === "split") {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        setSavedRange(range.cloneRange());
+        selected = range.toString().trim();
+      } else {
+        setSavedRange(null);
+      }
+    } else {
+      const textarea = textareaRef.current;
+      if (textarea) {
+        selected = value.substring(textarea.selectionStart, textarea.selectionEnd).trim();
+      }
+    }
+
+    setLinkText(selected);
+    setLinkUrl("");
+    setLinkNewTab(true);
+    setShowLinkModal(true);
+  };
+
+  const handleInsertLink = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!linkUrl.trim()) {
+      toastWarning("Vui lòng nhập đường dẫn liên kết (URL)!", "Thiếu đường dẫn");
+      return;
+    }
+
+    const finalUrl = linkUrl.trim();
+    const displayText = linkText.trim() || finalUrl;
+
+    if (activeTab === "visual" || activeTab === "split") {
+      visualEditorRef.current?.focus();
+      const targetAttr = linkNewTab ? ' target="_blank" rel="noopener noreferrer"' : '';
+      const linkHtml = `<a href="${finalUrl}"${targetAttr} class="text-[#b45309] dark:text-[#d4af37] underline decoration-[#d4af37]/60 hover:text-[#9b6f1e] font-semibold transition-colors">${displayText}</a>`;
+
+      if (savedRange) {
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(savedRange);
+        document.execCommand("insertHTML", false, linkHtml);
+      } else {
+        document.execCommand("insertHTML", false, linkHtml);
+      }
+      handleVisualInput();
+    } else {
+      const mdLink = `[${displayText}](${finalUrl})`;
+      const textarea = textareaRef.current;
+      if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const newValue = value.substring(0, start) + mdLink + value.substring(end);
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start + mdLink.length, start + mdLink.length);
+        }, 10);
+      } else {
+        insertAtCursor(mdLink);
+      }
+    }
+
+    setShowLinkModal(false);
+    toastSuccess(`Đã gắn link cho "${displayText}" thành công!`, "Gắn liên kết");
   };
 
   // Fetch gallery videos from database
@@ -1096,6 +1201,21 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               title="Gạch ngang chữ"
             >
               <Strikethrough className="w-4 h-4" />
+            </button>
+
+            {/* Gắn Link Button */}
+            <button
+              type="button"
+              onClick={openLinkModal}
+              className={`px-2 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all ${
+                showLinkModal
+                  ? "bg-[#d4af37] text-black shadow-md shadow-[#d4af37]/30"
+                  : "text-[#d4af37] hover:bg-[#16253b] hover:text-[#ffd700] border border-[#d4af37]/30"
+              }`}
+              title="Gắn link liên kết (Anchor text / Hyperlink SEO bài viết & sản phẩm)"
+            >
+              <LinkIcon className="w-4 h-4 text-[#d4af37]" />
+              <span className="font-bold">Gắn Link</span>
             </button>
           </div>
 
@@ -1971,6 +2091,131 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL GẮN LIÊN KẾT / ANCHOR LINK */}
+      {/* ------------------------------------------------------------- */}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-[#0c1825] border-2 border-[#d4af37]/60 rounded-2xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[#1e344d] pb-3">
+              <h3 className="font-serif font-bold text-base text-[#d4af37] uppercase tracking-wide flex items-center gap-2">
+                <LinkIcon className="w-5 h-5 text-[#d4af37]" />
+                <span>Chèn Liên Kết / Gắn Link Vào Bài Viết</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleInsertLink} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-white block uppercase">
+                  Văn Bản Hiển Thị (Từ Khóa Neo / Anchor Text) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={linkText}
+                  onChange={(e) => setLinkText(e.target.value)}
+                  placeholder="Ví dụ: Đúc tượng chân dung bằng đồng mạ vàng"
+                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none"
+                />
+                <span className="text-[11px] text-gray-400 block">
+                  Cụm từ được bôi đậm/gạch chân để người đọc bấm vào chuyển trang.
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-white block uppercase">
+                  Đường Dẫn Liên Kết (URL Hoặc Đường Dẫn Nội Bộ) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="https://quatanglocnam.com/... hoặc /san-pham/tuong-dong"
+                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none font-mono"
+                />
+              </div>
+
+              {/* Quick Presets */}
+              <div className="space-y-2 pt-1">
+                <span className="text-[11px] font-bold text-[#d4af37] uppercase tracking-wider block">
+                  ⚡ Gợi Ý Liên Kết Nhanh (Bấm Để Tự Động Điền Link):
+                </span>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                  {quickLinkPresets.map((preset, pIdx) => (
+                    <button
+                      key={pIdx}
+                      type="button"
+                      onClick={() => {
+                        setLinkUrl(preset.url);
+                        if (!linkText.trim()) {
+                          setLinkText(preset.title);
+                        }
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-[#142339] hover:bg-[#1f375a] border border-[#233a59] hover:border-[#d4af37] text-gray-200 hover:text-[#d4af37] text-[11px] font-medium transition-all text-left flex items-center gap-1.5"
+                    >
+                      <span className="text-[#d4af37] font-bold">🔗</span>
+                      <span>{preset.title}</span>
+                      <span className="text-[10px] text-gray-400 font-mono">({preset.url})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="linkNewTabCheck"
+                  checked={linkNewTab}
+                  onChange={(e) => setLinkNewTab(e.target.checked)}
+                  className="rounded border-[#1f2d42] text-[#d4af37] focus:ring-0 focus:ring-offset-0 bg-[#111c2e] cursor-pointer"
+                />
+                <label htmlFor="linkNewTabCheck" className="text-xs text-gray-300 cursor-pointer select-none">
+                  Mở liên kết trong tab mới (khuyến nghị cho trang ngoài hoặc bài viết chi tiết)
+                </label>
+              </div>
+
+              {/* Preview of the link */}
+              {linkUrl && (
+                <div className="p-3 rounded-xl bg-black/40 border border-[#1e344d] space-y-1">
+                  <span className="text-[11px] text-gray-400">Xem trước hiển thị:</span>
+                  <p className="text-xs text-gray-300">
+                    ...{" "}
+                    <span className="text-[#d4af37] underline decoration-[#d4af37]/70 font-semibold">
+                      {linkText || linkUrl}
+                    </span>{" "}
+                    ...
+                  </p>
+                </div>
+              )}
+
+              <div className="pt-2 flex justify-end gap-2 border-t border-[#1e344d]">
+                <button
+                  type="button"
+                  onClick={() => setShowLinkModal(false)}
+                  className="px-4 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 rounded-xl text-xs font-bold"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#d4af37] hover:bg-[#b8860b] text-[#0a111c] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-colors"
+                >
+                  <LinkIcon className="w-4 h-4" />
+                  <span>Chèn Liên Kết Vào Bài Viết</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
