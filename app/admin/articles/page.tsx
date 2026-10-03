@@ -31,6 +31,17 @@ import { useToast } from "@/components/admin/AdminToast";
 // Hierarchical Article Topics / Categories Structure
 const ARTICLE_CATEGORIES_TREE = [
   {
+    name: "GIỚI THIỆU CƠ SỞ & XƯỞNG ĐÚC",
+    slug: "gioi-thieu-co-so",
+    children: [
+      "Lịch sử xưởng đúc đồng Lộc Nam",
+      "Nghệ nhân Dương Bá Tiến & Bàn tay vàng",
+      "Quy mô hệ thống 7 phân xưởng & Showroom",
+      "Quy trình đúc đồng thủ công truyền thống",
+      "Chứng nhận nghệ nhân & Giải thưởng làng nghề",
+    ],
+  },
+  {
     name: "KIẾN THỨC ĐỒ ĐỒNG",
     slug: "kien-thuc-do-dong",
     children: [

@@ -185,3 +185,14 @@ model VideoChunk {
   @@index([createdAt])
 }
 
+model UploadedImage {
+  id        String   @id @default(cuid())
+  filename  String
+  mimeType  String   @default("image/jpeg")
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+

@@ -773,7 +773,7 @@ export default function AdminLandingPageManager() {
           }`}
         >
           <Award className="w-4 h-4" />
-          <span>Nghệ Nhân & Xưởng Đúc</span>
+          <span>Giới Thiệu Cơ Sở & Nghệ Nhân</span>
         </button>
 
         <button
@@ -1759,18 +1759,37 @@ export default function AdminLandingPageManager() {
           </div>
         )}
 
-        {/* TAB: NGHỆ NHÂN & GIỚI THIỆU XƯỞNG */}
+        {/* TAB: NGHỆ NHÂN & GIỚI THIỆU XƯỞNG / CƠ SỞ */}
         {activeTab === "artisan" && (
           <div className="space-y-6 animate-fadeIn">
-            <div className="bg-[#0c1420] border border-[#d4af37]/30 rounded-2xl p-5 sm:p-6 shadow-xl space-y-2">
-              <div className="flex items-center gap-2 text-[#d4af37]">
-                <Award className="w-5 h-5" />
-                <h3 className="font-serif font-bold text-sm uppercase tracking-wide">
-                  Tùy Chỉnh Phần Giới Thiệu Nghệ Nhân & Xưởng Đúc Đồng
-                </h3>
+            <div className="bg-[#0c1420] border border-[#d4af37]/30 rounded-2xl p-5 sm:p-6 shadow-xl space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-2 text-[#d4af37]">
+                  <Award className="w-5 h-5" />
+                  <h3 className="font-serif font-bold text-sm uppercase tracking-wide">
+                    Tùy Chỉnh Giới Thiệu Cơ Sở, Nghệ Nhân & Xưởng Đúc Đồng
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    href="/gioi-thieu"
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#152236] hover:bg-[#1d2f4a] text-[#d4af37] hover:text-white rounded-xl text-xs font-semibold border border-[#d4af37]/30 transition-all shadow-sm"
+                  >
+                    <span>Xem Trang /gioi-thieu</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                  <Link
+                    href="/admin/articles"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#d4af37]/20 hover:bg-[#d4af37]/30 text-[#d4af37] rounded-xl text-xs font-bold border border-[#d4af37]/40 transition-all shadow-sm"
+                  >
+                    <span>Viết Bài Viết Chi Tiết</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
-              <p className="text-[#94a3b8]">
-                Phần giới thiệu câu chuyện nghệ nhân, thương hiệu đúc đồng và chất lượng uy tín xuất hiện trực tiếp trên trang chủ.
+              <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
+                Nội dung và hình ảnh tại đây được hiển thị đồng bộ trên cả <strong className="text-white">Phần Giới Thiệu Trang Chủ</strong> và <strong className="text-white">Trang Về Chúng Tôi (/gioi-thieu)</strong>. Khi thay đổi ảnh đại diện hay nội dung giới thiệu tại đây và bấm Lưu, website sẽ tự động cập nhật ngay lập tức.
               </p>
             </div>
 

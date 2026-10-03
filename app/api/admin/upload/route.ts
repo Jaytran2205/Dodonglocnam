@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
+import prisma from "@/lib/prisma";
 import fs from "fs/promises";
 import path from "path";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const session = await getAdminSession(req);
@@ -53,29 +57,64 @@ export async function POST(req: NextRequest) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    
-    const targetDir = isVideo
-      ? path.join(process.cwd(), "public", "uploads", "videos")
-      : path.join(process.cwd(), "public", "uploads");
-    await fs.mkdir(targetDir, { recursive: true });
 
-    const prefix = isVideo ? "video" : "sp";
-    const safeName = `${prefix}-${Date.now()}-${Math.random().toString(36).charAt(2)}${Math.random().toString(36).slice(2, 6)}${cleanExt}`;
-    const filePath = path.join(targetDir, safeName);
+    const prefix = isVideo ? "video" : "img";
+    const safeName = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${cleanExt}`;
 
-    await fs.writeFile(filePath, buffer);
+    let publicUrl = "";
 
-    const publicUrl = isVideo ? `/uploads/videos/${safeName}` : `/uploads/${safeName}`;
+    if (isImage) {
+      // 1. Store in Database for guaranteed permanence across Vercel serverless deployments
+      const uploadedImg = await prisma.uploadedImage.create({
+        data: {
+          filename: safeName,
+          mimeType: file.type || (cleanExt === ".png" ? "image/png" : cleanExt === ".webp" ? "image/webp" : "image/jpeg"),
+          size: buffer.length,
+          data: buffer,
+        },
+      });
+
+      // 2. Try writing to local disk cache (safe on local dev, quietly skipped on read-only serverless)
+      try {
+        const targetDir = path.join(process.cwd(), "public", "uploads");
+        await fs.mkdir(targetDir, { recursive: true });
+        await fs.writeFile(path.join(targetDir, `img-${uploadedImg.id}${cleanExt}`), buffer);
+      } catch {
+        // Ignored on read-only serverless platforms like Vercel
+      }
+
+      publicUrl = `/api/images/${uploadedImg.id}/${safeName}`;
+    } else {
+      // Store video in Database
+      const uploadedVid = await prisma.uploadedVideo.create({
+        data: {
+          filename: safeName,
+          mimeType: file.type || "video/mp4",
+          size: buffer.length,
+          data: buffer,
+        },
+      });
+
+      try {
+        const targetDir = path.join(process.cwd(), "public", "uploads", "videos");
+        await fs.mkdir(targetDir, { recursive: true });
+        await fs.writeFile(path.join(targetDir, `video-${uploadedVid.id}${cleanExt}`), buffer);
+      } catch {
+        // Ignored on read-only serverless platforms
+      }
+
+      publicUrl = `/api/videos/${uploadedVid.id}/${safeName}`;
+    }
 
     return NextResponse.json({
       success: true,
       url: publicUrl,
-      message: "Tải ảnh thành công!"
+      message: "Tải lên thành công!"
     });
   } catch (error: any) {
     console.error("Upload Error:", error);
     return NextResponse.json(
-      { success: false, message: "Lỗi tải ảnh lên máy chủ" },
+      { success: false, message: `Lỗi tải tệp lên máy chủ: ${error?.message || "Không xác định"}` },
       { status: 500 }
     );
   }
