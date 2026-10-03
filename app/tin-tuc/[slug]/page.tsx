@@ -180,11 +180,58 @@ function parseShortcodesInHtml(content: string): string {
 
 function renderArticleText(text: string): React.ReactNode {
   if (!text) return "";
-  const regex = /(\[[^\]]+\]\([^)]+\)|<a\s+[^>]*>[\s\S]*?<\/a>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<u>[\s\S]*?<\/u>|\[color=#[a-fA-F0-9]{3,8}\][\s\S]*?\[\/color\])/g;
+  const regex = /(<mark(?:\s+style=["'][^"']*["'])?>[\s\S]*?<\/mark>|\[highlight=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/highlight\]|==[\s\S]*?==|\[size=\d+(?:px)?\][\s\S]*?\[\/size\]|<span\s+style=["'][^"']*font-size:\s*\d+px;?[^"']*["']>[\s\S]*?<\/span>|\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/color\]|\[(gold|bronze|jade|sky|red|white)\][\s\S]*?\[\/\2\]|<span\s+style=["'][^"']*color:\s*[^"']+["']>[\s\S]*?<\/span>|\[[^\]]+\]\([^)]+\)|<a\s+[^>]*>[\s\S]*?<\/a>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|<b>[\s\S]*?<\/b>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<i>[\s\S]*?<\/i>|<u>[\s\S]*?<\/u>|~~[\s\S]*?~~|<s>[\s\S]*?<\/s>|<del>[\s\S]*?<\/del>)/gi;
   const parts = text.split(regex).filter(Boolean);
 
   return parts.map((part, i) => {
-    // Markdown link: [text](url)
+    // 1. Highlight / Bút dạ quang: [highlight=#hex]text[/highlight]
+    const hlMatch = part.match(/^\[highlight=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/highlight\]$/i);
+    if (hlMatch) {
+      return (
+        <mark
+          key={i}
+          style={{ backgroundColor: hlMatch[1], color: "#0f172a" }}
+          className="px-1.5 py-0.5 rounded font-semibold inline"
+        >
+          {renderArticleText(hlMatch[2])}
+        </mark>
+      );
+    }
+
+    // 2. Highlight shortcut: ==text==
+    if (part.startsWith("==") && part.endsWith("==") && part.length >= 4) {
+      return (
+        <mark
+          key={i}
+          className="bg-[#fef08a] text-[#0f172a] px-1.5 py-0.5 rounded font-semibold inline"
+        >
+          {renderArticleText(part.slice(2, -2))}
+        </mark>
+      );
+    }
+
+    // 3. Font size tag: [size=18]text[/size]
+    const sizeMatch = part.match(/^\[size=(\d+)(?:px)?\]([\s\S]*?)\[\/size\]$/i);
+    if (sizeMatch) {
+      const px = parseInt(sizeMatch[1]);
+      return (
+        <span key={i} style={{ fontSize: `${px}px` }} className="inline">
+          {renderArticleText(sizeMatch[2])}
+        </span>
+      );
+    }
+
+    // 4. Color tag: [color=#hex]text[/color]
+    const colorMatch = part.match(/^\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/color\]$/i);
+    if (colorMatch) {
+      return (
+        <span key={i} style={{ color: colorMatch[1] }} className="font-semibold inline">
+          {renderArticleText(colorMatch[2])}
+        </span>
+      );
+    }
+
+    // 5. Markdown link: [text](url)
     const mdLink = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (mdLink) {
       const label = mdLink[1];
@@ -203,7 +250,7 @@ function renderArticleText(text: string): React.ReactNode {
       );
     }
 
-    // HTML link: <a href="url"...>label</a>
+    // 6. HTML link: <a href="url"...>label</a>
     const htmlLink = part.match(/^<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>$/i);
     if (htmlLink) {
       const url = htmlLink[1].trim();
@@ -222,25 +269,124 @@ function renderArticleText(text: string): React.ReactNode {
       );
     }
 
-    // Bold: **text** or <strong>text</strong>
-    if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("<strong>") && part.endsWith("</strong>"))) {
-      const inner = part.startsWith("**") ? part.slice(2, -2) : part.slice(8, -9);
+    // 7. Bold: **text** or <strong>text</strong> or <b>text</b>
+    if (
+      (part.startsWith("**") && part.endsWith("**")) ||
+      (part.startsWith("<strong>") && part.endsWith("</strong>")) ||
+      (part.startsWith("<b>") && part.endsWith("</b>"))
+    ) {
+      const inner = part.startsWith("**")
+        ? part.slice(2, -2)
+        : part.startsWith("<strong>")
+        ? part.slice(8, -9)
+        : part.slice(3, -4);
       return <strong key={i} className="font-bold text-[#0c1825]">{renderArticleText(inner)}</strong>;
     }
 
-    // Italic: *text* or <em>text</em>
-    if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("<em>") && part.endsWith("</em>"))) {
-      const inner = part.startsWith("*") ? part.slice(1, -1) : part.slice(4, -5);
+    // 8. Italic: *text* or <em>text</em> or <i>text</i>
+    if (
+      (part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) ||
+      (part.startsWith("<em>") && part.endsWith("</em>")) ||
+      (part.startsWith("<i>") && part.endsWith("</i>"))
+    ) {
+      const inner = part.startsWith("*")
+        ? part.slice(1, -1)
+        : part.startsWith("<em>")
+        ? part.slice(4, -5)
+        : part.slice(3, -4);
       return <em key={i} className="italic text-[#4b5563]">{renderArticleText(inner)}</em>;
     }
 
-    // Underline: <u>text</u>
+    // 9. Underline: <u>text</u>
     if (part.startsWith("<u>") && part.endsWith("</u>")) {
       return <u key={i} className="underline decoration-[#b8860b]/60 underline-offset-4">{renderArticleText(part.slice(3, -4))}</u>;
     }
 
+    // 10. Strikethrough: ~~text~~
+    if (part.startsWith("~~") && part.endsWith("~~")) {
+      return <s key={i} className="line-through text-gray-400">{renderArticleText(part.slice(2, -2))}</s>;
+    }
+
     return part;
   });
+}
+
+// Robust block parser that prevents headings or list items from merging into body paragraphs
+function parseArticleMarkdownToBlocks(raw: string): string[] {
+  if (!raw) return [];
+  const text = raw.replace(/\r\n/g, "\n");
+  const lines = text.split("\n");
+  const blocks: string[] = [];
+  let currentParagraphLines: string[] = [];
+
+  const flushParagraph = () => {
+    if (currentParagraphLines.length > 0) {
+      blocks.push(currentParagraphLines.join(" ").trim());
+      currentParagraphLines = [];
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) {
+      flushParagraph();
+      continue;
+    }
+
+    // Headings (##, ###, ####, #)
+    if (line.startsWith("#")) {
+      flushParagraph();
+      blocks.push(line);
+      continue;
+    }
+
+    // Images (![alt](url))
+    if (line.startsWith("![") && line.includes("](") && line.endsWith(")")) {
+      flushParagraph();
+      blocks.push(line);
+      continue;
+    }
+
+    // Video tags or raw video URLs
+    if (
+      line.startsWith("[video") ||
+      line.startsWith("/api/videos/") ||
+      line.startsWith("/uploads/videos/") ||
+      line.startsWith("https://www.youtube.com") ||
+      line.startsWith("https://youtu.be")
+    ) {
+      flushParagraph();
+      blocks.push(line);
+      continue;
+    }
+
+    // Callout Box tags: [box=gold]...[/box]
+    if (line.startsWith("[box=") || line === "[/box]") {
+      flushParagraph();
+      blocks.push(line);
+      continue;
+    }
+
+    // Quotes (> text)
+    if (line.startsWith("> ")) {
+      flushParagraph();
+      blocks.push(line);
+      continue;
+    }
+
+    // Bullet list items (- item, * item)
+    if (line.startsWith("- ") || line.startsWith("* ")) {
+      flushParagraph();
+      blocks.push(line);
+      continue;
+    }
+
+    // Normal paragraph line
+    currentParagraphLines.push(line);
+  }
+
+  flushParagraph();
+  return blocks;
 }
 
 async function getArticle(slug: string): Promise<NormalizedArticle | null> {
@@ -265,17 +411,7 @@ async function getArticle(slug: string): Promise<NormalizedArticle | null> {
       if (isHtml) {
         contentData = parseShortcodesInHtml(rawContent);
       } else {
-        const normalized = rawContent.replace(/(\[video[\s\S]*?\[\/video\])/gi, "\n\n$1\n\n");
-        if (normalized.startsWith("[") && normalized.endsWith("]")) {
-          try {
-            const parsed = JSON.parse(normalized);
-            if (Array.isArray(parsed)) contentData = parsed;
-          } catch {
-            contentData = normalized.split(/\r?\n\r?\n/).map((s) => s.trim()).filter(Boolean);
-          }
-        } else {
-          contentData = normalized.split(/\r?\n\r?\n/).map((s) => s.trim()).filter(Boolean);
-        }
+        contentData = parseArticleMarkdownToBlocks(rawContent);
       }
 
       let keywords: string[] = [];
@@ -530,21 +666,21 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                 if (paragraph.startsWith("## ")) {
                   return (
                     <h2 key={index} className="font-serif font-bold text-lg sm:text-xl text-[#0c1825] pt-6 pb-2 border-b border-[#e2d5bd] text-primary">
-                      {paragraph.replace("## ", "")}
+                      {renderArticleText(paragraph.replace("## ", ""))}
                     </h2>
                   );
                 }
                 if (paragraph.startsWith("### ")) {
                   return (
                     <h3 key={index} className="font-serif font-bold text-base sm:text-lg text-[#b8860b] pt-4 pb-1">
-                      {paragraph.replace("### ", "")}
+                      {renderArticleText(paragraph.replace("### ", ""))}
                     </h3>
                   );
                 }
                 if (paragraph.startsWith("#### ")) {
                   return (
                     <h4 key={index} className="font-bold text-sm sm:text-base text-[#0c1825] pt-2">
-                      {paragraph.replace("#### ", "")}
+                      {renderArticleText(paragraph.replace("#### ", ""))}
                     </h4>
                   );
                 }
@@ -610,11 +746,28 @@ export default async function ArticleDetailPage({ params }: PageProps) {
                     </div>
                   );
                 }
-                if (paragraph.startsWith("- ")) {
+                if (paragraph.startsWith("- ") || paragraph.startsWith("* ")) {
+                  const itemText = paragraph.replace(/^[-*]\s+/, "");
                   return (
-                    <div key={index} className="flex items-start gap-2 pl-2">
-                      <span className="text-[#b8860b] font-bold mt-0.5">•</span>
-                      <span>{renderArticleText(paragraph.replace("- ", ""))}</span>
+                    <div key={index} className="flex items-start gap-2.5 pl-2 my-1">
+                      <span className="text-[#b8860b] font-bold mt-1 text-sm leading-none">•</span>
+                      <span className="leading-relaxed">{renderArticleText(itemText)}</span>
+                    </div>
+                  );
+                }
+                const boxMatch = paragraph.match(/^\[box=([a-zA-Z0-9_-]+)\]([\s\S]*?)\[\/box\]$/i);
+                if (boxMatch) {
+                  const boxType = boxMatch[1].toLowerCase();
+                  const boxColorMap: Record<string, string> = {
+                    gold: "bg-amber-50/90 border-amber-400 text-amber-950",
+                    jade: "bg-emerald-50/90 border-emerald-400 text-emerald-950",
+                    red: "bg-rose-50/90 border-rose-400 text-rose-950",
+                    blue: "bg-sky-50/90 border-sky-400 text-sky-950",
+                  };
+                  const cls = boxColorMap[boxType] || "bg-amber-50/90 border-amber-400 text-amber-950";
+                  return (
+                    <div key={index} className={`my-4 p-4 rounded-xl border-2 ${cls} font-medium shadow-sm leading-relaxed`}>
+                      {renderArticleText(boxMatch[2])}
                     </div>
                   );
                 }

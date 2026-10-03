@@ -609,15 +609,58 @@ export function ProductArticleEditor({
   // Custom Color State
   const [customHexColor, setCustomHexColor] = useState("#b45309");
 
-  // DOM Refs
+  // DOM Refs & Performance Optimization Refs
   const visualEditorRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isUpdatingFromInternalRef = useRef(false);
+  const lastEmittedMarkdownRef = useRef<string>(value || "");
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isFocusedRef = useRef(false);
+  const isComposingRef = useRef(false);
+
+  // Flush pending changes from Visual Editor to parent (Markdown)
+  const flushVisualInput = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    if (!visualEditorRef.current) return;
+    isUpdatingFromInternalRef.current = true;
+    const currentHtml = visualEditorRef.current.innerHTML;
+    const newMarkdown = htmlToMarkdown(currentHtml);
+    lastEmittedMarkdownRef.current = newMarkdown;
+    onChange(newMarkdown);
+  }, [onChange]);
+
+  // Handle Visual Editor Input (typing or pasting)
+  // When typing, debounces 250ms for buttery smooth 60fps typing without DOM parsing freeze
+  const handleVisualInput = useCallback(
+    (immediate: boolean = false) => {
+      if (isComposingRef.current && !immediate) return;
+      if (immediate) {
+        flushVisualInput();
+        return;
+      }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      debounceTimerRef.current = setTimeout(() => {
+        if (!isComposingRef.current) {
+          flushVisualInput();
+        }
+      }, 250);
+    },
+    [flushVisualInput]
+  );
 
   // Sync value to visual editor when value changes externally (e.g. template inserted or product loaded)
   useEffect(() => {
-    if (isUpdatingFromInternalRef.current) {
+    if (isUpdatingFromInternalRef.current || value === lastEmittedMarkdownRef.current) {
       isUpdatingFromInternalRef.current = false;
+      return;
+    }
+    // Don't overwrite innerHTML if user is currently typing in the visual editor
+    if (isFocusedRef.current) {
       return;
     }
     if (visualEditorRef.current) {
@@ -626,23 +669,32 @@ export function ProductArticleEditor({
         visualEditorRef.current.innerHTML = newHtml;
       }
     }
+    lastEmittedMarkdownRef.current = value || "";
   }, [value, activeTab]);
 
-  // Handle Visual Editor Input (typing or pasting)
-  const handleVisualInput = useCallback(() => {
-    if (!visualEditorRef.current) return;
-    isUpdatingFromInternalRef.current = true;
-    const currentHtml = visualEditorRef.current.innerHTML;
-    const newMarkdown = htmlToMarkdown(currentHtml);
-    onChange(newMarkdown);
-  }, [onChange]);
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Helper to switch tabs safely with automatic flush
+  const switchTab = (tab: "visual" | "code" | "preview" | "split") => {
+    if (activeTab === "visual" || activeTab === "split") {
+      flushVisualInput();
+    }
+    setActiveTab(tab);
+  };
 
   // Execute formatting command in Visual Mode
   const execVisualCmd = (command: string, arg: string | undefined = undefined) => {
     if (activeTab === "visual" || activeTab === "split") {
       visualEditorRef.current?.focus();
       document.execCommand(command, false, arg);
-      handleVisualInput();
+      handleVisualInput(true);
     }
   };
 
@@ -771,7 +823,7 @@ export function ProductArticleEditor({
         const newRange = document.createRange();
         newRange.selectNodeContents(span);
         sel.addRange(newRange);
-        handleVisualInput();
+        handleVisualInput(true);
         toastSuccess(`Đã đặt cỡ chữ ${sizePx}px`);
       } catch (e) {
         console.error("Font size error:", e);
@@ -787,7 +839,7 @@ export function ProductArticleEditor({
     if (hex === "none") {
       if (activeTab === "visual" || activeTab === "split") {
         document.execCommand("removeFormat");
-        handleVisualInput();
+        handleVisualInput(true);
       }
       setShowHighlightPicker(false);
       return;
@@ -813,7 +865,7 @@ export function ProductArticleEditor({
         const newRange = document.createRange();
         newRange.selectNodeContents(mark);
         sel.addRange(newRange);
-        handleVisualInput();
+        handleVisualInput(true);
         toastSuccess("Đã bôi màu điểm nhấn!");
       } catch (e) {
         console.error("Highlight error:", e);
@@ -1007,7 +1059,7 @@ export function ProductArticleEditor({
     if (activeTab === "visual" || activeTab === "split") {
       visualEditorRef.current?.focus();
       document.execCommand("insertHTML", false, tableHtml);
-      handleVisualInput();
+      handleVisualInput(true);
     } else {
       insertAtCursor(`\n${tableMd.trim()}\n\n`);
     }
@@ -1070,7 +1122,7 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
       const boxHtml = `<div data-box="${type}" class="my-4 p-4 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-950 font-medium shadow-sm">${placeholder}</div><p><br></p>`;
       visualEditorRef.current?.focus();
       document.execCommand("insertHTML", false, boxHtml);
-      handleVisualInput();
+      handleVisualInput(true);
     } else {
       insertAtCursor(`\n\n[box=${type}]\n${placeholder}\n[/box]\n\n`);
     }
@@ -1159,7 +1211,7 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
       } else {
         document.execCommand("insertHTML", false, linkHtml);
       }
-      handleVisualInput();
+      handleVisualInput(true);
     } else {
       const mdLink = `[${displayText}](${finalUrl})`;
       const textarea = textareaRef.current;
@@ -1542,7 +1594,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           <div className="flex items-center p-1 bg-[#060c14] border border-[#1e344d] rounded-xl">
             <button
               type="button"
-              onClick={() => setActiveTab("visual")}
+              onClick={() => switchTab("visual")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                 activeTab === "visual"
                   ? "bg-[#ffd700] text-black shadow font-extrabold"
@@ -1556,7 +1608,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
 
             <button
               type="button"
-              onClick={() => setActiveTab("code")}
+              onClick={() => switchTab("code")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                 activeTab === "code"
                   ? "bg-[#ffd700] text-black shadow font-extrabold"
@@ -1570,7 +1622,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
 
             <button
               type="button"
-              onClick={() => setActiveTab("preview")}
+              onClick={() => switchTab("preview")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                 activeTab === "preview"
                   ? "bg-[#ffd700] text-black shadow font-extrabold"
@@ -1584,7 +1636,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
 
             <button
               type="button"
-              onClick={() => setActiveTab("split")}
+              onClick={() => switchTab("split")}
               className={`hidden md:flex px-3 py-1.5 rounded-lg text-xs font-bold items-center gap-1.5 transition-all ${
                 activeTab === "split"
                   ? "bg-[#ffd700] text-black shadow font-extrabold"
@@ -2222,7 +2274,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               </span>
               <button
                 type="button"
-                onClick={() => setActiveTab("code")}
+                onClick={() => switchTab("code")}
                 className="text-gray-400 hover:text-[#ffd700] underline"
               >
                 Chuyển sang chế độ xem Mã / Markdown
@@ -2233,8 +2285,21 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               ref={visualEditorRef}
               contentEditable
               suppressContentEditableWarning
-              onInput={handleVisualInput}
-              onBlur={handleVisualInput}
+              onFocus={() => {
+                isFocusedRef.current = true;
+              }}
+              onCompositionStart={() => {
+                isComposingRef.current = true;
+              }}
+              onCompositionEnd={() => {
+                isComposingRef.current = false;
+                handleVisualInput(false);
+              }}
+              onInput={() => handleVisualInput(false)}
+              onBlur={() => {
+                isFocusedRef.current = false;
+                handleVisualInput(true);
+              }}
               className={`w-full bg-white text-slate-900 border border-slate-300 focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 text-sm sm:text-base font-sans leading-relaxed p-6 rounded-xl focus:outline-none overflow-y-auto shadow-inner ${
                 isFullscreen ? "h-full flex-grow" : "min-h-[440px] max-h-[700px]"
               }`}
@@ -2253,7 +2318,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               </span>
               <button
                 type="button"
-                onClick={() => setActiveTab("visual")}
+                onClick={() => switchTab("visual")}
                 className="text-[#ffd700] hover:underline font-bold"
               >
                 Chuyển về Soạn Thảo Trực Quan
@@ -2315,8 +2380,21 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 ref={visualEditorRef}
                 contentEditable
                 suppressContentEditableWarning
-                onInput={handleVisualInput}
-                onBlur={handleVisualInput}
+                onFocus={() => {
+                  isFocusedRef.current = true;
+                }}
+                onCompositionStart={() => {
+                  isComposingRef.current = true;
+                }}
+                onCompositionEnd={() => {
+                  isComposingRef.current = false;
+                  handleVisualInput(false);
+                }}
+                onInput={() => handleVisualInput(false)}
+                onBlur={() => {
+                  isFocusedRef.current = false;
+                  handleVisualInput(true);
+                }}
                 className={`w-full bg-white text-slate-900 border border-slate-300 focus:border-[#d4af37] text-xs sm:text-sm font-sans leading-relaxed p-4 rounded-xl focus:outline-none overflow-y-auto shadow-inner flex-grow ${
                   isFullscreen ? "h-full" : "min-h-[420px]"
                 }`}
