@@ -1,14 +1,13 @@
 import React, { cache } from "react";
 import prisma from "@/lib/prisma";
-import { notFound, redirect } from "next/navigation";
+import { notFound, redirect, permanentRedirect } from "next/navigation";
 import { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import { ModernHeader } from "@/components/common/ModernHeader";
 import { ModernFooter } from "@/components/common/ModernFooter";
 import { FloatingContact } from "@/components/common/FloatingContact";
 import { LocNamPartners } from "@/components/home/LocNamPartners";
-import { BreadcrumbJsonLd, ProductJsonLd } from "@/components/seo/JsonLd";
-import { ProductDetailClient } from "@/components/product/ProductDetailClient";
+import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { CategorySubGrid } from "@/components/product/CategorySubGrid";
 import { CategoryProductListingView } from "@/components/product/CategoryProductListingView";
 import {
@@ -40,22 +39,6 @@ const getCachedProduct = cache(
   )
 );
 
-const getCachedRelatedProducts = cache(
-  unstable_cache(
-    async (categoryId: string, currentProductId: string) => {
-      return prisma.product.findMany({
-        where: {
-          categoryId,
-          id: { not: currentProductId },
-        },
-        take: 4,
-        include: { category: true },
-      });
-    },
-    ["san-pham-related-products"],
-    { revalidate: 60, tags: ["products"] }
-  )
-);
 
 const getCachedCategoryProducts = cache(
   unstable_cache(
@@ -167,9 +150,13 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
       description:
         product.shortDescription ||
         `Mua ${product.name} chất lượng cao, đúc thủ công từ phôi đồng nguyên chất tại làng nghề Ý Yên, Nam Định. Bảo hành trọn đời, giao hàng toàn quốc.`,
+      alternates: {
+        canonical: `https://www.quatanglocnam.com/san-pham/${product.slug}`,
+      },
       openGraph: {
         title: `${product.name} | Đồ Đồng Lộc Nam`,
         description: product.shortDescription || `Chi tiết sản phẩm ${product.name}`,
+        url: `https://www.quatanglocnam.com/san-pham/${product.slug}`,
         images: [{ url: mainImage.startsWith("http") ? mainImage : `https://www.quatanglocnam.com${mainImage}` }],
       },
     };
@@ -393,136 +380,20 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
     };
 
     if (legacyRedirectMap[lastSlug]) {
-      redirect(`/san-pham/${categorySlug}/${legacyRedirectMap[lastSlug]}`);
+      permanentRedirect(`/san-pham/${legacyRedirectMap[lastSlug]}`);
     }
 
     if (lastSlug.includes("dai-tuong-dai-tuong")) {
       const fixedSlug = lastSlug.replace(/dai-tuong-dai-tuong/g, "dai-tuong");
-      redirect(`/san-pham/${categorySlug}/${fixedSlug}`);
+      permanentRedirect(`/san-pham/${fixedSlug}`);
     }
   }
 
   if (product) {
-    const relatedProductsData = await getCachedRelatedProducts(product.categoryId, product.id);
-
-    let parsedImages: string[] = [];
-    try {
-      parsedImages = JSON.parse(product.images);
-    } catch {
-      parsedImages = [product.images || "/images/hero_golden_ship.jpg"];
-    }
-
-    const fullUrl = `https://www.quatanglocnam.com/san-pham/${categorySlug}/${slugs.join("/")}`;
-
-    const relatedProducts = relatedProductsData.map((rel) => {
-      let relImages: string[] = [];
-      try {
-        relImages = JSON.parse(rel.images);
-      } catch {
-        relImages = [rel.images || "/images/hero_golden_ship.jpg"];
-      }
-      return {
-        id: rel.id,
-        name: rel.name,
-        slug: rel.slug,
-        price: rel.price,
-        images: relImages,
-        category: { slug: rel.category.slug },
-      };
-    });
-
-    const productClientData = {
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      price: product.price,
-      originalPrice: product.originalPrice,
-      material: product.material,
-      dimensions: product.dimensions,
-      weight: product.weight,
-      shortDescription: product.shortDescription,
-      description: product.description,
-      images: parsedImages,
-      category: {
-        name: product.category.name,
-        slug: product.category.slug,
-      },
-    };
-
-    // Breadcrumbs for product
-    const catName = mainCat?.name || product.category.name;
-    const breadcrumbItems: { name: string; url?: string }[] = [
-      { name: "Trang chủ", url: "/" },
-      { name: "Sản phẩm", url: "/san-pham" },
-      { name: catName, url: `/san-pham/${categorySlug}` },
-    ];
-
-    if (slugs.length > 2) {
-      const subSlug = slugs[0];
-      const detailSlug = slugs[1];
-      const sub = findSubCategory(categorySlug, subSlug);
-      const detail = findDetailCategory(categorySlug, subSlug, detailSlug);
-      if (sub) {
-        breadcrumbItems.push({ name: sub.name, url: `/san-pham/${categorySlug}/${subSlug}` });
-      }
-      if (detail) {
-        breadcrumbItems.push({
-          name: detail.name,
-          url: `/san-pham/${categorySlug}/${subSlug}/${detailSlug}`,
-        });
-      }
-    } else if (slugs.length === 2) {
-      const subSlug = slugs[0];
-      const sub = findSubCategory(categorySlug, subSlug);
-      if (sub) {
-        breadcrumbItems.push({ name: sub.name, url: `/san-pham/${categorySlug}/${subSlug}` });
-      }
-    }
-
-    breadcrumbItems.push({ name: product.name });
-
-    return (
-      <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-[#e2e8f0] antialiased">
-        <BreadcrumbJsonLd
-          items={breadcrumbItems.map((b) => ({
-            name: b.name,
-            url: b.url ? `https://www.quatanglocnam.com${b.url}` : fullUrl,
-          }))}
-        />
-
-        <ProductJsonLd
-          name={product.name}
-          description={product.shortDescription || product.description || product.name}
-          images={parsedImages.map((img) =>
-            img.startsWith("http") ? img : `https://www.quatanglocnam.com${img}`
-          )}
-          price={product.price}
-          categoryName={product.category.name}
-          url={fullUrl}
-          sku={`LOCNAM-${product.slug.toUpperCase()}`}
-        />
-
-        <ModernHeader />
-
-        <main className="flex-grow max-w-[1440px] mx-auto px-4 sm:px-6 2xl:px-8 py-4 w-full">
-          <ProductDetailClient
-            product={productClientData}
-            relatedProducts={relatedProducts}
-            hotline1="0836 122 222"
-            hotline2="0846 699 997"
-            cleanPhone1="0836122222"
-            cleanPhone2="0846699997"
-            zaloPhone="0846699997"
-            fullUrl={fullUrl}
-          />
-        </main>
-
-        <LocNamPartners />
-        <ModernFooter />
-        <FloatingContact hotline="0836 122 222" hotline2="0846 699 997" zalo="0846699997" />
-      </div>
-    );
+    // 301 Permanent Redirect to canonical flat product URL
+    permanentRedirect(`/san-pham/${product.slug}`);
   }
 
   notFound();
 }
+

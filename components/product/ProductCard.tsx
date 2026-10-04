@@ -90,7 +90,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const productHref = isGift
     ? `/qua-tang/${product.slug}`
-    : `/san-pham/${categorySlug || product.category?.slug || "tuong-dong"}/${product.slug}`;
+    : `/san-pham/${product.slug}`;
 
   return (
     <div

@@ -471,7 +471,7 @@ export function CategoryProductListingView({
           mainCategory.slug === "qua-tang-dong";
         const href = isGift
           ? `/qua-tang/${p.slug}`
-          : `/san-pham/${p.category?.slug || mainCategory.slug}/${p.slug}`;
+          : `/san-pham/${p.slug}`;
         router.prefetch(href);
       });
     }, 1200);
@@ -1039,7 +1039,7 @@ function ListingProductCard({
 
   const detailHref = isGift
     ? `/qua-tang/${product.slug}`
-    : `/san-pham/${product.category?.slug || mainCategorySlug}/${product.slug}`;
+    : `/san-pham/${product.slug}`;
 
   const activateCardImages = () => {
     router.prefetch(detailHref);

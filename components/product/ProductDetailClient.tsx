@@ -115,7 +115,7 @@ export function ProductDetailClient({
         rel.category?.slug === "qua-tang-dong";
       const relHref = isGift
         ? `/qua-tang/${rel.slug}`
-        : `/san-pham/${rel.category.slug}/${rel.slug}`;
+        : `/san-pham/${rel.slug}`;
       router.prefetch(relHref);
     });
   }, [relatedProducts, router]);
@@ -773,7 +773,7 @@ export function ProductDetailClient({
                 rel.category?.slug === "qua-tang-dong";
               const relHref = isGift
                 ? `/qua-tang/${rel.slug}`
-                : `/san-pham/${rel.category.slug}/${rel.slug}`;
+                : `/san-pham/${rel.slug}`;
 
               return (
                 <div

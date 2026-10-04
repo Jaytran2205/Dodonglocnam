@@ -945,7 +945,7 @@ export function ModernHeader() {
                     {liveResults.map((item) => (
                       <Link
                         key={item.id}
-                        href={`/san-pham/${item.categorySlug}/${item.slug}`}
+                        href={item.categorySlug === "qua-tang" || item.categorySlug === "qua-tang-dong" ? `/qua-tang/${item.slug}` : `/san-pham/${item.slug}`}
                         onClick={() => setLiveSearchVisible(false)}
                         className="flex items-center gap-2.5 p-2 hover:bg-[#122234] rounded-xl transition-colors group"
                       >
@@ -1548,7 +1548,7 @@ export function ModernHeader() {
                         {liveResults.map((item) => (
                           <Link
                             key={item.id}
-                            href={`/san-pham/${item.categorySlug}/${item.slug}`}
+                            href={item.categorySlug === "qua-tang" || item.categorySlug === "qua-tang-dong" ? `/qua-tang/${item.slug}` : `/san-pham/${item.slug}`}
                             onClick={() => {
                               setLiveSearchVisible(false);
                               setSearchOpen(false);

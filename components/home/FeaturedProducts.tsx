@@ -52,7 +52,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
         prod.category?.slug === "qua-tang-dong";
       const productHref = isGift
         ? `/qua-tang/${prod.slug}`
-        : `/san-pham/${categorySlug}/${prod.slug}`;
+        : `/san-pham/${prod.slug}`;
       router.prefetch(productHref);
     });
   }, [filteredProducts, router]);
@@ -111,7 +111,7 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
 
           const productHref = isGift
             ? `/qua-tang/${prod.slug}`
-            : `/san-pham/${categorySlug}/${prod.slug}`;
+            : `/san-pham/${prod.slug}`;
 
           return (
             <div

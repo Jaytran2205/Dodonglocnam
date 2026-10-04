@@ -49,7 +49,7 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
         product.category?.slug === "qua-tang-dong";
       const productHref = isGift
         ? `/qua-tang/${product.slug}`
-        : `/san-pham/${product.category?.slug || "tuong-dong"}/${product.slug}`;
+        : `/san-pham/${product.slug}`;
       router.prefetch(productHref);
     });
   }, [filteredProducts, router]);
@@ -107,7 +107,7 @@ export function LeGiaProductGrid({ products }: LeGiaProductGridProps) {
 
             const productHref = isGift
               ? `/qua-tang/${product.slug}`
-              : `/san-pham/${product.category?.slug || "tuong-dong"}/${product.slug}`;
+              : `/san-pham/${product.slug}`;
 
             return (
               <div

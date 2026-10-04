@@ -1000,7 +1000,7 @@ export default function AdminProductsPage() {
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
-                            href={`/san-pham/${prod.category?.slug || "tuong-dong"}/${prod.slug}`}
+                            href={`/san-pham/${prod.slug}`}
                             target="_blank"
                             title="Xem trang sản phẩm thực tế"
                             className="p-1.5 rounded-lg bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 hover:text-white transition-colors"
@@ -1132,7 +1132,7 @@ export default function AdminProductsPage() {
                           <div className="min-w-0 flex flex-wrap items-center gap-1.5">
                             <span className="text-gray-400 font-semibold whitespace-nowrap">Đường dẫn cố định (URL):</span>
                             <span className="font-mono text-[#ffd700] bg-black/50 px-2 py-0.5 rounded border border-[#202f45] truncate max-w-full sm:max-w-md">
-                              {`/san-pham/${activeCatSlug}/${liveSlug}`}
+                              {`/san-pham/${liveSlug}`}
                             </span>
                             {formData.name && !customSlug && (
                               <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-medium">
@@ -1151,7 +1151,7 @@ export default function AdminProductsPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              const fullUrl = `${window.location.origin}/san-pham/${activeCatSlug}/${liveSlug}`;
+                              const fullUrl = `${window.location.origin}/san-pham/${liveSlug}`;
                               navigator.clipboard.writeText(fullUrl);
                               toastSuccess(`Đã sao chép liên kết bài viết: ${fullUrl}`, "Đã sao chép 📋");
                             }}
@@ -1174,7 +1174,7 @@ export default function AdminProductsPage() {
 
                           {editingProduct ? (
                             <a
-                              href={`/san-pham/${activeCatSlug}/${liveSlug}`}
+                              href={`/san-pham/${liveSlug}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="px-2.5 py-1 bg-gradient-to-r from-[#d4af37] to-[#e5b869] text-[#070c14] hover:brightness-110 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow transition-all active:scale-95"

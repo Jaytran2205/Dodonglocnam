@@ -45,7 +45,7 @@ export function ProductShowcaseSection({
         (prod as any).category?.slug === "qua-tang-dong";
       const productHref = isGift
         ? `/qua-tang/${prod.slug}`
-        : `/san-pham/${(prod as any).category?.slug || categorySlug}/${prod.slug}`;
+        : `/san-pham/${prod.slug}`;
       router.prefetch(productHref);
     });
   }, [products, categorySlug, router]);
@@ -93,7 +93,7 @@ export function ProductShowcaseSection({
 
           const productHref = isGift
             ? `/qua-tang/${prod.slug}`
-            : `/san-pham/${(prod as any).category?.slug || categorySlug}/${prod.slug}`;
+            : `/san-pham/${prod.slug}`;
 
           return (
             <div
