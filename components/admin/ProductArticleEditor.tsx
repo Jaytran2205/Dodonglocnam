@@ -47,6 +47,8 @@ import {
   ChevronDown,
   Wand2,
   Save,
+  Unlink,
+  Undo2,
 } from "lucide-react";
 import { ProductStructuredDescription } from "@/components/product/ProductStructuredDescription";
 import { useToast } from "@/components/admin/AdminToast";
@@ -588,6 +590,8 @@ export function ProductArticleEditor({
   const [linkText, setLinkText] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [linkNewTab, setLinkNewTab] = useState(true);
+  const [isExistingLink, setIsExistingLink] = useState(false);
+  const existingLinkElementRef = useRef<HTMLAnchorElement | null>(null);
   const [savedRange, setSavedRange] = useState<Range | null>(null);
   const [linkSuccessInfo, setLinkSuccessInfo] = useState<{
     text: string;
@@ -1169,25 +1173,105 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
 
   const openLinkModal = () => {
     let selected = "";
+    let detectedUrl = "";
+    let detectedNewTab = true;
+    let foundAnchor: HTMLAnchorElement | null = null;
+
     if (activeTab === "visual" || activeTab === "split") {
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
         setSavedRange(range.cloneRange());
         selected = range.toString().trim();
+
+        // 1. Detect if current selection or cursor is inside an <a> tag
+        let node: Node | null = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE && node.parentNode) {
+          node = node.parentNode;
+        }
+        while (node && node !== visualEditorRef.current) {
+          if (node.nodeName === "A") {
+            foundAnchor = node as HTMLAnchorElement;
+            break;
+          }
+          node = node.parentNode;
+        }
+
+        // Also check anchorNode / focusNode
+        if (!foundAnchor && sel.anchorNode) {
+          let aNode: Node | null = sel.anchorNode;
+          while (aNode && aNode !== visualEditorRef.current) {
+            if (aNode.nodeName === "A") {
+              foundAnchor = aNode as HTMLAnchorElement;
+              break;
+            }
+            aNode = aNode.parentNode;
+          }
+        }
+
+        // 2. If range contains an <a> tag inside it
+        if (!foundAnchor && range.cloneContents) {
+          const frag = range.cloneContents();
+          const innerA = frag.querySelector("a");
+          if (innerA) {
+            detectedUrl = innerA.getAttribute("href") || "";
+            detectedNewTab = innerA.getAttribute("target") === "_blank";
+          }
+        }
+
+        if (foundAnchor) {
+          selected = foundAnchor.textContent?.trim() || selected;
+          detectedUrl = foundAnchor.getAttribute("href") || "";
+          detectedNewTab = foundAnchor.getAttribute("target") === "_blank";
+          existingLinkElementRef.current = foundAnchor;
+          // Expand selection to cover the entire anchor
+          try {
+            const anchorRange = document.createRange();
+            anchorRange.selectNodeContents(foundAnchor);
+            setSavedRange(anchorRange.cloneRange());
+          } catch (_) {}
+        } else {
+          existingLinkElementRef.current = null;
+        }
       } else {
         setSavedRange(null);
+        existingLinkElementRef.current = null;
       }
     } else {
+      // Code / Markdown mode
       const textarea = textareaRef.current;
       if (textarea) {
-        selected = value.substring(textarea.selectionStart, textarea.selectionEnd).trim();
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        selected = value.substring(start, end).trim();
+
+        const mdLinkMatch = selected.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (mdLinkMatch) {
+          selected = mdLinkMatch[1];
+          detectedUrl = mdLinkMatch[2];
+        } else {
+          const before = value.substring(0, start);
+          const after = value.substring(end);
+          const openB = before.lastIndexOf("[");
+          const closeP = after.indexOf(")");
+          if (openB !== -1 && closeP !== -1) {
+            const snippet = value.substring(openB, end + closeP + 1);
+            const snippetMatch = snippet.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            if (snippetMatch) {
+              selected = snippetMatch[1];
+              detectedUrl = snippetMatch[2];
+            }
+          }
+        }
       }
+      existingLinkElementRef.current = null;
     }
 
+    const hasLink = Boolean(foundAnchor || detectedUrl);
+    setIsExistingLink(hasLink);
     setLinkText(selected);
-    setLinkUrl("");
-    setLinkNewTab(true);
+    setLinkUrl(detectedUrl);
+    setLinkNewTab(detectedNewTab);
     setLinkSuccessInfo(null);
     setShowLinkModal(true);
   };
@@ -1210,7 +1294,20 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
       const targetAttr = linkNewTab ? ' target="_blank" rel="noopener noreferrer"' : '';
       const linkHtml = `<a href="${finalUrl}"${targetAttr} class="text-[#b45309] dark:text-[#d4af37] underline decoration-[#d4af37]/60 hover:text-[#9b6f1e] font-semibold transition-colors">${displayText}</a>`;
 
-      if (savedRange) {
+      // If updating an already existing anchor directly
+      if (existingLinkElementRef.current && visualEditorRef.current?.contains(existingLinkElementRef.current)) {
+        const anchor = existingLinkElementRef.current;
+        anchor.setAttribute("href", finalUrl);
+        anchor.textContent = displayText;
+        if (linkNewTab) {
+          anchor.setAttribute("target", "_blank");
+          anchor.setAttribute("rel", "noopener noreferrer");
+        } else {
+          anchor.removeAttribute("target");
+          anchor.removeAttribute("rel");
+        }
+        handleVisualInput(true);
+      } else if (savedRange) {
         try {
           const sel = window.getSelection();
           sel?.removeAllRanges();
@@ -1229,34 +1326,208 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
         } catch (_) {
           document.execCommand("insertHTML", false, linkHtml);
         }
+        handleVisualInput(true);
       } else {
         document.execCommand("insertHTML", false, linkHtml);
+        handleVisualInput(true);
       }
-      handleVisualInput(true);
     } else {
       const mdLink = `[${displayText}](${finalUrl})`;
       const textarea = textareaRef.current;
       if (textarea) {
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const newValue = value.substring(0, start) + mdLink + value.substring(end);
-        onChange(newValue);
+        const before = value.substring(0, start);
+        const after = value.substring(end);
+        const openB = before.lastIndexOf("[");
+        const closeP = after.indexOf(")");
+        if (isExistingLink && openB !== -1 && closeP !== -1) {
+          const newValue = value.substring(0, openB) + mdLink + value.substring(end + closeP + 1);
+          onChange(newValue);
+        } else {
+          const newValue = value.substring(0, start) + mdLink + value.substring(end);
+          onChange(newValue);
+        }
         setTimeout(() => {
           textarea.focus();
-          textarea.setSelectionRange(start + mdLink.length, start + mdLink.length);
         }, 10);
       } else {
         insertAtCursor(mdLink);
       }
     }
 
-    // Hiển thị Popup thông báo thành công trực quan trong modal, không đột ngột out ra
     setLinkSuccessInfo({
       text: displayText,
       url: finalUrl,
       newTab: linkNewTab,
     });
-    toastSuccess(`Đã gắn link cho "${displayText}" thành công!`, "Gắn liên kết thành công");
+    toastSuccess(
+      isExistingLink
+        ? `Đã cập nhật liên kết cho "${displayText}" thành công!`
+        : `Đã gắn link cho "${displayText}" thành công!`,
+      "Thao tác thành công"
+    );
+  };
+
+  // Gỡ bỏ / Hủy liên kết (Unlink)
+  const handleRemoveLink = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (activeTab === "visual" || activeTab === "split") {
+      visualEditorRef.current?.focus();
+
+      // Case 1: We have direct reference to the anchor
+      if (existingLinkElementRef.current && visualEditorRef.current?.contains(existingLinkElementRef.current)) {
+        const anchor = existingLinkElementRef.current;
+        const textNode = document.createTextNode(anchor.textContent || linkText || "");
+        anchor.parentNode?.replaceChild(textNode, anchor);
+        handleVisualInput(true);
+      } else if (savedRange) {
+        // Case 2: Using savedRange
+        try {
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(savedRange);
+
+          document.execCommand("unlink", false, undefined);
+
+          let node: Node | null = savedRange.commonAncestorContainer;
+          if (node.nodeType === Node.TEXT_NODE && node.parentNode) {
+            node = node.parentNode;
+          }
+          while (node && node !== visualEditorRef.current) {
+            if (node.nodeName === "A") {
+              const textNode = document.createTextNode(node.textContent || "");
+              node.parentNode?.replaceChild(textNode, node);
+              break;
+            }
+            node = node.parentNode;
+          }
+
+          if (visualEditorRef.current) {
+            visualEditorRef.current.querySelectorAll("a").forEach((a) => {
+              if (savedRange.intersectsNode(a) || (linkText && a.textContent?.trim() === linkText.trim())) {
+                const textNode = document.createTextNode(a.textContent || "");
+                a.parentNode?.replaceChild(textNode, a);
+              }
+            });
+          }
+
+          handleVisualInput(true);
+        } catch (_) {
+          document.execCommand("unlink", false, undefined);
+          handleVisualInput(true);
+        }
+      } else {
+        document.execCommand("unlink", false, undefined);
+        handleVisualInput(true);
+      }
+    } else {
+      // Code / Markdown tab
+      const textarea = textareaRef.current;
+      if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedPart = value.substring(start, end);
+        const mdLinkMatch = selectedPart.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (mdLinkMatch) {
+          const unlinkedText = mdLinkMatch[1];
+          const newValue = value.substring(0, start) + unlinkedText + value.substring(end);
+          onChange(newValue);
+        } else {
+          const before = value.substring(0, start);
+          const after = value.substring(end);
+          const openBracket = before.lastIndexOf("[");
+          const closeParen = after.indexOf(")");
+          if (openBracket !== -1 && closeParen !== -1) {
+            const wholeSnippet = value.substring(openBracket, end + closeParen + 1);
+            const match = wholeSnippet.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            if (match) {
+              const unlinkedText = match[1];
+              const newValue = value.substring(0, openBracket) + unlinkedText + value.substring(end + closeParen + 1);
+              onChange(newValue);
+            }
+          }
+        }
+      }
+    }
+
+    toastSuccess(`Đã gỡ bỏ liên kết khỏi "${linkText || "từ khóa"}", giữ lại chữ!`, "Đã gỡ link");
+    setShowLinkModal(false);
+    setLinkSuccessInfo(null);
+    existingLinkElementRef.current = null;
+    setIsExistingLink(false);
+  };
+
+  // Direct toolbar 1-click Unlink button
+  const handleToolbarUnlink = () => {
+    if (activeTab === "visual" || activeTab === "split") {
+      visualEditorRef.current?.focus();
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+
+        let node: Node | null = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE && node.parentNode) {
+          node = node.parentNode;
+        }
+        let foundAnchor: HTMLAnchorElement | null = null;
+        while (node && node !== visualEditorRef.current) {
+          if (node.nodeName === "A") {
+            foundAnchor = node as HTMLAnchorElement;
+            break;
+          }
+          node = node.parentNode;
+        }
+
+        if (foundAnchor) {
+          const textNode = document.createTextNode(foundAnchor.textContent || "");
+          foundAnchor.parentNode?.replaceChild(textNode, foundAnchor);
+          handleVisualInput(true);
+          toastSuccess(`Đã gỡ bỏ liên kết khỏi "${foundAnchor.textContent}", giữ lại chữ!`, "Đã gỡ link");
+          return;
+        }
+
+        let unlinkedCount = 0;
+        if (visualEditorRef.current) {
+          visualEditorRef.current.querySelectorAll("a").forEach((a) => {
+            if (range.intersectsNode(a)) {
+              const textNode = document.createTextNode(a.textContent || "");
+              a.parentNode?.replaceChild(textNode, a);
+              unlinkedCount++;
+            }
+          });
+        }
+
+        document.execCommand("unlink", false, undefined);
+        handleVisualInput(true);
+        if (unlinkedCount > 0) {
+          toastSuccess(`Đã gỡ bỏ ${unlinkedCount} liên kết trong vùng chọn, giữ lại chữ!`, "Đã gỡ link");
+        } else {
+          toastSuccess("Đã gỡ bỏ liên kết khỏi vùng chọn!", "Đã gỡ link");
+        }
+      } else {
+        toastWarning("Vui lòng bôi đen hoặc đặt con trỏ vào từ khóa chứa liên kết cần gỡ bỏ.");
+      }
+    } else {
+      const textarea = textareaRef.current;
+      if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selText = value.substring(start, end);
+        const replaced = selText.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+        if (replaced !== selText) {
+          const newVal = value.substring(0, start) + replaced + value.substring(end);
+          onChange(newVal);
+          toastSuccess("Đã gỡ bỏ liên kết trong đoạn mã Markdown!", "Đã gỡ link");
+        } else {
+          toastWarning("Vui lòng bôi đen đoạn văn bản chứa liên kết [chữ](url) cần gỡ.");
+        }
+      }
+    }
   };
 
   // Fetch gallery videos from database
@@ -1855,6 +2126,17 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
             >
               <LinkIcon className="w-4 h-4 text-[#d4af37]" />
               <span className="font-bold">Gắn Link</span>
+            </button>
+
+            {/* Gỡ Link Button */}
+            <button
+              type="button"
+              onClick={handleToolbarUnlink}
+              className="px-2 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 text-gray-300 hover:text-rose-400 hover:bg-rose-500/10 border border-[#202f45] hover:border-rose-500/40 transition-colors"
+              title="Gỡ bỏ liên kết (Xóa link khỏi từ khóa đang chọn, giữ lại chữ)"
+            >
+              <Unlink className="w-4 h-4 text-rose-400" />
+              <span className="text-[11px] font-semibold text-rose-300 hidden sm:inline">Gỡ Link</span>
             </button>
           </div>
 
@@ -2966,21 +3248,42 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
         <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-xl bg-[#0c1825] border-2 border-[#d4af37]/60 rounded-2xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-[#1e344d] pb-3">
-              <h3 className="font-serif font-bold text-base text-[#d4af37] uppercase tracking-wide flex items-center gap-2">
-                <LinkIcon className="w-5 h-5 text-[#d4af37]" />
-                <span>
-                  {linkSuccessInfo
-                    ? "Thông Báo: Đã Chèn Liên Kết Thành Công"
-                    : "Chèn Liên Kết / Gắn Link Vào Bài Viết"}
-                </span>
-              </h3>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#ffd700]/15 border border-[#ffd700]/30 flex items-center justify-center text-[#ffd700] shrink-0">
+                  <LinkIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-sm sm:text-base text-[#d4af37] uppercase tracking-wide flex items-center gap-2">
+                    <span>
+                      {linkSuccessInfo
+                        ? "Thông Báo: Đã Chèn Liên Kết Thành Công"
+                        : isExistingLink
+                        ? "Chỉnh Sửa / Gỡ Bỏ Liên Kết"
+                        : "Chèn Liên Kết / Gắn Link Vào Bài Viết"}
+                    </span>
+                    {isExistingLink && !linkSuccessInfo && (
+                      <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-sans font-bold">
+                        Đang có link
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-[11px] text-gray-400">
+                    {isExistingLink
+                      ? "Bạn có thể chỉnh sửa link mới hoặc nhấn Gỡ Bỏ Liên Kết để xóa link"
+                      : "Gắn liên kết chuyển trang vào cụm từ khóa được chọn"}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => {
                   setShowLinkModal(false);
                   setLinkSuccessInfo(null);
+                  existingLinkElementRef.current = null;
+                  setIsExistingLink(false);
                 }}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#16253b] transition-colors"
+                title="Đóng cửa sổ"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -3052,6 +3355,15 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   )}
                   <button
                     type="button"
+                    onClick={handleRemoveLink}
+                    className="px-3.5 py-2.5 bg-rose-500/15 hover:bg-rose-600/30 text-rose-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-rose-500/30 flex items-center gap-1.5 active:scale-95"
+                    title="Hủy bỏ liên kết vừa gắn, khôi phục lại chữ nguyên bản"
+                  >
+                    <Undo2 className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Hủy Gắn Link (Hoàn Tác)</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => {
                       setLinkText("");
                       setLinkUrl("");
@@ -3082,6 +3394,26 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
             ) : (
               /* INPUT FORM (using div, NOT form, to prevent outer form collision) */
               <div className="space-y-4">
+                {isExistingLink && (
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                    <div className="flex items-center gap-2 text-amber-300">
+                      <span className="text-base">🔗</span>
+                      <span>
+                        Từ khóa này hiện đã có liên kết: <strong className="text-white font-mono break-all">{linkUrl || "(Đang gắn link)"}</strong>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveLink}
+                      className="px-3 py-1 bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1 active:scale-95"
+                      title="Gỡ bỏ liên kết ngay lập tức"
+                    >
+                      <Unlink className="w-3.5 h-3.5" />
+                      <span>Gỡ Link Ngay</span>
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-white block uppercase">
                     Văn Bản Hiển Thị (Từ Khóa Neo / Anchor Text) *
@@ -3180,25 +3512,45 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   </div>
                 )}
 
-                <div className="pt-2 flex justify-end gap-2 border-t border-[#1e344d]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowLinkModal(false);
-                      setLinkSuccessInfo(null);
-                    }}
-                    className="px-4 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 rounded-xl text-xs font-bold"
-                  >
-                    Hủy Bỏ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleInsertLink}
-                    className="px-5 py-2 bg-[#d4af37] hover:bg-[#b8860b] text-[#0a111c] rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-colors cursor-pointer"
-                  >
-                    <LinkIcon className="w-4 h-4" />
-                    <span>Chèn Liên Kết Vào Bài Viết</span>
-                  </button>
+                <div className="pt-3 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 border-t border-[#1e344d]">
+                  {/* Left: Unlink Button (Gỡ Bỏ Liên Kết) */}
+                  {(isExistingLink || linkUrl || linkText) ? (
+                    <button
+                      type="button"
+                      onClick={handleRemoveLink}
+                      className="px-3.5 py-2.5 bg-rose-500/15 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 hover:border-rose-500 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                      title="Gỡ bỏ hoàn toàn liên kết khỏi từ khóa này (Xóa link, giữ nguyên chữ)"
+                    >
+                      <Unlink className="w-4 h-4 text-rose-400 group-hover:text-white" />
+                      <span>Gỡ Bỏ Liên Kết (Bỏ Link Giữ Lại Chữ)</span>
+                    </button>
+                  ) : (
+                    <div className="hidden sm:block" />
+                  )}
+
+                  {/* Right: Cancel & Submit Buttons */}
+                  <div className="flex items-center justify-end gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLinkModal(false);
+                        setLinkSuccessInfo(null);
+                        existingLinkElementRef.current = null;
+                        setIsExistingLink(false);
+                      }}
+                      className="px-4 py-2.5 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-colors"
+                    >
+                      Hủy Bỏ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleInsertLink}
+                      className="px-5 py-2.5 bg-gradient-to-r from-[#ffd700] via-[#f5d77f] to-[#d4af37] hover:brightness-110 text-[#070c14] font-extrabold rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow transition-all cursor-pointer active:scale-95"
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                      <span>{isExistingLink ? "Cập Nhật Liên Kết" : "Chèn Liên Kết Vào Bài Viết"}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
