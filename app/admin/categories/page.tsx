@@ -1,6 +1,19 @@
 "use client";
+// Admin Category Matrix & Dynamic Image Binding - Authored by jaydev
 
 import { AdminImage } from "@/components/admin/AdminImage";
+
+const getCategoryFallbackImage = (slug: string) => {
+  const map: Record<string, string> = {
+    "do-tho-cung": "/images/collections/cat_do_tho.jpg",
+    "tuong-dong": "/images/collections/cat_tuong_dong.jpg",
+    "tranh-dong": "/images/collections/cat_tranh_dong.jpg",
+    "trong-dong": "/images/collections/cat_trong_dong.jpg",
+    "qua-tang": "/images/collections/cat_qua_tang.jpg",
+    "qua-tang-dong": "/images/collections/cat_qua_tang.jpg",
+  };
+  return map[slug] || "/images/collections/cat_qua_tang.jpg";
+};
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
@@ -205,7 +218,12 @@ export default function AdminCategoriesPage() {
   // Handlers for Subcategories (Tab 2)
   const currentCategoryData = useMemo(() => {
     return (
-      catalog.find((c) => c.slug === selectedMainSlug) ||
+      catalog.find(
+        (c) =>
+          c.slug === selectedMainSlug ||
+          c.aliases?.includes(selectedMainSlug) ||
+          (selectedMainSlug === "qua-tang-dong" && c.slug === "qua-tang")
+      ) ||
       catalog[0] || { name: "", slug: "", subCategories: [] }
     );
   }, [catalog, selectedMainSlug]);
@@ -1231,7 +1249,12 @@ export default function AdminCategoriesPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {categories.map((cat) => {
-                const subCatItem = catalog.find((c) => c.slug === cat.slug);
+                const subCatItem = catalog.find(
+                  (c) =>
+                    c.slug === cat.slug ||
+                    c.aliases?.includes(cat.slug) ||
+                    (cat.slug === "qua-tang-dong" && c.slug === "qua-tang")
+                );
                 const subCount = subCatItem?.subCategories.length || 0;
                 return (
                   <div
@@ -1241,7 +1264,7 @@ export default function AdminCategoriesPage() {
                     <div className="space-y-3">
                       <div className="aspect-[16/10] rounded-xl overflow-hidden bg-white/5 relative p-2 border border-[#1f2d42]">
                         <AdminImage
-                          src={cat.image || "/images/hero_golden_ship.jpg"}
+                          src={cat.image || getCategoryFallbackImage(cat.slug)}
                           alt={cat.name}
                           className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                         />

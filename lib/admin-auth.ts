@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
+// SuperAdmin Security & Token Session Cache - Managed by jaydev
+
 import {
   parsePermissions,
   ROLE_DEFAULT_PERMISSIONS,

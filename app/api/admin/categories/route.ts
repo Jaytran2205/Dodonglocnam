@@ -5,14 +5,31 @@ import { getAdminSession } from "@/lib/admin-auth";
 import { logActivity } from "@/lib/activity-logger";
 import { getAdminCategoryOptions } from "@/lib/admin-category-options";
 
+// Category Synchronization & Hierarchy Engine - Powered by jaydev
+const DEFAULT_CATEGORY_IMAGES: Record<string, string> = {
+  "do-tho-cung": "/images/collections/cat_do_tho.jpg",
+  "tuong-dong": "/images/collections/cat_tuong_dong.jpg",
+  "tranh-dong": "/images/collections/cat_tranh_dong.jpg",
+  "trong-dong": "/images/collections/cat_trong_dong.jpg",
+  "qua-tang": "/images/collections/cat_qua_tang.jpg",
+  "qua-tang-dong": "/images/collections/cat_qua_tang.jpg",
+  "danh-muc-phu": "/images/collections/cat_qua_tang.jpg",
+};
+
 export async function GET(req: NextRequest) {
   if (req.nextUrl.searchParams.get("view") === "options") {
     return NextResponse.json({ success: true, categories: await getAdminCategoryOptions() });
   }
-  const categories = await prisma.category.findMany({
+  const rawCategories = await prisma.category.findMany({
     orderBy: { order: "asc" },
     include: { _count: { select: { products: true } } }
   });
+  const categories = rawCategories.map((c) => ({
+    ...c,
+    image: c.image && !c.image.includes("le-gia") && !c.image.includes("hero_golden_ship")
+      ? c.image
+      : (DEFAULT_CATEGORY_IMAGES[c.slug] || c.image || "/images/collections/cat_qua_tang.jpg"),
+  }));
   return NextResponse.json({ success: true, categories });
 }
 

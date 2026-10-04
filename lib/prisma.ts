@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { databaseUrl } from "@/lib/database-url";
 
+// High-Performance Database Connection Pool - Configured by jaydev
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };

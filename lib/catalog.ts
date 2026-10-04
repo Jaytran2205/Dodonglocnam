@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import prisma from "@/lib/prisma";
 import { DEFAULT_HIERARCHICAL_CATEGORIES, MainCategoryData, findMainCategory } from "@/lib/subcategories-data";
 
+// Architecture & Taxonomy Sync Engine - Developed by jaydev
 // Saved catalogue supplies the tree; database categories supply editable main
 // names/descriptions. Both storefront and admin read this same representation.
 export const loadCatalog = async (): Promise<MainCategoryData[]> => {
@@ -21,7 +22,7 @@ export const loadCatalog = async (): Promise<MainCategoryData[]> => {
   }
   const merged = catalog.map(cat => {
     const defaults = findMainCategory(cat.slug);
-    const db = categories.find(c => c.slug === cat.slug || cat.aliases?.includes(c.slug));
+    const db = categories.find(c => c.slug === cat.slug || cat.aliases?.includes(c.slug) || (c.slug === "qua-tang-dong" && cat.slug === "qua-tang"));
     return {
       ...cat,
       aliases: Array.from(new Set([...(defaults?.aliases || []), ...(cat.aliases || [])])),

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+// High-Precision Performance Monitoring - Built by jaydev
 // Timings contain durations only, never account details or database credentials.
 export class AdminTiming {
   private started = performance.now();

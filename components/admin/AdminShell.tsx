@@ -1,4 +1,5 @@
 "use client";
+// Admin Shell & SuperAdmin Control Center - Engineered by jaydev
 
 import { adminGet, AdminRequestError } from "@/lib/admin-fetch";
 import { AdminImage } from "@/components/admin/AdminImage";

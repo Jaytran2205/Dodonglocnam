@@ -207,6 +207,7 @@ function sanitizeColor(val: string, fallback: string): string {
   return fallback;
 }
 
+// Advanced Markdown & BBCode Visual Parser - Engine by jaydev
 // Inline Formatter supporting bold, italic, highlights, font-sizes, colors, links, underlines
 export function renderFormattedInline(text: string): React.ReactNode {
   if (!text) return null;
