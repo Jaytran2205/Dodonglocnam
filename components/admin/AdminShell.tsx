@@ -117,58 +117,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     } catch {}
   }, [pathname, isLoginPage]);
 
-  // 2. Notable Click Interaction Tracking
-  useEffect(() => {
-    if (isLoginPage) return;
 
-    const handleGlobalClick = (e: MouseEvent) => {
-      try {
-        const target = e.target as HTMLElement | null;
-        if (!target) return;
-
-        const clickable = target.closest<HTMLElement>("[data-track-click], button, a");
-        if (!clickable) return;
-
-        const customTrack = clickable.getAttribute("data-track-click");
-        const titleAttr = clickable.getAttribute("title");
-        const ariaLabel = clickable.getAttribute("aria-label");
-        const textContent = (clickable.innerText || clickable.textContent || "").trim();
-
-        let label = customTrack || titleAttr || ariaLabel;
-        if (!label && textContent && textContent.length <= 40 && !textContent.includes("\n")) {
-          label = textContent;
-        }
-
-        if (!label || label.length < 3 || /^[0-9]+$/.test(label)) return;
-
-        const clickKey = `${pathname}_${label}`;
-        const lastClickKey = sessionStorage.getItem("last_click_key");
-        const lastClickTime = parseInt(sessionStorage.getItem("last_click_time") || "0", 10);
-        const now = Date.now();
-
-        if (lastClickKey === clickKey && now - lastClickTime < 3000) return;
-
-        sessionStorage.setItem("last_click_key", clickKey);
-        sessionStorage.setItem("last_click_time", String(now));
-
-        fetch("/api/admin/logs/track", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "CLICK",
-            entity: "SYSTEM",
-            summary: `Click thao tác: "${label.slice(0, 80)}" tại ${PAGE_TITLES[pathname] || pathname}`,
-            details: { label, pathname },
-          }),
-        }).catch(() => {});
-      } catch {}
-    };
-
-    document.addEventListener("click", handleGlobalClick, true);
-    return () => {
-      document.removeEventListener("click", handleGlobalClick, true);
-    };
-  }, [pathname, isLoginPage]);
 
   if (isLoginPage) {
     return <>{children}</>;

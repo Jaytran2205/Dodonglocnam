@@ -56,27 +56,31 @@ export async function POST(req: NextRequest) {
       role: user.role
     });
 
-    // Update lastLoginAt asynchronously
-    prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() }
-    }).catch(() => {});
+    // Update lastLoginAt safely
+    try {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() }
+      });
+    } catch (_) {}
 
     // Log login activity
-    logActivity({
-      req,
-      session: {
-        userId: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      },
-      action: "LOGIN",
-      entity: "AUTH",
-      entityId: user.id,
-      entityName: user.name,
-      summary: `Đăng nhập hệ thống quản trị thành công (${user.name} - ${user.role})`
-    }).catch(() => {});
+    try {
+      await logActivity({
+        req,
+        session: {
+          userId: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role
+        },
+        action: "LOGIN",
+        entity: "AUTH",
+        entityId: user.id,
+        entityName: user.name,
+        summary: `Đăng nhập hệ thống quản trị thành công (${user.name} - ${user.role})`
+      });
+    } catch (_) {}
 
     const response = NextResponse.json({
       success: true,
@@ -94,6 +98,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error: any) {
     console.error("Admin Login Error:", error);
-    return NextResponse.json({ success: false, message: "Lỗi hệ thống khi đăng nhập." }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Lỗi kết nối máy chủ khi đăng nhập. Vui lòng bấm thử lại." }, { status: 500 });
   }
 }
