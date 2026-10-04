@@ -144,7 +144,26 @@ export default function RootLayout({
                          str.indexOf('M_ID') !== -1 ||
                          str.indexOf('executors') !== -1;
                 }
+                function handleChunkError(str) {
+                  if (/Loading chunk|ChunkLoadError|Failed to fetch dynamically imported module/i.test(str)) {
+                    var k = 'chunk_reload_lock';
+                    var last = sessionStorage.getItem(k);
+                    var now = Date.now();
+                    if (!last || now - parseInt(last, 10) > 8000) {
+                      sessionStorage.setItem(k, now.toString());
+                      window.location.reload();
+                      return true;
+                    }
+                  }
+                  return false;
+                }
                 window.addEventListener('error', function(e) {
+                  var full = (e.message || '') + ' ' + (e.filename || '') + ' ' + (e.error && e.error.message ? e.error.message : '');
+                  if (handleChunkError(full)) {
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                    return true;
+                  }
                   if (isExtensionError(e.message, e.filename, e.error)) {
                     e.stopImmediatePropagation();
                     e.preventDefault();
@@ -152,6 +171,12 @@ export default function RootLayout({
                   }
                 }, true);
                 window.addEventListener('unhandledrejection', function(e) {
+                  var full = (e.reason && e.reason.message ? e.reason.message : '') + ' ' + (e.reason && e.reason.stack ? e.reason.stack : '');
+                  if (handleChunkError(full)) {
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                    return;
+                  }
                   if (e.reason && isExtensionError(e.reason.message, '', e.reason)) {
                     e.stopImmediatePropagation();
                     e.preventDefault();
