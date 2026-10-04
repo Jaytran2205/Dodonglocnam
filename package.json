@@ -10,7 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "media:index": "node scripts/generate-media-index.mjs",
-    "test": "node --test tests/seo-admin.test.cjs",
+    "test": "node --test tests/seo-admin.test.cjs tests/admin-performance.test.cjs",
     "test:ui": "node tests/ui-regression.cjs"
   },
   "dependencies": {

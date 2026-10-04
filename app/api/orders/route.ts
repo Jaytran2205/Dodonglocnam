@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    revalidateTag("orders"); revalidateTag("customers");
     return NextResponse.json({
       success: true,
       message: "Đặt hàng thành công! Nhân viên Lộc Nam sẽ liên hệ quý khách trong ít phút.",

@@ -3,14 +3,27 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { logActivity } from "@/lib/activity-logger";
+import { pagedAdminArticles } from "@/lib/admin-article-list";
+import { AdminTiming } from "@/lib/admin-timing";
 
 export async function GET(req: NextRequest) {
-  const session = await getAdminSession(req);
+  const timing = new AdminTiming();
+  let session;
+  try { session = await timing.measure("auth", () => getAdminSession(req)); }
+  catch { return timing.json({ success: false, message: "Kết nối database đang gián đoạn. Vui lòng thử lại." }, 503); }
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
-  if (id) {
-    const article = await prisma.article.findFirst({ where: { id, ...(!session ? { isPublished: true } : {}) } });
-    return article ? NextResponse.json({ success: true, article }) : NextResponse.json({ success: false, message: "Không tìm thấy bài viết." }, { status: 404 });
+  const slug = searchParams.get("slug");
+  if (id || slug) {
+    const article = await timing.measure("data", () => prisma.article.findFirst({ where: { ...(id ? { id } : { slug: slug! }), ...(!session ? { isPublished: true } : {}) } }));
+    return article ? timing.json({ success: true, article }) : timing.json({ success: false, message: "Không tìm thấy bài viết." }, 404);
+  }
+  if (searchParams.get("paged") === "1") {
+    try { return timing.json(await timing.measure("data", () => pagedAdminArticles(searchParams, !!session))); }
+    catch (error) {
+      console.error("Article list error:", error);
+      return timing.json({ success: false, message: "Không tải được bài viết. Vui lòng thử lại." }, 503);
+    }
   }
   const where: any = {};
   if (!session) {

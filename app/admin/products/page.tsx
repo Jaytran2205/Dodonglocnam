@@ -1,8 +1,15 @@
 "use client";
 
+import { adminGet } from "@/lib/admin-fetch";
 import { AdminImage } from "@/components/admin/AdminImage";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import {
   Plus,
   Search,
@@ -51,12 +58,27 @@ import { formatPrice, slugify, parseImageList } from "@/lib/utils";
 import { useToast } from "@/components/admin/AdminToast";
 
 export default function AdminProductsPage() {
-  const { toastSuccess, toastError, toastWarning, toastInfo, confirm: showConfirm } = useToast();
+  const {
+    toastSuccess,
+    toastError,
+    toastWarning,
+    toastInfo,
+    confirm: showConfirm,
+  } = useToast();
   const editRequestRef = useRef(0);
+  const flagLocks = useRef(new Set<string>());
+  const [pendingFlags, setPendingFlags] = useState(new Set<string>());
   const [productPage, setProductPage] = useState(1);
+  const listRequestId = useRef(0);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [listError, setListError] = useState("");
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [catalog, setCatalog] = useState<MainCategoryData[]>(DEFAULT_HIERARCHICAL_CATEGORIES);
+  const [catalog, setCatalog] = useState<MainCategoryData[]>(
+    DEFAULT_HIERARCHICAL_CATEGORIES
+  );
   const [loading, setLoading] = useState(true);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [customSlug, setCustomSlug] = useState<string>("");
@@ -72,7 +94,9 @@ export default function AdminProductsPage() {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [angleImages, setAngleImages] = useState<{ id: string; label: string; url: string }[]>([]);
+  const [angleImages, setAngleImages] = useState<
+    { id: string; label: string; url: string }[]
+  >([]);
   const [uploadingAngle, setUploadingAngle] = useState<number | null>(null);
 
   // Main Form Data State
@@ -131,68 +155,81 @@ export default function AdminProductsPage() {
     }
   };
 
-  const fetchProducts = async (forceRefresh = false) => {
-    if (!forceRefresh) {
-      try {
-        const cached = sessionStorage.getItem("locnam_admin_products_cache_v2");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.products && Array.isArray(parsed.products)) {
-            setProducts(parsed.products);
-            if (parsed.categories && Array.isArray(parsed.categories)) {
-              setCategories(parsed.categories);
-            }
-            setLoading(false);
-          }
-        }
-      } catch (_) {}
-    } else {
-      // Only show full-screen loader if products list is currently empty
-      setProducts((current) => {
-        if (current.length === 0) setLoading(true);
-        return current;
-      });
-    }
-
-    try {
-      const [res, catRes] = await Promise.all([
-        fetch("/api/admin/products?view=list"),
-        fetch("/api/admin/categories"),
-      ]);
-      const [data, catData] = await Promise.all([res.json(), catRes.json()]);
-
-      if (data.success) {
-        setProducts(data.products);
-      }
-      if (catData.success) {
-        setCategories(catData.categories);
-        if (!formData.categoryId && catData.categories.length > 0) {
-          setFormData((prev) => prev.categoryId ? prev : ({ ...prev, categoryId: catData.categories[0].id }));
-        }
-      }
-
-      if (data.success && catData.success) {
-        try {
-          sessionStorage.setItem(
-            "locnam_admin_products_cache_v2",
-            JSON.stringify({
-              products: data.products,
-              categories: catData.categories,
-            })
-          );
-        } catch (_) {}
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+  const fetchProducts = async () => {
+    setRefreshVersion((version) => version + 1);
   };
-
   useEffect(() => {
-    fetchProducts();
-    fetchCatalog();
+    let active = true;
+    Promise.all([
+      adminGet("/api/admin/categories?view=options"),
+      adminGet("/api/admin/subcategories"),
+    ])
+      .then(([catData, catalogData]) => {
+        if (!active) return;
+        setCategories(catData.categories || []);
+        setCatalog(catalogData.data || []);
+        if (catData.categories?.length)
+          setFormData((prev) =>
+            prev.categoryId
+              ? prev
+              : { ...prev, categoryId: catData.categories[0].id }
+          );
+      })
+      .catch((error) => {
+        if (active) toastError(error.message);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const fetchPage = useCallback(async () => {
+    const requestId = ++listRequestId.current;
+    setLoading(true);
+    setListError("");
+    const params = new URLSearchParams({
+      view: "list",
+      paged: "1",
+      limit: "40",
+      page: String(productPage),
+      search: search.trim(),
+      categoryId: selectedCat,
+      subCategoryId: selectedSubCat,
+      stock: stockFilter,
+      sort: sortBy,
+    });
+    try {
+      const data = await adminGet(`/api/admin/products?${params}`);
+      if (requestId !== listRequestId.current) return;
+      setProducts(data.products || []);
+      setPagination({
+        total: data.pagination.total,
+        totalPages: data.pagination.totalPages,
+      });
+      setTotalProducts(data.totalProducts);
+      if (data.pagination.page !== productPage)
+        setProductPage(data.pagination.page);
+    } catch (error) {
+      if (requestId === listRequestId.current)
+        setListError(
+          error instanceof Error ? error.message : "Không tải được sản phẩm."
+        );
+    } finally {
+      if (requestId === listRequestId.current) setLoading(false);
+    }
+  }, [productPage, search, selectedCat, selectedSubCat, stockFilter, sortBy]);
+  useEffect(() => {
+    const timer = setTimeout(
+      () => {
+        void fetchPage();
+      },
+      search.trim() ? 250 : 0
+    );
+    return () => {
+      clearTimeout(timer);
+      listRequestId.current++;
+    };
+  }, [fetchPage, refreshVersion]);
 
   // Available Subcategories for the filter dropdown
   const availableSubcategoriesForFilter = useMemo(() => {
@@ -244,7 +281,9 @@ export default function AdminProductsPage() {
       return result;
     }
 
-    const selectedDbCat = categories.find((c) => c.id === selectedCat || c.slug === selectedCat);
+    const selectedDbCat = categories.find(
+      (c) => c.id === selectedCat || c.slug === selectedCat
+    );
     if (!selectedDbCat) return [];
 
     const matchedCatalog = catalog.find(
@@ -258,7 +297,10 @@ export default function AdminProductsPage() {
     return result;
   }, [selectedCat, categories, catalog]);
 
-  useEffect(() => setProductPage(1), [search, selectedCat, selectedSubCat, stockFilter, sortBy]);
+  useEffect(
+    () => setProductPage(1),
+    [search, selectedCat, selectedSubCat, stockFilter, sortBy]
+  );
 
   // Open Create Modal
   const openCreateModal = () => {
@@ -288,7 +330,11 @@ export default function AdminProductsPage() {
     });
     setSelectedSurfaces(["Mạ - dát vàng 24K"]);
     setAngleImages([
-      { id: "1", label: "Ảnh chính / Mặt trước", url: "/images/hero_golden_ship.jpg" },
+      {
+        id: "1",
+        label: "Ảnh chính / Mặt trước",
+        url: "/images/hero_golden_ship.jpg",
+      },
       { id: "2", label: "Góc nghiêng 45°", url: "" },
       { id: "3", label: "Cận cảnh chi tiết hoa văn", url: "" },
       { id: "4", label: "Mặt sau & Chân đế", url: "" },
@@ -301,12 +347,21 @@ export default function AdminProductsPage() {
     const requestId = ++editRequestRef.current;
     let prod;
     try {
-      const res = await fetch(`/api/admin/products?id=${encodeURIComponent(summary.id)}`, { cache: "no-store" });
+      const res = await fetch(
+        `/api/admin/products?id=${encodeURIComponent(summary.id)}`,
+        { cache: "no-store" }
+      );
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được sản phẩm");
+      if (!res.ok || !data.success)
+        throw new Error(data.message || "Không tải được sản phẩm");
       if (requestId !== editRequestRef.current) return;
       prod = data.product;
-    } catch (error) { toastError(error instanceof Error ? error.message : "Không tải được sản phẩm"); return; }
+    } catch (error) {
+      toastError(
+        error instanceof Error ? error.message : "Không tải được sản phẩm"
+      );
+      return;
+    }
 
     setLastSavedAt(null);
     setEditingProduct(prod);
@@ -346,21 +401,28 @@ export default function AdminProductsPage() {
 
     // Extract surfaces from material and tags
     const surfaces: string[] = [];
-    const matAndTags = `${prod.material || ""} ${prod.tags || ""}`.toLowerCase();
-    if (matAndTags.includes("mạ vàng") || matAndTags.includes("dát vàng 24k")) surfaces.push("Mạ - dát vàng 24K");
+    const matAndTags =
+      `${prod.material || ""} ${prod.tags || ""}`.toLowerCase();
+    if (matAndTags.includes("mạ vàng") || matAndTags.includes("dát vàng 24k"))
+      surfaces.push("Mạ - dát vàng 24K");
     if (matAndTags.includes("9999")) surfaces.push("Dát vàng 9999");
     if (matAndTags.includes("tam khí")) surfaces.push("Mạ - khảm tam khí");
     if (matAndTags.includes("ngũ sắc")) surfaces.push("Mạ - khảm ngũ sắc");
     if (matAndTags.includes("khảm bạc")) surfaces.push("Mạ - khảm bạc");
-    if (matAndTags.includes("giả cổ") || matAndTags.includes("hun nâu")) surfaces.push("Giả cổ hun nâu");
+    if (matAndTags.includes("giả cổ") || matAndTags.includes("hun nâu"))
+      surfaces.push("Giả cổ hun nâu");
     if (matAndTags.includes("màu mộc")) surfaces.push("Màu mộc đồng đỏ");
     if (matAndTags.includes("catut")) surfaces.push("Đồng catut quân sự");
 
     setSelectedSurfaces(surfaces.length > 0 ? surfaces : ["Mạ - dát vàng 24K"]);
 
     const initialCatId = prod.categoryId || categories[0]?.id || "";
-    const resolvedCatIds = prod.categoryIds || (initialCatId ? JSON.stringify([initialCatId]) : "[]");
-    const resolvedSubIds = prod.subCategoryIds || (detectedSubCat ? JSON.stringify([detectedSubCat]) : "[]");
+    const resolvedCatIds =
+      prod.categoryIds ||
+      (initialCatId ? JSON.stringify([initialCatId]) : "[]");
+    const resolvedSubIds =
+      prod.subCategoryIds ||
+      (detectedSubCat ? JSON.stringify([detectedSubCat]) : "[]");
 
     setFormData({
       name: prod.name || "",
@@ -405,7 +467,10 @@ export default function AdminProductsPage() {
         if (idx === 0) {
           setFormData((prev) => ({ ...prev, images: result.url }));
         }
-        toastSuccess(`Đã tải ảnh "${file.name}" lên thành công!`, "Tải ảnh hoàn tất");
+        toastSuccess(
+          `Đã tải ảnh "${file.name}" lên thành công!`,
+          "Tải ảnh hoàn tất"
+        );
       } else {
         toastError(result.message || "Lỗi tải ảnh lên", "Tải ảnh thất bại");
       }
@@ -417,21 +482,32 @@ export default function AdminProductsPage() {
   };
 
   // Save Product (Create or Edit)
-  const handleSave = async (e?: React.FormEvent, forceStatus?: boolean, closeModalAfter = false) => {
+  const handleSave = async (
+    e?: React.FormEvent,
+    forceStatus?: boolean,
+    closeModalAfter = false
+  ) => {
     if (e) e.preventDefault();
     if (!formData.name.trim()) {
-      toastWarning("Vui lòng nhập tên sản phẩm / tiêu đề bài viết!", "Thiếu thông tin");
+      toastWarning(
+        "Vui lòng nhập tên sản phẩm / tiêu đề bài viết!",
+        "Thiếu thông tin"
+      );
       return;
     }
     if (!formData.categoryId) {
-      toastWarning("Vui lòng chọn danh mục chính cho sản phẩm!", "Thiếu thông tin");
+      toastWarning(
+        "Vui lòng chọn danh mục chính cho sản phẩm!",
+        "Thiếu thông tin"
+      );
       return;
     }
 
     setSaving(true);
     try {
       const validUrls = angleImages.map((a) => a.url.trim()).filter(Boolean);
-      const imageList = validUrls.length > 0 ? validUrls : ["/images/hero_golden_ship.jpg"];
+      const imageList =
+        validUrls.length > 0 ? validUrls : ["/images/hero_golden_ship.jpg"];
 
       // Merge selected surfaces into tags if not present
       const currentTagsList = (formData.tags || "")
@@ -447,7 +523,9 @@ export default function AdminProductsPage() {
         tags: currentTagsList.join(", "),
         inStock: forceStatus !== undefined ? forceStatus : formData.inStock,
         price: formData.price ? parseFloat(formData.price) : null,
-        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
+        originalPrice: formData.originalPrice
+          ? parseFloat(formData.originalPrice)
+          : null,
         images: JSON.stringify(imageList),
         id: editingProduct?.id,
         slug: liveSlug,
@@ -462,6 +540,7 @@ export default function AdminProductsPage() {
 
       if (data.success && data.product) {
         const savedProd = data.product;
+        void fetchProducts();
         const nowStr = new Date().toLocaleTimeString("vi-VN");
         setLastSavedAt(nowStr);
 
@@ -478,20 +557,6 @@ export default function AdminProductsPage() {
           }
           return [savedProd, ...prev];
         });
-
-        // Update sessionStorage cache quietly
-        try {
-          const cached = sessionStorage.getItem("locnam_admin_products_cache_v2");
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed.products)) {
-              const idx = parsed.products.findIndex((p: any) => p.id === savedProd.id);
-              if (idx >= 0) parsed.products[idx] = { ...parsed.products[idx], ...savedProd };
-              else parsed.products.unshift(savedProd);
-              sessionStorage.setItem("locnam_admin_products_cache_v2", JSON.stringify(parsed));
-            }
-          }
-        } catch (_) {}
 
         // Prominent toast notification
         toastSuccess(
@@ -543,18 +608,28 @@ export default function AdminProductsPage() {
       type: "danger",
       onConfirm: async () => {
         try {
-          const res = await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
+          const res = await fetch(`/api/admin/products?id=${id}`, {
+            method: "DELETE",
+          });
           const data = await res.json();
           if (data.success) {
             setProducts((prev) => prev.filter((p) => p.id !== id));
+            void fetchProducts();
             // Update session cache
             try {
-              const cached = sessionStorage.getItem("locnam_admin_products_cache_v2");
+              const cached = sessionStorage.getItem(
+                "locnam_admin_products_cache_v2"
+              );
               if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed.products)) {
-                  parsed.products = parsed.products.filter((p: any) => p.id !== id);
-                  sessionStorage.setItem("locnam_admin_products_cache_v2", JSON.stringify(parsed));
+                  parsed.products = parsed.products.filter(
+                    (p: any) => p.id !== id
+                  );
+                  sessionStorage.setItem(
+                    "locnam_admin_products_cache_v2",
+                    JSON.stringify(parsed)
+                  );
                 }
               }
             } catch (_) {}
@@ -570,6 +645,9 @@ export default function AdminProductsPage() {
   };
 
   const toggleStock = async (prod: any) => {
+    const key = `${prod.id}-inStock`;
+    if (flagLocks.current.has(key)) return;
+    flagLocks.current.add(key); setPendingFlags(new Set(flagLocks.current));
     const nextStatus = !prod.inStock;
     // Optimistic UI update
     setProducts((prev) =>
@@ -584,6 +662,7 @@ export default function AdminProductsPage() {
       if (!res.ok) {
         throw new Error("HTTP " + res.status);
       }
+      if (stockFilter !== "ALL") void fetchProducts();
       toastInfo(
         `Đã chuyển "${prod.name}" sang trạng thái ${nextStatus ? "Còn hàng" : "Hết hàng"}`,
         "Kho hàng"
@@ -594,14 +673,19 @@ export default function AdminProductsPage() {
         prev.map((p) => (p.id === prod.id ? { ...p, inStock: !nextStatus } : p))
       );
       toastError("Lỗi cập nhật trạng thái kho. Đã hoàn tác!", "Lỗi hệ thống");
-    }
+    } finally { flagLocks.current.delete(key); setPendingFlags(new Set(flagLocks.current)); }
   };
 
   const toggleFeatured = async (prod: any) => {
+    const key = `${prod.id}-isFeatured`;
+    if (flagLocks.current.has(key)) return;
+    flagLocks.current.add(key); setPendingFlags(new Set(flagLocks.current));
     const nextFeatured = !prod.isFeatured;
     // Optimistic UI update
     setProducts((prev) =>
-      prev.map((p) => (p.id === prod.id ? { ...p, isFeatured: nextFeatured } : p))
+      prev.map((p) =>
+        p.id === prod.id ? { ...p, isFeatured: nextFeatured } : p
+      )
     );
     try {
       const res = await fetch("/api/admin/products", {
@@ -621,149 +705,41 @@ export default function AdminProductsPage() {
     } catch (e) {
       // Rollback
       setProducts((prev) =>
-        prev.map((p) => (p.id === prod.id ? { ...p, isFeatured: !nextFeatured } : p))
+        prev.map((p) =>
+          p.id === prod.id ? { ...p, isFeatured: !nextFeatured } : p
+        )
       );
       toastError("Lỗi cập nhật sản phẩm nổi bật. Đã hoàn tác!", "Lỗi hệ thống");
-    }
+    } finally { flagLocks.current.delete(key); setPendingFlags(new Set(flagLocks.current)); }
   };
 
   // Helper to find Subcategory Name for a product
   const getSubCatNameForProduct = (prod: any) => {
+    if (prod.subcategoryLabel) return prod.subcategoryLabel;
     const info = getSubCatInfoForProduct(prod, catalog);
     return info?.name || null;
   };
 
   // Filter & Sort Products for Listing Table
-  const filteredProducts = useMemo(() => {
-    let list = [...products];
-
-    if (search.trim()) {
-      const rawQ = search.trim().toLowerCase();
-      const cleanQ = removeVietnameseTones(rawQ);
-
-      list = list.filter((p) => {
-        const pName = (p.name || "").toLowerCase();
-        const pNameClean = removeVietnameseTones(pName);
-        const pSlug = (p.slug || "").toLowerCase();
-        const pMaterial = (p.material || "").toLowerCase();
-        const pMaterialClean = removeVietnameseTones(pMaterial);
-        const pTags = (p.tags || "").toLowerCase();
-        const pTagsClean = removeVietnameseTones(pTags);
-
-        const subInfo = getSubCatInfoForProduct(p, catalog);
-        const subName = (subInfo?.name || "").toLowerCase();
-        const subNameClean = removeVietnameseTones(subName);
-
-        const catName = (p.category?.name || "").toLowerCase();
-        const catNameClean = removeVietnameseTones(catName);
-
-        return (
-          pName.includes(rawQ) ||
-          pNameClean.includes(cleanQ) ||
-          pSlug.includes(cleanQ) ||
-          pMaterial.includes(rawQ) ||
-          pMaterialClean.includes(cleanQ) ||
-          pTags.includes(rawQ) ||
-          pTagsClean.includes(cleanQ) ||
-          subName.includes(rawQ) ||
-          subNameClean.includes(cleanQ) ||
-          catName.includes(rawQ) ||
-          catNameClean.includes(cleanQ)
-        );
-      });
-    }
-
-    if (selectedCat !== "ALL") {
-      list = list.filter((p) => {
-        if (p.categoryId === selectedCat) return true;
-        if (p.category?.slug === selectedCat) return true;
-        if (p.categoryIds) {
-          try {
-            const parsed = JSON.parse(p.categoryIds);
-            if (Array.isArray(parsed) && parsed.includes(selectedCat)) return true;
-          } catch {
-            const parts = p.categoryIds.split(",").map((s: string) => s.trim());
-            if (parts.includes(selectedCat)) return true;
-          }
-        }
-        return false;
-      });
-    }
-
-    if (selectedSubCat !== "ALL") {
-      const selectedSubObj = availableSubcategoriesForFilter.find((s) => s.id === selectedSubCat);
-      const targetIds = [selectedSubCat, ...(selectedSubObj?.childIds || [])];
-
-      list = list.filter((p) => {
-        // 1. Direct subCategoryId match
-        if (p.subCategoryId && targetIds.includes(p.subCategoryId)) return true;
-
-        // 2. subCategoryIds match
-        if (p.subCategoryIds) {
-          try {
-            const parsed = JSON.parse(p.subCategoryIds);
-            if (Array.isArray(parsed) && parsed.some((id: string) => targetIds.includes(id))) return true;
-          } catch {
-            for (let i = 0; i < targetIds.length; i++) {
-              if (p.subCategoryIds.includes(targetIds[i])) return true;
-            }
-          }
-        }
-
-        // 3. Resolved subcategory info match
-        const subInfo = getSubCatInfoForProduct(p, catalog);
-        if (subInfo) {
-          if (targetIds.includes(subInfo.id)) return true;
-          if (subInfo.parentId && targetIds.includes(subInfo.parentId)) return true;
-        }
-
-        // 4. Keyword match for selected subcategory - only if product has NO explicit conflicting subCategoryId
-        if (selectedSubObj && !p.subCategoryId) {
-          const pName = (p.name || "").toLowerCase();
-          const pNameClean = removeVietnameseTones(pName);
-          const kws = (selectedSubObj.keyword || "").split(",").map((k) => k.trim().toLowerCase()).filter(Boolean);
-          kws.push(selectedSubObj.name.toLowerCase());
-
-          for (const kw of kws) {
-            const kwClean = removeVietnameseTones(kw);
-            // If keyword has Vietnamese tones, enforce tone matching so "hổ" does not match "Bác Hồ"
-            if (/[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/.test(kw)) {
-              const regexRaw = new RegExp(`(^|[^a-z0-9àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ])${kw}([^a-z0-9àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]|$)`, "i");
-              if (regexRaw.test(pName)) return true;
-            } else {
-              const regexClean = new RegExp(`(^|[^a-z0-9])${kwClean}([^a-z0-9]|$)`, "i");
-              if (regexClean.test(pNameClean)) return true;
-            }
-          }
-        }
-
-        return false;
-      });
-    }
-
-    if (stockFilter === "IN_STOCK") {
-      list = list.filter((p) => p.inStock);
-    } else if (stockFilter === "OUT_OF_STOCK") {
-      list = list.filter((p) => !p.inStock);
-    }
-
-    if (sortBy === "price-asc") {
-      list.sort((a, b) => (a.price || 0) - (b.price || 0));
-    } else if (sortBy === "price-desc") {
-      list.sort((a, b) => (b.price || 0) - (a.price || 0));
-    } else if (sortBy === "name-asc") {
-      list.sort((a, b) => a.name.localeCompare(b.name, "vi"));
-    } else if (sortBy === "name-desc") {
-      list.sort((a, b) => b.name.localeCompare(a.name, "vi"));
-    } else {
-      list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-    }
-
-    return list;
-  }, [products, search, selectedCat, selectedSubCat, stockFilter, sortBy, availableSubcategoriesForFilter, catalog]);
+  const filteredProducts = products;
 
   return (
     <div className="space-y-6">
+      {listError && (
+        <div
+          role="alert"
+          className="p-3 border border-red-400/40 rounded-lg text-red-300 text-sm"
+        >
+          {listError}
+          <button
+            type="button"
+            onClick={() => void fetchProducts()}
+            className="ml-3 underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
       {/* Header with Title and Create Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -774,16 +750,17 @@ export default function AdminProductsPage() {
             </span>
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-extrabold text-white uppercase tracking-wide mt-1">
-            QUẢN LÝ SẢN PHẨM ({products.length} MẶT HÀNG)
+            QUẢN LÝ SẢN PHẨM ({totalProducts} MẶT HÀNG)
           </h1>
           <p className="text-xs text-[#94a3b8] mt-0.5">
-            Cấu hình danh mục nhánh nhỏ, biên tập nội dung chuẩn SEO và kiểm soát kho hàng
+            Cấu hình danh mục nhánh nhỏ, biên tập nội dung chuẩn SEO và kiểm
+            soát kho hàng
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => fetchProducts(true)}
+            onClick={() => fetchProducts()}
             className="p-2.5 bg-[#111c2e] hover:bg-[#152236] text-[#d4af37] border border-[#d4af37]/30 rounded-xl transition-all shadow"
             title="Tải lại danh sách"
           >
@@ -825,7 +802,9 @@ export default function AdminProductsPage() {
               }}
               className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-3 py-2.5 rounded-xl focus:outline-none cursor-pointer"
             >
-              <option value="ALL">Tất Cả Danh Mục Chính ({categories.length})</option>
+              <option value="ALL">
+                Tất Cả Danh Mục Chính ({categories.length})
+              </option>
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
@@ -841,7 +820,9 @@ export default function AdminProductsPage() {
               onChange={(e) => setSelectedSubCat(e.target.value)}
               className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-3 py-2.5 rounded-xl focus:outline-none cursor-pointer"
             >
-              <option value="ALL">Tất Cả Nhánh Nhỏ ({availableSubcategoriesForFilter.length})</option>
+              <option value="ALL">
+                Tất Cả Nhánh Nhỏ ({availableSubcategoriesForFilter.length})
+              </option>
               {availableSubcategoriesForFilter.map((sub) => (
                 <option key={sub.id} value={sub.id}>
                   {sub.displayName || `└─ ${sub.name}`}
@@ -867,9 +848,13 @@ export default function AdminProductsPage() {
         {/* Active Filter Tags */}
         <div className="flex items-center justify-between text-xs text-[#94a3b8] pt-1 border-t border-[#1f2d42]">
           <span>
-            Hiển thị <strong>{filteredProducts.length}</strong> / {products.length} sản phẩm
+            Hiển thị <strong>{pagination.total}</strong> / {totalProducts} sản
+            phẩm
           </span>
-          {(search || selectedCat !== "ALL" || selectedSubCat !== "ALL" || stockFilter !== "ALL") && (
+          {(search ||
+            selectedCat !== "ALL" ||
+            selectedSubCat !== "ALL" ||
+            stockFilter !== "ALL") && (
             <button
               onClick={() => {
                 setSearch("");
@@ -886,9 +871,29 @@ export default function AdminProductsPage() {
       </div>
 
       <div className="flex items-center justify-end gap-3 my-3 text-sm text-[#cbd5e1]">
-        <button type="button" className="px-3 py-2 border border-[#34465e] rounded-lg disabled:opacity-40" disabled={productPage <= 1} onClick={() => setProductPage(p => Math.max(1, Math.min(p, Math.ceil(filteredProducts.length / 40)) - 1))}>Trang trước</button>
-        <span>Trang {Math.min(productPage, Math.max(1, Math.ceil(filteredProducts.length / 40)))} / {Math.max(1, Math.ceil(filteredProducts.length / 40))}</span>
-        <button type="button" className="px-3 py-2 border border-[#34465e] rounded-lg disabled:opacity-40" disabled={productPage >= Math.ceil(filteredProducts.length / 40)} onClick={() => setProductPage(p => p + 1)}>Trang sau</button>
+        <button
+          type="button"
+          className="px-3 py-2 border border-[#34465e] rounded-lg disabled:opacity-40"
+          disabled={productPage <= 1 || loading}
+          onClick={() =>
+            setProductPage((p) =>
+              Math.max(1, Math.min(p, pagination.totalPages) - 1)
+            )
+          }
+        >
+          Trang trước
+        </button>
+        <span>
+          Trang {productPage} / {pagination.totalPages}
+        </span>
+        <button
+          type="button"
+          className="px-3 py-2 border border-[#34465e] rounded-lg disabled:opacity-40"
+          disabled={productPage >= pagination.totalPages || loading}
+          onClick={() => setProductPage((p) => p + 1)}
+        >
+          Trang sau
+        </button>
       </div>
 
       {/* Products Table */}
@@ -896,12 +901,16 @@ export default function AdminProductsPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
             <div className="w-8 h-8 border-3 border-[#d4af37] border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs text-gray-400">Đang tải cơ sở dữ liệu sản phẩm...</span>
+            <span className="text-xs text-gray-400">
+              Đang tải cơ sở dữ liệu sản phẩm...
+            </span>
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-16 space-y-3 text-gray-400">
             <Package className="w-12 h-12 mx-auto text-gray-600" />
-            <p className="text-sm">Không tìm thấy sản phẩm nào phù hợp với bộ lọc hiện tại.</p>
+            <p className="text-sm">
+              Không tìm thấy sản phẩm nào phù hợp với bộ lọc hiện tại.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -918,16 +927,22 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1f2d42]/60">
-                {filteredProducts.slice((Math.min(productPage, Math.max(1, Math.ceil(filteredProducts.length / 40))) - 1) * 40, Math.min(productPage, Math.max(1, Math.ceil(filteredProducts.length / 40))) * 40).map((prod) => {
-                  const img = parseImageList(prod.images)[0] || "/images/hero_golden_ship.jpg";
+                {filteredProducts.map((prod) => {
+                  const img =
+                    parseImageList(prod.images)[0] ||
+                    "/images/hero_golden_ship.jpg";
 
                   const subBranchName = getSubCatNameForProduct(prod);
 
                   return (
-                    <tr key={prod.id} className="hover:bg-[#111c2e]/60 transition-colors">
+                    <tr
+                      key={prod.id}
+                      className="hover:bg-[#111c2e]/60 transition-colors"
+                    >
                       <td className="py-3 px-4 text-center">
                         <div className="w-12 h-12 rounded-lg bg-white/5 border border-[#1f2d42] overflow-hidden p-1 flex items-center justify-center">
                           <AdminImage
+                            previewWidth={128}
                             src={img}
                             alt={prod.name}
                             className="w-full h-full object-contain rounded"
@@ -946,7 +961,8 @@ export default function AdminProductsPage() {
                           {prod.name}
                         </div>
                         <div className="text-[10px] text-[#94a3b8] line-clamp-1 mt-0.5">
-                          {prod.material || "Đồng nguyên chất"} {prod.dimensions && `• ${prod.dimensions}`}
+                          {prod.material || "Đồng nguyên chất"}{" "}
+                          {prod.dimensions && `• ${prod.dimensions}`}
                         </div>
                       </td>
 
@@ -958,7 +974,9 @@ export default function AdminProductsPage() {
                           {subBranchName && (
                             <div className="flex items-center gap-1 text-[10px] text-amber-300 font-medium">
                               <span className="text-gray-500">└─</span>
-                              <span className="truncate max-w-[180px]">{subBranchName}</span>
+                              <span className="truncate max-w-[180px]">
+                                {subBranchName}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -970,6 +988,7 @@ export default function AdminProductsPage() {
 
                       <td className="py-3 px-4 text-center">
                         <button
+                          disabled={pendingFlags.has(`${prod.id}-inStock`)}
                           onClick={() => toggleStock(prod)}
                           title="Bấm để đổi trạng thái kho"
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-colors ${
@@ -994,6 +1013,7 @@ export default function AdminProductsPage() {
 
                       <td className="py-3 px-4 text-center">
                         <button
+                          disabled={pendingFlags.has(`${prod.id}-isFeatured`)}
                           onClick={() => toggleFeatured(prod)}
                           title="Bật/Tắt hiển thị nổi bật"
                           className={`p-1.5 rounded-lg transition-colors ${
@@ -1002,7 +1022,9 @@ export default function AdminProductsPage() {
                               : "text-gray-500 hover:text-gray-300"
                           }`}
                         >
-                          <Star className={`w-4 h-4 ${prod.isFeatured ? "fill-current" : ""}`} />
+                          <Star
+                            className={`w-4 h-4 ${prod.isFeatured ? "fill-current" : ""}`}
+                          />
                         </button>
                       </td>
 
@@ -1055,10 +1077,16 @@ export default function AdminProductsPage() {
                 <div className="w-3 h-3 rounded-full bg-[#d4af37] animate-pulse shrink-0"></div>
                 <div className="min-w-0">
                   <h2 className="font-serif font-extrabold text-sm sm:text-base md:text-lg text-[#d4af37] uppercase tracking-wide truncate">
-                    {editingProduct ? "CHỈNH SỬA BÀI VIẾT SẢN PHẨM" : "SOẠN THẢO BÀI VIẾT SẢN PHẨM MỚI"}
+                    {editingProduct
+                      ? "CHỈNH SỬA BÀI VIẾT SẢN PHẨM"
+                      : "SOẠN THẢO BÀI VIẾT SẢN PHẨM MỚI"}
                   </h2>
                   <p className="text-[11px] text-gray-400 truncate hidden sm:block">
-                    Hỗ trợ phím tắt <span className="text-[#ffd700] font-mono font-bold">Ctrl+S</span> để lưu tức thì mọi lúc mọi nơi
+                    Hỗ trợ phím tắt{" "}
+                    <span className="text-[#ffd700] font-mono font-bold">
+                      Ctrl+S
+                    </span>{" "}
+                    để lưu tức thì mọi lúc mọi nơi
                   </p>
                 </div>
               </div>
@@ -1080,7 +1108,13 @@ export default function AdminProductsPage() {
                   title="Lưu cập nhật sản phẩm lên website ngay mà không cần cuộn trang (Ctrl+S)"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>{saving ? "ĐANG LƯU..." : editingProduct ? "CẬP NHẬT (Ctrl+S)" : "XUẤT BẢN"}</span>
+                  <span>
+                    {saving
+                      ? "ĐANG LƯU..."
+                      : editingProduct
+                        ? "CẬP NHẬT (Ctrl+S)"
+                        : "XUẤT BẢN"}
+                  </span>
                 </button>
 
                 {/* STICKY SAVE & CLOSE BUTTON */}
@@ -1107,14 +1141,15 @@ export default function AdminProductsPage() {
             </div>
 
             {/* Modal Scrollable Body */}
-            <form onSubmit={handleSave} className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+            <form
+              onSubmit={handleSave}
+              className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs"
+            >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                
                 {/* ============================================================= */}
                 {/* LEFT COLUMN: MAIN CONTENT BOXES (8 COLS)                      */}
                 {/* ============================================================= */}
                 <div className="lg:col-span-8 space-y-6">
-                  
                   {/* BOX 1: TITLE & PERMALINK PREVIEW */}
                   <div className="bg-[#0e1726] border border-[#202f45] rounded-xl p-4 shadow-lg space-y-3">
                     <div>
@@ -1125,7 +1160,9 @@ export default function AdminProductsPage() {
                         type="text"
                         required
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
                         placeholder="Ví dụ: Bộ Ngũ Sự Đỉnh Đồng Thờ Cúng Bằng Đồng Đỏ Mạ Vàng 24K"
                         className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-sm sm:text-base font-serif font-bold px-4 py-3 rounded-xl focus:outline-none"
                       />
@@ -1139,7 +1176,9 @@ export default function AdminProductsPage() {
                             <Link2 className="w-3.5 h-3.5 text-[#ffd700]" />
                           </div>
                           <div className="min-w-0 flex flex-wrap items-center gap-1.5">
-                            <span className="text-gray-400 font-semibold whitespace-nowrap">Đường dẫn cố định (URL):</span>
+                            <span className="text-gray-400 font-semibold whitespace-nowrap">
+                              Đường dẫn cố định (URL):
+                            </span>
                             <span className="font-mono text-[#ffd700] bg-black/50 px-2 py-0.5 rounded border border-[#202f45] truncate max-w-full sm:max-w-md">
                               {`/san-pham/${liveSlug}`}
                             </span>
@@ -1162,7 +1201,10 @@ export default function AdminProductsPage() {
                             onClick={() => {
                               const fullUrl = `${window.location.origin}/san-pham/${liveSlug}`;
                               navigator.clipboard.writeText(fullUrl);
-                              toastSuccess(`Đã sao chép liên kết bài viết: ${fullUrl}`, "Đã sao chép 📋");
+                              toastSuccess(
+                                `Đã sao chép liên kết bài viết: ${fullUrl}`,
+                                "Đã sao chép 📋"
+                              );
                             }}
                             className="px-2.5 py-1 bg-[#152236] hover:bg-[#1d2f4a] text-[#ffd700] border border-[#ffd700]/30 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all active:scale-95"
                             title="Sao chép toàn bộ đường dẫn"
@@ -1203,7 +1245,9 @@ export default function AdminProductsPage() {
                       {/* Optional Custom Slug Input Drawer */}
                       {isEditingSlug && (
                         <div className="pt-2 border-t border-[#1b283d] flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                          <span className="text-gray-400 text-[11px] shrink-0 font-medium">Slug tùy chỉnh:</span>
+                          <span className="text-gray-400 text-[11px] shrink-0 font-medium">
+                            Slug tùy chỉnh:
+                          </span>
                           <input
                             type="text"
                             value={customSlug || liveSlug}
@@ -1216,7 +1260,9 @@ export default function AdminProductsPage() {
                             onClick={() => {
                               setCustomSlug("");
                               setIsEditingSlug(false);
-                              toastInfo("Đã đặt lại slug tự động đồng bộ theo tiêu đề bài viết!");
+                              toastInfo(
+                                "Đã đặt lại slug tự động đồng bộ theo tiêu đề bài viết!"
+                              );
                             }}
                             className="px-2 py-1 bg-[#152236] hover:bg-[#1f314d] text-gray-300 text-[11px] rounded-lg border border-[#202f45]"
                           >
@@ -1244,9 +1290,15 @@ export default function AdminProductsPage() {
                     <div className="p-4">
                       <ProductArticleEditor
                         value={formData.description}
-                        onChange={(val) => setFormData({ ...formData, description: val })}
-                        productName={formData.name || "Sản phẩm Đồ Đồng Lộc Nam"}
-                        onQuickSave={() => handleSave(undefined, undefined, false)}
+                        onChange={(val) =>
+                          setFormData({ ...formData, description: val })
+                        }
+                        productName={
+                          formData.name || "Sản phẩm Đồ Đồng Lộc Nam"
+                        }
+                        onQuickSave={() =>
+                          handleSave(undefined, undefined, false)
+                        }
                         saving={saving}
                         lastSavedAt={lastSavedAt}
                       />
@@ -1278,7 +1330,12 @@ export default function AdminProductsPage() {
                       <textarea
                         rows={3}
                         value={formData.shortDescription}
-                        onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            shortDescription: e.target.value,
+                          })
+                        }
                         placeholder="Đoạn văn ngắn gọn 2 - 3 câu nêu bật phôi đồng thanh khiết, xuất xứ làng nghề Ý Yên..."
                         className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none resize-none leading-relaxed"
                       />
@@ -1309,7 +1366,12 @@ export default function AdminProductsPage() {
                           <input
                             type="number"
                             value={formData.price}
-                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                price: e.target.value,
+                              })
+                            }
                             placeholder="Để trống nếu là giá Liên hệ"
                             className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none font-mono"
                           />
@@ -1323,7 +1385,12 @@ export default function AdminProductsPage() {
                           <input
                             type="number"
                             value={formData.originalPrice}
-                            onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                originalPrice: e.target.value,
+                              })
+                            }
                             placeholder="Giá niêm yết trước giảm (nếu có)"
                             className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none font-mono"
                           />
@@ -1337,7 +1404,12 @@ export default function AdminProductsPage() {
                           <input
                             type="text"
                             value={formData.dimensions}
-                            onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                dimensions: e.target.value,
+                              })
+                            }
                             placeholder="Ví dụ: Cao 60cm, Rộng 38cm chuẩn cung Phú Quý"
                             className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none"
                           />
@@ -1351,7 +1423,12 @@ export default function AdminProductsPage() {
                           <input
                             type="text"
                             value={formData.weight}
-                            onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                weight: e.target.value,
+                              })
+                            }
                             placeholder="Ví dụ: 12kg hoặc Theo kích thước phôi đúc"
                             className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none"
                           />
@@ -1365,7 +1442,12 @@ export default function AdminProductsPage() {
                           <input
                             type="text"
                             value={formData.material}
-                            onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                material: e.target.value,
+                              })
+                            }
                             placeholder="Ví dụ: Đồng đỏ nguyên chất thanh khiết Ý Yên, mạ vàng 24K"
                             className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none"
                           />
@@ -1378,7 +1460,9 @@ export default function AdminProductsPage() {
                   <ProductSeoBox
                     title={formData.name}
                     slug={liveSlug}
-                    categoryName={categories.find((c) => c.id === formData.categoryId)?.name}
+                    categoryName={
+                      categories.find((c) => c.id === formData.categoryId)?.name
+                    }
                     shortDescription={formData.shortDescription}
                     description={formData.description}
                     hasImages={angleImages.some((a) => a.url)}
@@ -1399,7 +1483,6 @@ export default function AdminProductsPage() {
                 {/* RIGHT COLUMN: SIDEBAR META-BOXES (4 COLS)                    */}
                 {/* ============================================================= */}
                 <div className="lg:col-span-4 space-y-6">
-                  
                   {/* BOX 1: PUBLISH META-BOX (From screenshot 1) */}
                   <div className="bg-[#0e1726] border border-[#202f45] rounded-xl overflow-hidden shadow-lg">
                     <div className="px-4 py-3 bg-[#111c2e] border-b border-[#202f45] flex items-center justify-between">
@@ -1417,10 +1500,17 @@ export default function AdminProductsPage() {
                       <div className="space-y-2.5 text-xs">
                         {/* InStock switch */}
                         <div className="flex items-center justify-between p-2 rounded-lg bg-[#111c2e] border border-[#202f45]">
-                          <span className="text-gray-300 font-medium">Tình trạng kho hàng:</span>
+                          <span className="text-gray-300 font-medium">
+                            Tình trạng kho hàng:
+                          </span>
                           <button
                             type="button"
-                            onClick={() => setFormData({ ...formData, inStock: !formData.inStock })}
+                            onClick={() =>
+                              setFormData({
+                                ...formData,
+                                inStock: !formData.inStock,
+                              })
+                            }
                             className={`px-2.5 py-1 rounded-md font-bold text-[11px] transition-colors ${
                               formData.inStock
                                 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
@@ -1433,17 +1523,26 @@ export default function AdminProductsPage() {
 
                         {/* Featured Star Switch */}
                         <div className="flex items-center justify-between p-2 rounded-lg bg-[#111c2e] border border-[#202f45]">
-                          <span className="text-gray-300 font-medium">Sản phẩm nổi bật:</span>
+                          <span className="text-gray-300 font-medium">
+                            Sản phẩm nổi bật:
+                          </span>
                           <button
                             type="button"
-                            onClick={() => setFormData({ ...formData, isFeatured: !formData.isFeatured })}
+                            onClick={() =>
+                              setFormData({
+                                ...formData,
+                                isFeatured: !formData.isFeatured,
+                              })
+                            }
                             className={`p-1.5 rounded-lg transition-colors ${
                               formData.isFeatured
                                 ? "bg-amber-400/20 text-amber-400 border border-amber-400/40"
                                 : "bg-gray-800 text-gray-500"
                             }`}
                           >
-                            <Star className={`w-4 h-4 ${formData.isFeatured ? "fill-current" : ""}`} />
+                            <Star
+                              className={`w-4 h-4 ${formData.isFeatured ? "fill-current" : ""}`}
+                            />
                           </button>
                         </div>
                       </div>
@@ -1456,7 +1555,9 @@ export default function AdminProductsPage() {
                               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                               Đã lưu gần nhất:
                             </span>
-                            <span className="font-mono font-bold">{lastSavedAt}</span>
+                            <span className="font-mono font-bold">
+                              {lastSavedAt}
+                            </span>
                           </div>
                         )}
 
@@ -1464,12 +1565,20 @@ export default function AdminProductsPage() {
                         <button
                           type="button"
                           disabled={saving}
-                          onClick={() => handleSave(undefined, undefined, false)}
+                          onClick={() =>
+                            handleSave(undefined, undefined, false)
+                          }
                           className="w-full py-2.5 bg-gradient-to-r from-[#d4af37] via-[#e5b869] to-[#d4af37] hover:brightness-110 text-[#070c14] font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.01]"
                           title="Lưu các thay đổi và tiếp tục chỉnh sửa trên cửa sổ này"
                         >
                           <Save className="w-4 h-4" />
-                          <span>{saving ? "ĐANG LƯU THAY ĐỔI..." : editingProduct ? "CẬP NHẬT SẢN PHẨM" : "XUẤT BẢN SẢN PHẨM"}</span>
+                          <span>
+                            {saving
+                              ? "ĐANG LƯU THAY ĐỔI..."
+                              : editingProduct
+                                ? "CẬP NHẬT SẢN PHẨM"
+                                : "XUẤT BẢN SẢN PHẨM"}
+                          </span>
                         </button>
 
                         {/* Button 2: Save and close modal */}
@@ -1515,14 +1624,27 @@ export default function AdminProductsPage() {
                     selectedSubCategoryId={formData.subCategoryId}
                     selectedCategoryIds={formData.categoryIds}
                     selectedSubCategoryIds={formData.subCategoryIds}
-                    onChangeMultiSelection={({ primaryCategoryId, primarySubCategoryId, categoryIds, subCategoryIds, tagsToAppend }) => {
+                    onChangeMultiSelection={({
+                      primaryCategoryId,
+                      primarySubCategoryId,
+                      categoryIds,
+                      subCategoryIds,
+                      tagsToAppend,
+                    }) => {
                       setFormData((prev) => {
                         let updatedTags = prev.tags;
                         if (tagsToAppend) {
-                          const existingList = (prev.tags || "").split(",").map((s) => s.trim()).filter(Boolean);
-                          const newItems = tagsToAppend.split(",").map((s) => s.trim()).filter(Boolean);
+                          const existingList = (prev.tags || "")
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean);
+                          const newItems = tagsToAppend
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean);
                           newItems.forEach((item) => {
-                            if (!existingList.includes(item)) existingList.push(item);
+                            if (!existingList.includes(item))
+                              existingList.push(item);
                           });
                           updatedTags = existingList.join(", ");
                         }
@@ -1536,14 +1658,26 @@ export default function AdminProductsPage() {
                         };
                       });
                     }}
-                    onSelectCategory={(catId, subId, pathText, tagsToAppend) => {
+                    onSelectCategory={(
+                      catId,
+                      subId,
+                      pathText,
+                      tagsToAppend
+                    ) => {
                       setFormData((prev) => {
                         let updatedTags = prev.tags;
                         if (tagsToAppend) {
-                          const existingList = (prev.tags || "").split(",").map((s) => s.trim()).filter(Boolean);
-                          const newItems = tagsToAppend.split(",").map((s) => s.trim()).filter(Boolean);
+                          const existingList = (prev.tags || "")
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean);
+                          const newItems = tagsToAppend
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean);
                           newItems.forEach((item) => {
-                            if (!existingList.includes(item)) existingList.push(item);
+                            if (!existingList.includes(item))
+                              existingList.push(item);
                           });
                           updatedTags = existingList.join(", ");
                         }
@@ -1588,7 +1722,11 @@ export default function AdminProductsPage() {
                         onClick={() =>
                           setAngleImages((prev) => [
                             ...prev,
-                            { id: String(Date.now()), label: `Góc chụp ${prev.length + 1}`, url: "" },
+                            {
+                              id: String(Date.now()),
+                              label: `Góc chụp ${prev.length + 1}`,
+                              url: "",
+                            },
                           ])
                         }
                         className="text-[10px] text-[#ffd700] hover:underline font-bold flex items-center gap-1"
@@ -1614,7 +1752,9 @@ export default function AdminProductsPage() {
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    setAngleImages((prev) => prev.filter((_, i) => i !== idx))
+                                    setAngleImages((prev) =>
+                                      prev.filter((_, i) => i !== idx)
+                                    )
                                   }
                                   className="text-gray-500 hover:text-red-400 p-0.5"
                                 >
@@ -1634,14 +1774,20 @@ export default function AdminProductsPage() {
                               ) : (
                                 <div className="text-center p-1">
                                   <Package className="w-5 h-5 text-gray-600 mx-auto mb-0.5" />
-                                  <span className="text-[9px] text-gray-500 block">Chưa có ảnh</span>
+                                  <span className="text-[9px] text-gray-500 block">
+                                    Chưa có ảnh
+                                  </span>
                                 </div>
                               )}
 
                               {/* Hover overlay upload */}
                               <label className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white text-[10px] font-semibold gap-1 z-10">
                                 <Upload className="w-3.5 h-3.5 text-[#ffd700]" />
-                                <span>{uploadingAngle === idx ? "Tải lên..." : "Tải ảnh từ máy"}</span>
+                                <span>
+                                  {uploadingAngle === idx
+                                    ? "Tải lên..."
+                                    : "Tải ảnh từ máy"}
+                                </span>
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -1649,7 +1795,8 @@ export default function AdminProductsPage() {
                                   disabled={uploadingAngle === idx}
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
-                                    if (file) handleFileUploadForAngle(idx, file);
+                                    if (file)
+                                      handleFileUploadForAngle(idx, file);
                                   }}
                                 />
                               </label>
@@ -1682,7 +1829,6 @@ export default function AdminProductsPage() {
                     onChange={(val) => setFormData({ ...formData, tags: val })}
                   />
                 </div>
-
               </div>
             </form>
           </div>

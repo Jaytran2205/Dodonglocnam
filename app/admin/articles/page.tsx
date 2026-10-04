@@ -1,8 +1,15 @@
 "use client";
 
+import { adminGet } from "@/lib/admin-fetch";
 import { AdminImage } from "@/components/admin/AdminImage";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import {
   Plus,
   Edit2,
@@ -149,8 +156,20 @@ const ARTICLE_CATEGORIES_TREE = [
 
 export default function AdminArticlesPage() {
   const editRequestRef = useRef(0);
+  const listRequestId = useRef(0);
+  const [articlePage, setArticlePage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+  const [totalArticles, setTotalArticles] = useState(0);
+  const [categoryNames, setCategoryNames] = useState<string[]>([]);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [listError, setListError] = useState("");
   const [articles, setArticles] = useState<any[]>([]);
-  const { toastSuccess, toastError, toastWarning, confirm: showConfirm } = useToast();
+  const {
+    toastSuccess,
+    toastError,
+    toastWarning,
+    confirm: showConfirm,
+  } = useToast();
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingArt, setEditingArt] = useState<any>(null);
@@ -189,22 +208,32 @@ export default function AdminArticlesPage() {
   // Dynamically merge any categories present on existing articles so none are ever lost or missing
   const allAvailableCategories = useMemo(() => {
     const definedNames = new Set(ARTICLE_CATEGORIES_TREE.map((c) => c.name));
-    const dynamicCats: { name: string; slug: string; children: string[] }[] = [...ARTICLE_CATEGORIES_TREE];
+    const dynamicCats: { name: string; slug: string; children: string[] }[] = [
+      ...ARTICLE_CATEGORIES_TREE,
+    ];
 
-    articles.forEach((a) => {
-      if (a.category && !definedNames.has(a.category)) {
-        definedNames.add(a.category);
-        dynamicCats.push({
-          name: a.category,
-          slug: a.category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-"),
-          children: [],
-        });
+    [...articles, ...categoryNames.map((category) => ({ category }))].forEach(
+      (a) => {
+        if (a.category && !definedNames.has(a.category)) {
+          definedNames.add(a.category);
+          dynamicCats.push({
+            name: a.category,
+            slug: a.category
+              .toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[^a-z0-9]/g, "-"),
+            children: [],
+          });
+        }
       }
-    });
+    );
     return dynamicCats;
-  }, [articles]);
+  }, [articles, categoryNames]);
 
-  const handleUploadThumbnail = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadThumbnail = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingThumbnail(true);
@@ -218,7 +247,10 @@ export default function AdminArticlesPage() {
       const data = await res.json();
       if (data.success && data.url) {
         setFormData((prev) => ({ ...prev, thumbnail: data.url }));
-        toastSuccess(`Đã tải ảnh bìa "${file.name}" lên thành công!`, "Tải ảnh");
+        toastSuccess(
+          `Đã tải ảnh bìa "${file.name}" lên thành công!`,
+          "Tải ảnh"
+        );
       } else {
         toastError(data.message || "Tải ảnh thất bại", "Lỗi tải ảnh");
       }
@@ -229,36 +261,75 @@ export default function AdminArticlesPage() {
     }
   };
 
-  const fetchArticles = async (silent = false) => {
-    if (!silent && articles.length === 0) setLoading(true);
-    try {
-      const res = await fetch("/api/admin/articles?view=list");
-      const data = await res.json();
-      if (data.success) setArticles(data.articles);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+  const fetchArticles = async (_silent = false) => {
+    setRefreshVersion((version) => version + 1);
   };
-
-  useEffect(() => {
-    fetchArticles();
-  }, []);
-
-  useEffect(() => {
-    if (articles.length === 0 || typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const slug = params.get("slug");
-    const editId = params.get("edit");
-    if (slug) {
-      const art = articles.find((a) => a.slug === slug);
-      if (art) openEdit(art);
-    } else if (editId) {
-      const art = articles.find((a) => a.id === editId);
-      if (art) openEdit(art);
+  const fetchPage = useCallback(async () => {
+    const requestId = ++listRequestId.current;
+    setLoading(true);
+    setListError("");
+    const params = new URLSearchParams({
+      view: "list",
+      paged: "1",
+      limit: "40",
+      page: String(articlePage),
+      search: search.trim(),
+      category: selectedFilterCat,
+    });
+    try {
+      const data = await adminGet(`/api/admin/articles?${params}`);
+      if (requestId !== listRequestId.current) return;
+      setArticles(data.articles || []);
+      setTotalArticles(data.totalArticles);
+      setCategoryNames(data.categories || []);
+      setPagination({
+        total: data.pagination.total,
+        totalPages: data.pagination.totalPages,
+      });
+      if (data.pagination.page !== articlePage)
+        setArticlePage(data.pagination.page);
+    } catch (error) {
+      if (requestId === listRequestId.current)
+        setListError(
+          error instanceof Error ? error.message : "Không tải được bài viết."
+        );
+    } finally {
+      if (requestId === listRequestId.current) setLoading(false);
     }
-  }, [articles]);
+  }, [articlePage, search, selectedFilterCat]);
+  useEffect(() => {
+    const timer = setTimeout(
+      () => {
+        void fetchPage();
+      },
+      search.trim() ? 250 : 0
+    );
+    return () => {
+      clearTimeout(timer);
+      listRequestId.current++;
+    };
+  }, [fetchPage, refreshVersion]);
+  useEffect(() => setArticlePage(1), [search, selectedFilterCat]);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("slug"),
+      editId = params.get("edit");
+    if (!slug && !editId) return;
+    let active = true;
+    const query = new URLSearchParams(
+      editId ? { id: editId } : { slug: slug! }
+    );
+    adminGet(`/api/admin/articles?${query}`)
+      .then((data) => {
+        if (active && data.article) void openEdit(data.article);
+      })
+      .catch((error) => {
+        if (active) toastError(error.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const openCreate = () => {
     editRequestRef.current++;
@@ -280,12 +351,20 @@ export default function AdminArticlesPage() {
     const requestId = ++editRequestRef.current;
     let art;
     try {
-      const res = await fetch(`/api/admin/articles?id=${encodeURIComponent(summary.id)}`, { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được bài viết");
+      const data =
+        typeof summary.content === "string"
+          ? { article: summary }
+          : await adminGet(
+              `/api/admin/articles?id=${encodeURIComponent(summary.id)}`
+            );
       if (requestId !== editRequestRef.current) return;
       art = data.article;
-    } catch (error) { toastError(error instanceof Error ? error.message : "Không tải được bài viết"); return; }
+    } catch (error) {
+      toastError(
+        error instanceof Error ? error.message : "Không tải được bài viết"
+      );
+      return;
+    }
 
     setLastSavedAt(null);
     setEditingArt(art);
@@ -301,7 +380,11 @@ export default function AdminArticlesPage() {
     setModalOpen(true);
   };
 
-  const handleSave = async (e?: React.FormEvent, forcePublish?: boolean, closeModalAfter = false) => {
+  const handleSave = async (
+    e?: React.FormEvent,
+    forcePublish?: boolean,
+    closeModalAfter = false
+  ) => {
     if (e) e.preventDefault();
     if (!formData.title.trim()) {
       toastWarning("Vui lòng nhập tiêu đề bài viết!", "Thiếu thông tin");
@@ -316,7 +399,8 @@ export default function AdminArticlesPage() {
     try {
       const payload = {
         ...formData,
-        isPublished: forcePublish !== undefined ? forcePublish : formData.isPublished,
+        isPublished:
+          forcePublish !== undefined ? forcePublish : formData.isPublished,
         id: editingArt?.id,
       };
 
@@ -328,6 +412,7 @@ export default function AdminArticlesPage() {
       const data = await res.json();
       if (data.success && data.article) {
         const savedArt = data.article;
+        void fetchArticles(true);
         const nowStr = new Date().toLocaleTimeString("vi-VN");
         setLastSavedAt(nowStr);
         setEditingArt(savedArt);
@@ -392,10 +477,13 @@ export default function AdminArticlesPage() {
       type: "danger",
       onConfirm: async () => {
         try {
-          const res = await fetch(`/api/admin/articles?id=${id}`, { method: "DELETE" });
+          const res = await fetch(`/api/admin/articles?id=${id}`, {
+            method: "DELETE",
+          });
           const data = await res.json();
           if (data.success) {
             setArticles((prev) => prev.filter((a) => a.id !== id));
+            void fetchArticles(true);
             toastSuccess(`Đã xóa bài viết "${title}" thành công!`, "Đã xóa");
           } else {
             toastError(data.message || "Lỗi xóa bài viết", "Xóa thất bại");
@@ -408,25 +496,47 @@ export default function AdminArticlesPage() {
   };
 
   // Filtered articles list
-  const filteredArticles = useMemo(() => {
-    let list = [...articles];
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (a) =>
-          a.title.toLowerCase().includes(q) ||
-          (a.summary && a.summary.toLowerCase().includes(q)) ||
-          (a.category && a.category.toLowerCase().includes(q))
-      );
-    }
-    if (selectedFilterCat !== "ALL") {
-      list = list.filter((a) => a.category === selectedFilterCat);
-    }
-    return list;
-  }, [articles, search, selectedFilterCat]);
+  const filteredArticles = articles;
 
   return (
     <div className="space-y-6">
+      {listError && (
+        <div
+          role="alert"
+          className="p-3 border border-red-400/40 rounded-lg text-red-300 text-sm"
+        >
+          {listError}
+          <button
+            type="button"
+            onClick={() => void fetchArticles()}
+            className="ml-3 underline"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+      <div className="flex items-center justify-end gap-3 text-sm text-[#cbd5e1]">
+        <button
+          type="button"
+          disabled={articlePage <= 1 || loading}
+          onClick={() => setArticlePage((page) => page - 1)}
+          className="px-3 py-2 border border-[#34465e] rounded-lg disabled:opacity-40"
+        >
+          Trang trước
+        </button>
+        <span>
+          Trang {articlePage}/{pagination.totalPages} — {pagination.total} bài
+          viết
+        </span>
+        <button
+          type="button"
+          disabled={articlePage >= pagination.totalPages || loading}
+          onClick={() => setArticlePage((page) => page + 1)}
+          className="px-3 py-2 border border-[#34465e] rounded-lg disabled:opacity-40"
+        >
+          Trang sau
+        </button>
+      </div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -437,10 +547,11 @@ export default function AdminArticlesPage() {
             </span>
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-extrabold text-white uppercase tracking-wide mt-1">
-            QUẢN LÝ BÀI VIẾT & KIẾN THỨC ({articles.length})
+            QUẢN LÝ BÀI VIẾT & KIẾN THỨC ({totalArticles})
           </h1>
           <p className="text-xs text-[#94a3b8] mt-0.5">
-            Biên tập cẩm nang phong thủy thờ cúng, kiến thức đúc tượng chân dung và tin tức làng nghề Ý Yên
+            Biên tập cẩm nang phong thủy thờ cúng, kiến thức đúc tượng chân dung
+            và tin tức làng nghề Ý Yên
           </p>
         </div>
 
@@ -497,7 +608,9 @@ export default function AdminArticlesPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
             <div className="w-8 h-8 border-3 border-[#d4af37] border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs text-gray-400">Đang tải danh sách bài viết...</span>
+            <span className="text-xs text-gray-400">
+              Đang tải danh sách bài viết...
+            </span>
           </div>
         ) : filteredArticles.length === 0 ? (
           <div className="text-center py-16 space-y-3 text-gray-400">
@@ -519,7 +632,10 @@ export default function AdminArticlesPage() {
               </thead>
               <tbody className="divide-y divide-[#1f2d42]/60">
                 {filteredArticles.map((art) => (
-                  <tr key={art.id} className="hover:bg-[#111c2e]/60 transition-colors">
+                  <tr
+                    key={art.id}
+                    className="hover:bg-[#111c2e]/60 transition-colors"
+                  >
                     <td className="py-3 px-4 text-center">
                       <div className="w-12 h-12 rounded-lg bg-white/5 border border-[#1f2d42] overflow-hidden p-1">
                         <AdminImage
@@ -568,7 +684,9 @@ export default function AdminArticlesPage() {
                     </td>
 
                     <td className="py-3 px-4 text-gray-400">
-                      {new Date(art.publishedAt || art.createdAt).toLocaleDateString("vi-VN")}
+                      {new Date(
+                        art.publishedAt || art.createdAt
+                      ).toLocaleDateString("vi-VN")}
                     </td>
 
                     <td className="py-3 px-4 text-right">
@@ -617,10 +735,16 @@ export default function AdminArticlesPage() {
                 <div className="w-3 h-3 rounded-full bg-[#d4af37] animate-pulse shrink-0"></div>
                 <div className="min-w-0">
                   <h2 className="font-serif font-extrabold text-sm sm:text-base md:text-lg text-[#d4af37] uppercase tracking-wide truncate">
-                    {editingArt ? "CHỈNH SỬA BÀI VIẾT" : "SOẠN THẢO BÀI VIẾT CẨM NANG MỚI"}
+                    {editingArt
+                      ? "CHỈNH SỬA BÀI VIẾT"
+                      : "SOẠN THẢO BÀI VIẾT CẨM NANG MỚI"}
                   </h2>
                   <p className="text-[11px] text-gray-400 truncate hidden sm:block">
-                    Hỗ trợ phím tắt <span className="text-[#ffd700] font-mono font-bold">Ctrl+S</span> để lưu tức thì mọi lúc mọi nơi
+                    Hỗ trợ phím tắt{" "}
+                    <span className="text-[#ffd700] font-mono font-bold">
+                      Ctrl+S
+                    </span>{" "}
+                    để lưu tức thì mọi lúc mọi nơi
                   </p>
                 </div>
               </div>
@@ -642,7 +766,13 @@ export default function AdminArticlesPage() {
                   title="Lưu cập nhật bài viết lên website ngay mà không cần cuộn trang (Ctrl+S)"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>{saving ? "ĐANG LƯU..." : editingArt ? "CẬP NHẬT (Ctrl+S)" : "XUẤT BẢN"}</span>
+                  <span>
+                    {saving
+                      ? "ĐANG LƯU..."
+                      : editingArt
+                        ? "CẬP NHẬT (Ctrl+S)"
+                        : "XUẤT BẢN"}
+                  </span>
                 </button>
 
                 {/* STICKY SAVE & CLOSE BUTTON */}
@@ -669,9 +799,11 @@ export default function AdminArticlesPage() {
             </div>
 
             {/* Modal Body: 2-Column Layout */}
-            <form onSubmit={handleSave} className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+            <form
+              onSubmit={handleSave}
+              className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs"
+            >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                
                 {/* LEFT COLUMN: MAIN CONTENT (8 COLS) */}
                 <div className="lg:col-span-8 space-y-6">
                   {/* Title Box */}
@@ -683,14 +815,18 @@ export default function AdminArticlesPage() {
                       type="text"
                       required
                       value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
                       placeholder="Ví dụ: Bí Quyết Bố Trí Ban Thờ Gia Tiên Chuẩn Phong Thủy Rước Tài Lộc"
                       className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-sm sm:text-base font-serif font-bold px-4 py-3 rounded-xl focus:outline-none"
                     />
 
                     {editingArt && (
                       <div className="p-2.5 bg-[#070c14] rounded-lg border border-[#1b283d] flex items-center justify-between text-[11px]">
-                        <span className="text-gray-400">Đường dẫn bài viết:</span>
+                        <span className="text-gray-400">
+                          Đường dẫn bài viết:
+                        </span>
                         <a
                           href={`/tin-tuc/${editingArt.slug}`}
                           target="_blank"
@@ -714,7 +850,9 @@ export default function AdminArticlesPage() {
                       <textarea
                         rows={3}
                         value={formData.summary}
-                        onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, summary: e.target.value })
+                        }
                         placeholder="Đoạn văn ngắn gọn trích dẫn ngoài danh sách bài viết và tối ưu thẻ Meta Description..."
                         className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none resize-none leading-relaxed"
                       />
@@ -737,9 +875,15 @@ export default function AdminArticlesPage() {
                     <div className="p-4">
                       <ProductArticleEditor
                         value={formData.content}
-                        onChange={(val) => setFormData({ ...formData, content: val })}
-                        productName={formData.title || "Cẩm nang Đồ Đồng Lộc Nam"}
-                        onQuickSave={() => handleSave(undefined, undefined, false)}
+                        onChange={(val) =>
+                          setFormData({ ...formData, content: val })
+                        }
+                        productName={
+                          formData.title || "Cẩm nang Đồ Đồng Lộc Nam"
+                        }
+                        onQuickSave={() =>
+                          handleSave(undefined, undefined, false)
+                        }
                         saving={saving}
                         lastSavedAt={lastSavedAt}
                       />
@@ -757,19 +901,30 @@ export default function AdminArticlesPage() {
                     onApplyOutline={(outline) => {
                       setFormData((prev) => ({
                         ...prev,
-                        content: prev.content ? `${prev.content}\n\n${outline}` : outline,
+                        content: prev.content
+                          ? `${prev.content}\n\n${outline}`
+                          : outline,
                       }));
-                      toastSuccess("Đã chèn khung dàn ý chuẩn SEO vào bài viết!", "Gợi ý SEO");
+                      toastSuccess(
+                        "Đã chèn khung dàn ý chuẩn SEO vào bài viết!",
+                        "Gợi ý SEO"
+                      );
                     }}
                     onSetFocusKeyword={(kw) => {
                       setFormData((prev) => {
-                        const tags = (prev.tags || "").split(",").map((t) => t.trim()).filter(Boolean);
+                        const tags = (prev.tags || "")
+                          .split(",")
+                          .map((t) => t.trim())
+                          .filter(Boolean);
                         if (!tags.includes(kw)) {
                           tags.push(kw);
                         }
                         return { ...prev, tags: tags.join(", ") };
                       });
-                      toastSuccess(`Đã thêm từ khóa SEO "${kw}" vào danh sách thẻ bài viết!`, "Từ khóa SEO");
+                      toastSuccess(
+                        `Đã thêm từ khóa SEO "${kw}" vào danh sách thẻ bài viết!`,
+                        "Từ khóa SEO"
+                      );
                     }}
                   />
                 </div>
@@ -790,10 +945,17 @@ export default function AdminArticlesPage() {
 
                     <div className="p-4 space-y-4">
                       <div className="flex items-center justify-between p-2 rounded-lg bg-[#111c2e] border border-[#202f45]">
-                        <span className="text-gray-300 font-medium">Trạng thái bài viết:</span>
+                        <span className="text-gray-300 font-medium">
+                          Trạng thái bài viết:
+                        </span>
                         <button
                           type="button"
-                          onClick={() => setFormData({ ...formData, isPublished: !formData.isPublished })}
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              isPublished: !formData.isPublished,
+                            })
+                          }
                           className={`px-2.5 py-1 rounded-md font-bold text-[11px] transition-colors ${
                             formData.isPublished
                               ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
@@ -811,7 +973,9 @@ export default function AdminArticlesPage() {
                               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                               Đã lưu gần nhất:
                             </span>
-                            <span className="font-mono font-bold">{lastSavedAt}</span>
+                            <span className="font-mono font-bold">
+                              {lastSavedAt}
+                            </span>
                           </div>
                         )}
 
@@ -819,12 +983,20 @@ export default function AdminArticlesPage() {
                         <button
                           type="button"
                           disabled={saving}
-                          onClick={() => handleSave(undefined, undefined, false)}
+                          onClick={() =>
+                            handleSave(undefined, undefined, false)
+                          }
                           className="w-full py-2.5 bg-gradient-to-r from-[#d4af37] via-[#e5b869] to-[#d4af37] hover:brightness-110 text-[#070c14] font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                           title="Lưu các thay đổi và tiếp tục biên tập"
                         >
                           <Save className="w-4 h-4" />
-                          <span>{saving ? "ĐANG LƯU..." : editingArt ? "LƯU THAY ĐỔI" : "ĐĂNG BÀI VIẾT"}</span>
+                          <span>
+                            {saving
+                              ? "ĐANG LƯU..."
+                              : editingArt
+                                ? "LƯU THAY ĐỔI"
+                                : "ĐĂNG BÀI VIẾT"}
+                          </span>
                         </button>
 
                         {/* Save and close modal */}
@@ -891,7 +1063,9 @@ export default function AdminArticlesPage() {
                       {allAvailableCategories.map((main) => {
                         const isMainActive = formData.category === main.name;
                         const hasActiveChild = main.children.some(
-                          (ch) => formData.category === ch || formData.tags.includes(ch)
+                          (ch) =>
+                            formData.category === ch ||
+                            formData.tags.includes(ch)
                         );
                         const isExpanded = expandedMain[main.slug] ?? true;
 
@@ -902,8 +1076,8 @@ export default function AdminArticlesPage() {
                                 isMainActive
                                   ? "bg-[#d4af37]/20 border border-[#d4af37]/40 text-[#ffd700]"
                                   : hasActiveChild
-                                  ? "bg-[#142339] text-white"
-                                  : "hover:bg-[#152236] text-gray-200"
+                                    ? "bg-[#142339] text-white"
+                                    : "hover:bg-[#152236] text-gray-200"
                               }`}
                             >
                               <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0 select-none">
@@ -912,18 +1086,32 @@ export default function AdminArticlesPage() {
                                   checked={isMainActive || hasActiveChild}
                                   onChange={() => {
                                     setFormData((prev) => {
-                                      const tagsArr = (prev.tags || "").split(",").map((s) => s.trim()).filter(Boolean);
+                                      const tagsArr = (prev.tags || "")
+                                        .split(",")
+                                        .map((s) => s.trim())
+                                        .filter(Boolean);
                                       if (prev.category === main.name) {
-                                        return { ...prev, category: tagsArr[0] || "KIẾN THỨC ĐỒ ĐỒNG" };
+                                        return {
+                                          ...prev,
+                                          category:
+                                            tagsArr[0] || "KIẾN THỨC ĐỒ ĐỒNG",
+                                        };
                                       } else {
-                                        if (!tagsArr.includes(main.name)) tagsArr.push(main.name);
-                                        return { ...prev, category: main.name, tags: tagsArr.join(", ") };
+                                        if (!tagsArr.includes(main.name))
+                                          tagsArr.push(main.name);
+                                        return {
+                                          ...prev,
+                                          category: main.name,
+                                          tags: tagsArr.join(", "),
+                                        };
                                       }
                                     });
                                   }}
                                   className="w-3.5 h-3.5 accent-[#d4af37] cursor-pointer"
                                 />
-                                <span className="font-bold text-xs truncate">{main.name}</span>
+                                <span className="font-bold text-xs truncate">
+                                  {main.name}
+                                </span>
                               </label>
 
                               <button
@@ -950,7 +1138,11 @@ export default function AdminArticlesPage() {
                                   .filter(
                                     (ch) =>
                                       !catSearch.trim() ||
-                                      ch.toLowerCase().includes(catSearch.toLowerCase().trim())
+                                      ch
+                                        .toLowerCase()
+                                        .includes(
+                                          catSearch.toLowerCase().trim()
+                                        )
                                   )
                                   .map((childName) => {
                                     const isChildSelected =
@@ -976,20 +1168,25 @@ export default function AdminArticlesPage() {
                                                 .map((s) => s.trim())
                                                 .filter(Boolean);
                                               if (tagsArr.includes(childName)) {
-                                                tagsArr = tagsArr.filter((t) => t !== childName);
+                                                tagsArr = tagsArr.filter(
+                                                  (t) => t !== childName
+                                                );
                                               } else {
                                                 tagsArr.push(childName);
                                               }
                                               return {
                                                 ...prev,
-                                                category: prev.category || main.name,
+                                                category:
+                                                  prev.category || main.name,
                                                 tags: tagsArr.join(", "),
                                               };
                                             });
                                           }}
                                           className="w-3 h-3 accent-[#d4af37] cursor-pointer"
                                         />
-                                        <span className="text-[11px] truncate">{childName}</span>
+                                        <span className="text-[11px] truncate">
+                                          {childName}
+                                        </span>
                                       </label>
                                     );
                                   })}
@@ -1024,7 +1221,10 @@ export default function AdminArticlesPage() {
                               type="button"
                               onClick={() => {
                                 if (customCatName.trim()) {
-                                  setFormData({ ...formData, category: customCatName.trim() });
+                                  setFormData({
+                                    ...formData,
+                                    category: customCatName.trim(),
+                                  });
                                   setCustomCatName("");
                                   setShowAddCat(false);
                                 }
@@ -1062,7 +1262,9 @@ export default function AdminArticlesPage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="text-gray-500 text-xs">Chưa có ảnh đại diện</span>
+                          <span className="text-gray-500 text-xs">
+                            Chưa có ảnh đại diện
+                          </span>
                         )}
                       </div>
 
@@ -1070,7 +1272,12 @@ export default function AdminArticlesPage() {
                         <input
                           type="text"
                           value={formData.thumbnail}
-                          onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              thumbnail: e.target.value,
+                            })
+                          }
                           placeholder="/images/do-tho-cung.jpg"
                           className="flex-1 bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3 py-1.5 rounded-lg focus:outline-none font-mono"
                         />
@@ -1106,18 +1313,19 @@ export default function AdminArticlesPage() {
                       <textarea
                         rows={2}
                         value={formData.tags}
-                        onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, tags: e.target.value })
+                        }
                         placeholder="đồ thờ, phong thủy, kích thước lỗ ban, ý yên..."
                         className="w-full bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3 py-2 rounded-xl focus:outline-none resize-none"
                       />
                       <p className="text-[10px] text-gray-400">
-                        Phân tách các thẻ bằng dấu phẩy (,). Thẻ giúp tăng cường SEO và tìm kiếm liên quan.
+                        Phân tách các thẻ bằng dấu phẩy (,). Thẻ giúp tăng cường
+                        SEO và tìm kiếm liên quan.
                       </p>
                     </div>
                   </div>
-
                 </div>
-
               </div>
             </form>
           </div>

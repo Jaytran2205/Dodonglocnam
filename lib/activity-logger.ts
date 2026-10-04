@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { AdminTokenPayload, getAdminSession } from "@/lib/admin-auth";
@@ -92,6 +93,7 @@ export async function logActivity(params: LogActivityParams): Promise<void> {
         userAgent,
       },
     });
+    try { revalidateTag("admin-logs"); } catch { /* Optional when called outside a Next request. */ }
   } catch (error) {
     console.error("Activity Logging Error (non-blocking):", error);
   }

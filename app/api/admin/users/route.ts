@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getAdminSession } from "@/lib/admin-auth";
+import { getAdminSession, invalidateAdminSession } from "@/lib/admin-auth";
 import { HIDDEN_SUPER_ADMIN, isHiddenSuperAdmin, parsePermissions, ALL_PERMISSIONS } from "@/lib/permissions";
 import { logActivity } from "@/lib/activity-logger";
 import bcrypt from "bcryptjs";
@@ -285,6 +285,7 @@ export async function PUT(req: NextRequest) {
         updatedAt: true,
       },
     });
+    invalidateAdminSession(updatedUser.id);
 
     // Log activity
     await logActivity({
@@ -359,6 +360,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     await prisma.user.delete({ where: { id } });
+    invalidateAdminSession(id);
 
     // Log activity
     await logActivity({

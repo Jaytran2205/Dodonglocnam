@@ -6,6 +6,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
 }
 
 model User {
@@ -195,4 +196,3 @@ model UploadedImage {
 
   @@index([createdAt])
 }
-

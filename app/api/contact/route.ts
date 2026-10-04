@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
       });
     }
 
+    revalidateTag("customers"); revalidateTag("orders");
     return NextResponse.json({ success: true, messageId: message.id, orderCode });
   } catch (error) {
     console.error("Lỗi khi lưu tin nhắn liên hệ:", error);

@@ -4,6 +4,8 @@ import { revalidateTag, revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { logActivity } from "@/lib/activity-logger";
+import { pagedAdminProducts } from "@/lib/admin-product-list";
+import { AdminTiming } from "@/lib/admin-timing";
 
 function parseBool(val: any, fallback = false): boolean {
   if (typeof val === "boolean") return val;
@@ -24,7 +26,10 @@ function parsePrice(val: any): { valid: boolean; value: number | null } {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await getAdminSession(req);
+  const timing = new AdminTiming();
+  let session;
+  try { session = await timing.measure("auth", () => getAdminSession(req)); }
+  catch { return timing.json({ success: false, message: "Kết nối database đang gián đoạn. Vui lòng thử lại." }, 503); }
   if (!session) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
@@ -35,10 +40,17 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
+  if (searchParams.get("paged") === "1") {
+    try { return timing.json(await timing.measure("data", () => pagedAdminProducts(searchParams))); }
+    catch (error) {
+      console.error("Product list error:", error);
+      return timing.json({ success: false, message: "Không tải được sản phẩm. Vui lòng thử lại." }, 503);
+    }
+  }
   const id = searchParams.get("id");
   if (id) {
-    const product = await prisma.product.findUnique({ where: { id }, include: { category: true } });
-    return product ? NextResponse.json({ success: true, product }) : NextResponse.json({ success: false, message: "Không tìm thấy sản phẩm." }, { status: 404 });
+    const product = await timing.measure("data", () => prisma.product.findUnique({ where: { id }, include: { category: true } }));
+    return product ? timing.json({ success: true, product }) : timing.json({ success: false, message: "Không tìm thấy sản phẩm." }, 404);
   }
   const categoryId = searchParams.get("categoryId");
   const search = searchParams.get("search");
@@ -270,7 +282,31 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  return PUT(req);
+  const body = await req.clone().json();
+  // Existing callers can still PATCH full editor fields through the PUT path.
+  if (Object.keys(body).some(key => !["id", "inStock", "isFeatured"].includes(key))) return PUT(req);
+  const timing = new AdminTiming();
+  try {
+    const session = await timing.measure("auth", () => getAdminSession(req));
+    if (!session) return timing.json({ success: false, message: "Unauthorized" }, 401);
+    if (!["ADMIN", "SUPER_ADMIN"].includes(session.role) && !session.permissions?.includes("products")) {
+      return timing.json({ success: false, message: "Bạn không có quyền cập nhật sản phẩm." }, 403);
+    }
+    if (!body.id || (body.inStock === undefined && body.isFeatured === undefined)) {
+      return timing.json({ success: false, message: "Thiếu sản phẩm hoặc trạng thái cần cập nhật." }, 400);
+    }
+    const data = { ...(body.inStock !== undefined ? { inStock: parseBool(body.inStock) } : {}),
+      ...(body.isFeatured !== undefined ? { isFeatured: parseBool(body.isFeatured) } : {}) };
+    const product = await timing.measure("data", () => prisma.product.update({ where: { id: body.id }, data,
+      select: { id: true, name: true, inStock: true, isFeatured: true } }));
+    revalidateTag("products"); revalidateTag("media"); revalidatePath("/", "layout");
+    logActivity({ req, session, action: "STATUS_CHANGE", entity: "PRODUCT", entityId: product.id,
+      entityName: product.name, summary: `Cập nhật trạng thái sản phẩm: "${product.name}"`, details: data }).catch(() => {});
+    return timing.json({ success: true, product });
+  } catch (error) {
+    console.error("Product status error:", error);
+    return timing.json({ success: false, message: "Không lưu được trạng thái. Vui lòng thử lại." }, 503);
+  }
 }
 
 export async function DELETE(req: NextRequest) {

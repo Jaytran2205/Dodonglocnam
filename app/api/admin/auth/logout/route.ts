@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/admin-auth";
+import { getAdminSession, invalidateAdminSession } from "@/lib/admin-auth";
 import { logActivity } from "@/lib/activity-logger";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getAdminSession(req);
     if (session) {
+      invalidateAdminSession(session.userId);
       await logActivity({
         req,
         session,

@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
@@ -59,6 +60,7 @@ export async function PUT(req: NextRequest) {
       data: { status }
     });
 
+    revalidateTag("orders"); revalidateTag("customers");
     logActivity({
       req,
       session,
@@ -98,7 +100,8 @@ export async function DELETE(req: NextRequest) {
     await prisma.order.delete({ where: { id } });
 
     if (existing) {
-      logActivity({
+      revalidateTag("orders"); revalidateTag("customers");
+    logActivity({
         req,
         session,
         action: "DELETE",

@@ -3,8 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { logActivity } from "@/lib/activity-logger";
+import { getAdminCategoryOptions } from "@/lib/admin-category-options";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (req.nextUrl.searchParams.get("view") === "options") {
+    return NextResponse.json({ success: true, categories: await getAdminCategoryOptions() });
+  }
   const categories = await prisma.category.findMany({
     orderBy: { order: "asc" },
     include: { _count: { select: { products: true } } }

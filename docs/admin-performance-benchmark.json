@@ -1,0 +1,34 @@
+{
+  "measuredAt": "2026-10-04T15:23:05.032Z",
+  "coldConnectMs": 2956,
+  "runs": [
+    {
+      "label": "legacy-all-products-1",
+      "ms": 3305,
+      "queries": 2,
+      "rows": 622,
+      "jsonBytes": 769205
+    },
+    {
+      "label": "join-40-products-1",
+      "ms": 1657,
+      "queries": 1,
+      "rows": 40,
+      "jsonBytes": 28795
+    },
+    {
+      "label": "legacy-all-products-2",
+      "ms": 2398,
+      "queries": 2,
+      "rows": 622,
+      "jsonBytes": 769205
+    },
+    {
+      "label": "join-40-products-2",
+      "ms": 304,
+      "queries": 1,
+      "rows": 40,
+      "jsonBytes": 28795
+    }
+  ]
+}

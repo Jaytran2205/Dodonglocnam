@@ -28,3 +28,19 @@ Kiểm tra mã: `npm test`, `npx tsc --noEmit --incremental false`, `npm run bui
 Kiểm tra giao diện: chạy website ở `http://localhost:3045`, cài Playwright hoặc cung cấp thư mục package qua `PLAYWRIGHT_MODULES`, rồi chạy `npm run test:ui`. Có thể đổi địa chỉ bằng `QA_BASE_URL`. Kiểm thử dùng API/dữ liệu mẫu và không ghi vào database thật; ảnh kiểm tra lưu trong `scratch/seo-admin-qa`.
 
 Sau khi triển khai, kiểm tra kết nối database và thao tác lưu bằng tài khoản thật, rồi gửi lại `/sitemap.xml` trong Google Search Console. Nếu dùng tên miền cũ, cấu hình chuyển hướng tại hosting/DNS của tên miền đó.
+
+## Nâng cấp hiệu năng admin
+
+- Danh sách sản phẩm và bài viết phân trang ở server, tối đa 40 hàng/lượt. Tìm kiếm, lọc theo danh mục chính/phụ, trạng thái kho và sắp xếp vẫn áp dụng trên toàn bộ dữ liệu. Chỉ mục tìm kiếm gọn được giữ trên server trong 60 giây và xóa cache khi dữ liệu thay đổi.
+- Trang sản phẩm mặc định lấy tổng số, trang hiện tại và danh mục bằng một truy vấn; không chờ tải chỉ mục tìm kiếm toàn bộ. Trình sửa vẫn tải đầy đủ từng sản phẩm/bài viết khi mở.
+- Prisma dùng `relationJoins`, dùng chung kết nối trong mỗi worker và giới hạn mặc định 4 kết nối cho Supabase pooler. Giữ nguyên host/port và mọi thiết lập pool đã khai báo. Không cần đổi cấu trúc bảng hoặc chạy `prisma db push` cho bản nâng cấp này.
+- `vercel.json` đặt runtime ở `syd1`, gần database `ap-southeast-2`. Thay đổi vùng chạy chỉ có hiệu lực sau deployment; nếu chuyển database sang khu vực khác, đổi vùng tương ứng.
+- Các lượt GET phiên đăng nhập đồng thời dùng chung truy vấn, cache đọc 15 giây. Mọi thao tác ghi kiểm tra lại quyền hiện tại; khóa/sửa tài khoản xóa cache. Database gián đoạn trả lỗi dịch vụ, không dùng phiên cũ để cho phép ghi và không tự đẩy người dùng khỏi trình sửa.
+- Khung admin không gọi lại thông tin phiên/đếm đơn hàng mỗi lần chuyển menu. Đếm đơn hàng cập nhật sau thay đổi đơn hoặc mỗi 60 giây khi tab đang hiển thị.
+- Báo cáo và thông tin chung của nhật ký cache 15 giây, vô hiệu hóa khi có thay đổi. Doanh thu được tổng hợp bằng SQL thay vì tải toàn bộ đơn hàng.
+- Ảnh đại diện trong bảng sản phẩm dùng bản 128px, giữ ảnh gốc trong trình sửa. Ảnh upload có cache CDN vì URL mỗi file là duy nhất. Nếu tối ưu ảnh thất bại, preview thử lại bằng URL gốc.
+- Đổi trạng thái kho/nổi bật chỉ trả bốn trường nhỏ, giữ nguyên nội dung bài viết và bộ ảnh; chặn bấm lặp khi đang lưu.
+
+Đo lại bằng `node scripts/benchmark-admin.mjs` (chỉ đọc database). Các API danh sách và phiên có header `Server-Timing`: `auth`, `data`, `total`; kiểm tra trong Network của trình duyệt. Không in thông tin đăng nhập hoặc nội dung hàng dữ liệu trong báo cáo đo.
+
+Phép đo ngày 04/10/2026 với 622 sản phẩm: JSON danh sách cũ 769.205 byte, trang 40 sản phẩm khoảng 27–29 KB. API mới trên máy kiểm thử với database thật trả trang 40 sản phẩm trong khoảng 0,34–0,38 giây khi đã kết nối; lượt đầu còn chịu thời gian kết nối/biên dịch local. Đây là số đo môi trường kiểm thử, cần đo lại production sau khi triển khai vùng chạy mới.

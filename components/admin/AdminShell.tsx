@@ -1,5 +1,6 @@
 "use client";
 
+import { adminGet, AdminRequestError } from "@/lib/admin-fetch";
 import { AdminImage } from "@/components/admin/AdminImage";
 
 import React, { useState, useEffect } from "react";
@@ -25,15 +26,21 @@ import {
   History,
   Globe,
   Plus,
-  Film, Image as ImageIcon
+  Film,
+  Image as ImageIcon,
 } from "lucide-react";
 import { ToastProvider } from "@/components/admin/AdminToast";
 
-export default function AdminShell({ children }: { children: React.ReactNode }) {
+export default function AdminShell({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
+  const [authError, setAuthError] = useState("");
   const [pendingOrdersCount, setPendingOrdersCount] = useState<number>(0);
 
   // If we are on the login page, don't show the dashboard shell
@@ -44,31 +51,61 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       setAdminUser(null);
       return;
     }
-
-    // Always fetch latest authenticated user session
-    fetch("/api/admin/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setAdminUser(data.user);
-        } else {
+    let active = true;
+    let lastRefresh = 0;
+    let canReadOrders = false;
+    const refreshBadge = async () => {
+      if (!canReadOrders) return;
+      try {
+        const data = await adminGet(
+          "/api/admin/orders?status=PENDING&countOnly=1"
+        );
+        if (active) setPendingOrdersCount(data.count || 0);
+      } catch {
+        /* Badge failures must not block navigation. */
+      }
+    };
+    const refreshSession = async () => {
+      if (Date.now() - lastRefresh < 15000) return;
+      lastRefresh = Date.now();
+      try {
+        const data = await adminGet("/api/admin/auth/me");
+        if (!active) return;
+        setAdminUser(data.user);
+        setAuthError("");
+        canReadOrders =
+          ["ADMIN", "SUPER_ADMIN"].includes(data.user.role) ||
+          data.user.permissions?.includes("orders");
+        void refreshBadge();
+      } catch (error) {
+        if (!active) return;
+        if (error instanceof AdminRequestError && error.status === 401)
           window.location.href = "/admin/login";
-        }
-      })
-      .catch(() => {
-        window.location.href = "/admin/login";
-      });
-
-    // Fetch pending orders count for badge once
-    fetch("/api/admin/orders?status=PENDING&countOnly=1")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && typeof data.count === "number") {
-          setPendingOrdersCount(data.count);
-        }
-      })
-      .catch(() => {});
-  }, [pathname, isLoginPage]);
+        else
+          setAuthError(
+            "Kết nối đang gián đoạn. Vui lòng thử lại; các nội dung đang sửa vẫn được giữ."
+          );
+      }
+    };
+    const retrySession = () => {
+      lastRefresh = 0;
+      void refreshSession();
+    };
+    void refreshSession();
+    window.addEventListener("focus", refreshSession);
+    window.addEventListener("admin:session-refresh", retrySession);
+    window.addEventListener("admin:orders-updated", refreshBadge);
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void refreshBadge();
+    }, 60000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+      window.removeEventListener("focus", refreshSession);
+      window.removeEventListener("admin:session-refresh", retrySession);
+      window.removeEventListener("admin:orders-updated", refreshBadge);
+    };
+  }, [isLoginPage]);
 
   // Route titles mapping for activity logs
   const PAGE_TITLES: { [key: string]: string } = {
@@ -91,7 +128,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
     try {
       const lastTracked = sessionStorage.getItem("last_tracked_path");
-      const lastTrackedTime = parseInt(sessionStorage.getItem("last_tracked_time") || "0", 10);
+      const lastTrackedTime = parseInt(
+        sessionStorage.getItem("last_tracked_time") || "0",
+        10
+      );
       const now = Date.now();
 
       // Avoid spamming if user re-clicks the same menu within 10 seconds
@@ -117,8 +157,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     } catch {}
   }, [pathname, isLoginPage]);
 
-
-
   if (isLoginPage) {
     return <>{children}</>;
   }
@@ -133,25 +171,81 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   const navItems = [
     { href: "/admin", label: "Tổng Quan & Báo Cáo", icon: LayoutDashboard },
-    { href: "/admin/products", label: "Quản Lý Sản Phẩm", icon: Package, permission: "products" },
-    { href: "/admin/categories", label: "Danh Mục & Thẻ Con", icon: Layers, permission: "categories" },
-    { href: "/admin/landing-page", label: "Giao Diện & Trang Chủ", icon: Sliders, permission: "landing" },
-    { href: "/admin/orders", label: "Quản Lý Đơn Hàng", icon: ShoppingCart, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null, permission: "orders" },
-    { href: "/admin/articles", label: "Bài Viết Chuẩn SEO", icon: FileText, permission: "articles" },
+    {
+      href: "/admin/products",
+      label: "Quản Lý Sản Phẩm",
+      icon: Package,
+      permission: "products",
+    },
+    {
+      href: "/admin/categories",
+      label: "Danh Mục & Thẻ Con",
+      icon: Layers,
+      permission: "categories",
+    },
+    {
+      href: "/admin/landing-page",
+      label: "Giao Diện & Trang Chủ",
+      icon: Sliders,
+      permission: "landing",
+    },
+    {
+      href: "/admin/orders",
+      label: "Quản Lý Đơn Hàng",
+      icon: ShoppingCart,
+      badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
+      permission: "orders",
+    },
+    {
+      href: "/admin/articles",
+      label: "Bài Viết Chuẩn SEO",
+      icon: FileText,
+      permission: "articles",
+    },
     { href: "/admin/images", label: "Thư Viện Ảnh", icon: ImageIcon },
-    { href: "/admin/videos", label: "Kho Video Tải Lên", icon: Film, permission: "articles" },
-    { href: "/admin/customers", label: "Khách Hàng & Liên Hệ", icon: Users, permission: "customers" },
-    { href: "/admin/users", label: "Tài Khoản & Phân Quyền", icon: ShieldCheck, permission: "users" },
-    { href: "/admin/logs", label: "Lịch Sử Hoạt Động", icon: History, permission: "logs" },
+    {
+      href: "/admin/videos",
+      label: "Kho Video Tải Lên",
+      icon: Film,
+      permission: "articles",
+    },
+    {
+      href: "/admin/customers",
+      label: "Khách Hàng & Liên Hệ",
+      icon: Users,
+      permission: "customers",
+    },
+    {
+      href: "/admin/users",
+      label: "Tài Khoản & Phân Quyền",
+      icon: ShieldCheck,
+      permission: "users",
+    },
+    {
+      href: "/admin/logs",
+      label: "Lịch Sử Hoạt Động",
+      icon: History,
+      permission: "logs",
+    },
   ];
 
   const filteredNavItems = navItems.filter((item) => {
     if (!adminUser) return !item.permission && item.href !== "/admin/images";
-    if (item.href === "/admin/images") return adminUser.role === "SUPER_ADMIN" || adminUser.role === "ADMIN" || adminUser.permissions?.some((p: string) => ["products", "articles", "categories", "landing"].includes(p));
+    if (item.href === "/admin/images")
+      return (
+        adminUser.role === "SUPER_ADMIN" ||
+        adminUser.role === "ADMIN" ||
+        adminUser.permissions?.some((p: string) =>
+          ["products", "articles", "categories", "landing"].includes(p)
+        )
+      );
     if (!item.permission) return true;
     const role = (adminUser.role || "").toUpperCase();
     if (role === "SUPER_ADMIN" || role === "ADMIN") return true;
-    return Array.isArray(adminUser.permissions) && adminUser.permissions.includes(item.permission);
+    return (
+      Array.isArray(adminUser.permissions) &&
+      adminUser.permissions.includes(item.permission)
+    );
   });
 
   return (
@@ -162,7 +256,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           {/* Logo & Brand Header */}
           <div className="p-6 border-b border-[#d4af37]/20 flex items-center gap-3.5 bg-gradient-to-b from-[#111c2e] to-[#0c1420]">
             <div className="w-12 h-12 rounded-xl border border-[#d4af37]/50 p-1 bg-white flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.25)]">
-              <AdminImage src="/images/logo.png" alt="Lộc Nam" className="w-full h-full object-contain" />
+              <AdminImage
+                src="/images/logo.png"
+                alt="Lộc Nam"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -272,11 +370,19 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               onClick={() => setMobileOpen(!mobileOpen)}
               className="p-2 text-[#d4af37] hover:text-white rounded-lg hover:bg-[#152236]"
             >
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg border border-[#d4af37] p-0.5 bg-white flex items-center justify-center">
-                <AdminImage src="/images/logo.png" alt="Logo" className="w-full h-full object-contain" />
+                <AdminImage
+                  src="/images/logo.png"
+                  alt="Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span className="font-serif font-bold text-xs text-[#d4af37] uppercase">
                 LỘC NAM ADMIN
@@ -288,7 +394,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <div className="hidden md:flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111c2e] border border-[#d4af37]/20 text-xs text-[#94a3b8]">
               <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Hệ thống quản trị xưởng đúc Đồ Đồng Lộc Nam (Ý Yên - Nam Định)</span>
+              <span>
+                Hệ thống quản trị xưởng đúc Đồ Đồng Lộc Nam (Ý Yên - Nam Định)
+              </span>
             </div>
           </div>
 
@@ -364,6 +472,23 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
         {/* Page Body */}
         <main className="flex-1 p-4 sm:p-8 overflow-y-auto max-w-[1600px] w-full mx-auto">
+          {authError && (
+            <div
+              role="alert"
+              className="mb-4 p-3 border border-amber-400/40 rounded-lg text-amber-200 text-sm"
+            >
+              {authError}
+              <button
+                type="button"
+                className="ml-3 underline"
+                onClick={() =>
+                  window.dispatchEvent(new Event("admin:session-refresh"))
+                }
+              >
+                Thử lại kết nối
+              </button>
+            </div>
+          )}
           <ToastProvider>{children}</ToastProvider>
         </main>
       </div>

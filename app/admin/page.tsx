@@ -34,6 +34,7 @@ export default function AdminDashboardPage() {
       .then((res) => res.json())
       .then((resData) => {
         if (resData.success) {
+        window.dispatchEvent(new Event("admin:orders-updated"));
           setData(resData.data);
           try {
             sessionStorage.setItem("locnam_admin_analytics", JSON.stringify(resData.data));
@@ -63,6 +64,7 @@ export default function AdminDashboardPage() {
       });
       const resData = await res.json();
       if (resData.success) {
+        window.dispatchEvent(new Event("admin:orders-updated"));
         fetchAnalytics();
       }
     } catch (e) {

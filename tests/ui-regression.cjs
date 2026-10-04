@@ -10,10 +10,10 @@ const category={id:'cat1',name:'Tượng đồng',slug:'tuong-dong'};
 const products=Array.from({length:53},(_,i)=>({id:'p'+i,name:'Sản phẩm '+i,slug:'san-pham-'+i,price:1200000,images:'["/images/logo.png"]',material:'Đồng đỏ',categoryId:'cat1',category,inStock:true,isFeatured:false,createdAt:'2026-09-01T00:00:00Z',tags:'',description:'<p>NỘI DUNG GỐC CẦN GIỮ</p>'}));
 const article={id:'a1',title:'Bài viết thử nghiệm',slug:'bai-thu-nghiem',summary:'Tóm tắt',content:'<p>NỘI DUNG BÀI VIẾT GỐC</p>',thumbnail:'/images/logo.png',category:'KIẾN THỨC ĐỒ ĐỒNG',isPublished:true,publishedAt:'2026-09-01T00:00:00Z'};
 (async()=>{
- const browser=await chromium.launch({channel:'chrome',headless:true});
+ let browser=await chromium.launch({channel:'chrome',headless:true});
  const context=await browser.newContext({viewport:{width:1440,height:1000}});
  await context.addCookies([{name:'admin_token',value:'isolated-ui-fixture',url:base}]);
- const page=await context.newPage();const errors=[];let unexpectedSaves=0;
+ const page=await context.newPage();page.setDefaultNavigationTimeout(60000);const errors=[];let unexpectedSaves=0;
 page.on('pageerror',err=>{ errors.push(err.message); console.log('PAGE ERROR:',err.message); });
  page.on('console', msg=>{if(msg.type()==='error' && /hydration|cannot be a descendant/i.test(msg.text()))errors.push(msg.text());});
  await page.route('**/api/admin/**',async route=>{
@@ -22,8 +22,18 @@ page.on('pageerror',err=>{ errors.push(err.message); console.log('PAGE ERROR:',e
   else if(url.pathname.endsWith('/subcategories')){if(req.method()==='POST')savedCatalog=req.postDataJSON().catalog;data.data=savedCatalog||catalog;}
   else if(url.pathname.endsWith('/categories'))data.categories=[category];
   else if(url.pathname.endsWith('/landing-page')){if(req.method()==='POST')settings={...settings,...req.postDataJSON().settings};data.settings=settings;}
-  else if(url.pathname.endsWith('/products')){if(req.method()!=='GET')unexpectedSaves++;if(url.searchParams.has('id'))data.product=products.find(p=>p.id===url.searchParams.get('id'));else data.products=products.map(({description,...p})=>p);}
-  else if(url.pathname.endsWith('/articles')){if(url.searchParams.has('id'))data.article=article;else data.articles=[{...article,content:undefined}];}
+  else if(url.pathname.endsWith('/products')){
+   if(req.method()!=='GET')unexpectedSaves++;
+   if(url.searchParams.has('id'))data.product=products.find(p=>p.id===url.searchParams.get('id'));
+   else {
+    const q=(url.searchParams.get('search')||'').toLowerCase();const matched=products.filter(p=>p.name.toLowerCase().includes(q));
+    const current=Math.max(1,Number(url.searchParams.get('page')||1));
+    data={success:true,products:matched.slice((current-1)*40,current*40).map(({description,...p})=>p),totalProducts:products.length,pagination:{total:matched.length,totalPages:Math.max(1,Math.ceil(matched.length/40)),page:current,limit:40}};
+   }
+  }
+  else if(url.pathname.endsWith('/articles')){if(url.searchParams.has('id')||url.searchParams.has('slug'))data.article=article;
+   else data={success:true,articles:[{...article,content:undefined}],totalArticles:1,categories:['KIẾN THỨC ĐỒ ĐỒNG','Chuyên mục ở trang cuối'],pagination:{total:1,totalPages:1,page:1,limit:40}};
+  }
   else if(url.pathname.endsWith('/images'))data={success:true,images:[{url:'/images/logo.png',name:'Logo chuẩn',source:'Ảnh có sẵn'}],total:1,pageCount:1,page:1};
   else if(url.pathname.endsWith('/orders'))data={success:true,count:0,orders:[]};
   else if(url.pathname.endsWith('/videos'))data.videos=[];
@@ -54,7 +64,9 @@ page.on('pageerror',err=>{ errors.push(err.message); console.log('PAGE ERROR:',e
  await page.setViewportSize({width:390,height:844});await editor.scrollIntoViewIfNeeded();await page.screenshot({path:'scratch/seo-admin-qa/home-editor-mobile.png',fullPage:false});
  await page.setViewportSize({width:1440,height:1000});
  await page.goto(base+'/admin/products');await page.waitForSelector('tbody tr');assert.equal(await page.locator('tbody tr').count(),40);
- await page.getByRole('button',{name:'Trang sau',exact:true}).click();assert.equal(await page.locator('tbody tr').count(),13);
+ await page.getByRole('button',{name:'Trang sau',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('tbody tr').length===13);
+ const productSearch=page.getByPlaceholder('Tìm theo tên, chất liệu, nhánh nhỏ, từ khóa...');
+ await productSearch.fill('Sản phẩm 52');await page.waitForFunction(()=>document.querySelectorAll('tbody tr').length===1);
  await page.getByTitle('Chỉnh sửa sản phẩm',{exact:true}).first().click();await page.waitForFunction(()=>document.body.innerText.includes('NỘI DUNG GỐC CẦN GIỮ'));
  assert.equal(await page.locator('form form').count(),0);
  const tagInput=page.getByPlaceholder('Nhập thẻ, cách nhau bằng dấu phẩy...');

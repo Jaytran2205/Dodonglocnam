@@ -60,6 +60,7 @@ export default function AdminOrdersPage() {
       });
       const data = await res.json();
       if (data.success) {
+        window.dispatchEvent(new Event("admin:orders-updated"));
         fetchOrders();
         if (selectedOrder && selectedOrder.id === id) {
           setSelectedOrder({ ...selectedOrder, status: newStatus });
@@ -83,6 +84,7 @@ export default function AdminOrdersPage() {
           const res = await fetch(`/api/admin/orders?id=${id}`, { method: "DELETE" });
           const data = await res.json();
           if (data.success) {
+        window.dispatchEvent(new Event("admin:orders-updated"));
             fetchOrders();
             if (selectedOrder?.id === id) setSelectedOrder(null);
             toastSuccess(`Đã xóa đơn hàng #${code} thành công!`, "Đã xóa");

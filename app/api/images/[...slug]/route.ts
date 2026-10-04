@@ -60,7 +60,8 @@ export async function GET(
       status: 200,
       headers: {
         "Content-Type": mimeType,
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+        "Vercel-CDN-Cache-Control": "public, max-age=31536000, immutable",
       },
     });
   } catch (error: any) {

@@ -1,8 +1,20 @@
+import { unstable_cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { HIDDEN_SUPER_ADMIN, isHiddenSuperAdmin, checkUserPermission } from "@/lib/permissions";
 import { getExcludedSuperAdminFilter, logActivity } from "@/lib/activity-logger";
+
+const getLogMetadata = unstable_cache(async () => {
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const [distinctUsers, todayCount, totalExcludingHidden] = await Promise.all([
+    prisma.activityLog.findMany({ where: getExcludedSuperAdminFilter(), distinct: ["userEmail"],
+      select: { userId: true, userName: true, userEmail: true, userRole: true }, take: 50 }),
+    prisma.activityLog.count({ where: { AND: [getExcludedSuperAdminFilter(), { createdAt: { gte: todayStart } }] } }),
+    prisma.activityLog.count({ where: getExcludedSuperAdminFilter() }),
+  ]);
+  return { distinctUsers, todayCount, totalExcludingHidden };
+}, ["admin-log-metadata-v1"], { revalidate: 15, tags: ["admin-logs"] });
 
 // GET: Retrieve activity logs with filtering and pagination
 // NOTE: ALWAYS strictly excludes the hidden super admin jaytran225 as requested!
@@ -90,7 +102,7 @@ export async function GET(req: NextRequest) {
 
     const where = { AND: andConditions };
 
-    const [total, logs] = await Promise.all([
+    const [total, logs, metadata] = await Promise.all([
       prisma.activityLog.count({ where }),
       prisma.activityLog.findMany({
         where,
@@ -98,35 +110,10 @@ export async function GET(req: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
       }),
+      getLogMetadata(),
     ]);
 
-    // Unique users who have logs (excluding hidden admin)
-    const distinctUsers = await prisma.activityLog.findMany({
-      where: getExcludedSuperAdminFilter(),
-      distinct: ["userEmail"],
-      select: {
-        userId: true,
-        userName: true,
-        userEmail: true,
-        userRole: true,
-      },
-      take: 50,
-    });
-
-    // Counts for stats
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const [todayCount, totalExcludingHidden] = await Promise.all([
-      prisma.activityLog.count({
-        where: {
-          AND: [getExcludedSuperAdminFilter(), { createdAt: { gte: todayStart } }],
-        },
-      }),
-      prisma.activityLog.count({
-        where: getExcludedSuperAdminFilter(),
-      }),
-    ]);
+    const { distinctUsers, todayCount, totalExcludingHidden } = metadata;
 
     // If querying a specific user, compute their journey metrics
     let userJourneyStats: any = null;
