@@ -49,6 +49,8 @@ import {
   Save,
   Unlink,
   Undo2,
+  Trash2,
+  Check,
 } from "lucide-react";
 import { ProductStructuredDescription } from "@/components/product/ProductStructuredDescription";
 import { useToast } from "@/components/admin/AdminToast";
@@ -338,9 +340,17 @@ export function markdownToHtml(md: string): string {
       const safeSrc = escapeAttribute(src);
       const safeAlt = escapeAttribute(alt);
       htmlBlocks.push(
-        `<div class="my-4 text-center"><img src="${safeSrc}" alt="${safeAlt}" class="max-h-72 rounded-xl mx-auto shadow-md border border-slate-200 object-contain" />${
-          safeAlt ? `<p class="text-xs text-slate-500 italic mt-1.5">${safeAlt}</p>` : ""
-        }</div>`
+        `<figure data-image-block="true" class="my-4 text-center group relative inline-block max-w-full select-none cursor-pointer">
+          <div class="relative inline-block overflow-hidden rounded-xl shadow-md border border-slate-200">
+            <img src="${safeSrc}" alt="${safeAlt}" class="max-h-80 mx-auto object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.01]" />
+            <div class="image-edit-overlay absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity cursor-pointer text-white text-xs font-semibold">
+              <span class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5 pointer-events-none transition-transform active:scale-95">
+                ✏️ Bấm để sửa hoặc thay ảnh
+              </span>
+            </div>
+          </div>
+          ${safeAlt ? `<figcaption class="text-xs text-slate-500 italic mt-1.5 select-none">${safeAlt}</figcaption>` : ""}
+        </figure>`
       );
       continue;
     }
@@ -433,6 +443,26 @@ export function htmlToMarkdown(html: string): string {
         return `\n\n[video title="${videoTitle}"]${videoUrl}[/video]\n\n`;
       }
       return `\n\n[video]${videoUrl}[/video]\n\n`;
+    }
+
+    // Image block container (figure, data-image-block, or div with img)
+    if (
+      tag === "figure" ||
+      el.getAttribute("data-image-block") === "true" ||
+      (tag === "div" && (el.classList.contains("my-4") || el.classList.contains("text-center")) && el.querySelector("img"))
+    ) {
+      const img = el.querySelector("img");
+      if (img) {
+        const src = img.getAttribute("src") || "";
+        const figcaption = el.querySelector("figcaption");
+        const pCaption = el.querySelector("p");
+        const alt = (figcaption?.textContent || img.getAttribute("alt") || pCaption?.textContent || "").trim();
+        return `\n\n![${alt}](${src})\n\n`;
+      }
+    }
+
+    if (tag === "figcaption") {
+      return "";
     }
 
     // Recursive child markdown
@@ -627,6 +657,7 @@ export function ProductArticleEditor({
   const [imageUrl, setImageUrl] = useState("");
   const [imageCaption, setImageCaption] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [editingImageElement, setEditingImageElement] = useState<HTMLImageElement | null>(null);
 
   // Custom Color State
   const [customHexColor, setCustomHexColor] = useState("#b45309");
@@ -1773,6 +1804,24 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
     }
   };
 
+  // Image Modal Openers
+  const openInsertImageModal = () => {
+    setEditingImageElement(null);
+    setImageUrl("");
+    setImageCaption("");
+    setShowImageModal(true);
+  };
+
+  const openEditImageModal = (img: HTMLImageElement) => {
+    setEditingImageElement(img);
+    setImageUrl(img.getAttribute("src") || "");
+    const figcaption = img.closest("figure")?.querySelector("figcaption");
+    const pCaption = img.closest("figure, div")?.querySelector("p");
+    const alt = (figcaption?.textContent || img.getAttribute("alt") || pCaption?.textContent || "").trim();
+    setImageCaption(alt);
+    setShowImageModal(true);
+  };
+
   // Image Insertion with guaranteed direct markdown update
   const handleInsertImage = (e?: React.MouseEvent | React.FormEvent) => {
     if (e) e.preventDefault();
@@ -1801,6 +1850,124 @@ Tác phẩm được đúc cân đối, có độ hoàn thiện sắc sảo từ
     setImageUrl("");
     setImageCaption("");
     setShowImageModal(false);
+  };
+
+  // Update existing image or insert new
+  const handleSaveImageChanges = (e?: React.MouseEvent | React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!imageUrl.trim()) {
+      toastWarning("Vui lòng nhập liên kết hình ảnh hoặc tải ảnh lên", "Thiếu ảnh");
+      return;
+    }
+
+    const finalUrl = imageUrl.trim();
+    const finalCaption = imageCaption.trim();
+
+    if (editingImageElement) {
+      const oldAlt = (editingImageElement.getAttribute("alt") || "").trim();
+      editingImageElement.setAttribute("src", finalUrl);
+      editingImageElement.setAttribute("alt", finalCaption);
+
+      const figure =
+        editingImageElement.closest('figure[data-image-block="true"]') ||
+        editingImageElement.closest("figure") ||
+        editingImageElement.closest("div.my-4");
+
+      if (figure) {
+        let figcaption = figure.querySelector("figcaption");
+        let pCaption = figure.querySelector("p");
+        if (finalCaption) {
+          if (figcaption) {
+            figcaption.textContent = finalCaption;
+          } else if (pCaption) {
+            pCaption.textContent = finalCaption;
+          } else {
+            const newCap = document.createElement("figcaption");
+            newCap.className = "text-xs text-slate-500 italic mt-1.5 select-none";
+            newCap.textContent = finalCaption;
+            figure.appendChild(newCap);
+          }
+        } else {
+          if (figcaption) figcaption.remove();
+          if (pCaption) pCaption.remove();
+        }
+
+        // Clean up accidental duplicate sibling paragraph if it had the exact oldAlt
+        const nextEl = figure.nextElementSibling;
+        if (nextEl && nextEl.tagName === "P" && nextEl.textContent?.trim() === oldAlt) {
+          nextEl.remove();
+        }
+      }
+
+      handleVisualInput(true);
+      toastSuccess("Đã cập nhật hình ảnh và chú thích thành công!", "Cập nhật ảnh");
+      setEditingImageElement(null);
+      setImageUrl("");
+      setImageCaption("");
+      setShowImageModal(false);
+    } else {
+      handleInsertImage(e);
+    }
+  };
+
+  // Delete image from article
+  const handleDeleteImage = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!editingImageElement) return;
+
+    if (activeTab === "visual" || activeTab === "split") {
+      const figure =
+        editingImageElement.closest('figure[data-image-block="true"]') ||
+        editingImageElement.closest("figure") ||
+        editingImageElement.closest("div.my-4");
+      const oldAlt = (editingImageElement.getAttribute("alt") || "").trim();
+      if (figure) {
+        const nextEl = figure.nextElementSibling;
+        if (nextEl && nextEl.tagName === "P" && nextEl.textContent?.trim() === oldAlt) {
+          nextEl.remove();
+        }
+        figure.remove();
+      } else {
+        editingImageElement.remove();
+      }
+      handleVisualInput(true);
+    } else {
+      const src = editingImageElement.getAttribute("src") || "";
+      if (src) {
+        const escapedSrc = src.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const imgRegex = new RegExp(`!\\[[^\\]]*\\]\\(${escapedSrc}\\)\\s*`, "g");
+        const updatedVal = value.replace(imgRegex, "");
+        onChange(updatedVal);
+      }
+    }
+
+    toastSuccess("Đã xóa hình ảnh khỏi bài viết thành công!", "Xóa ảnh");
+    setEditingImageElement(null);
+    setImageUrl("");
+    setImageCaption("");
+    setShowImageModal(false);
+  };
+
+  // Handle click on images or image overlays in visual editor
+  const handleVisualEditorClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (!target) return;
+    const img =
+      target.tagName === "IMG"
+        ? (target as HTMLImageElement)
+        : (target.closest('[data-image-block="true"]')?.querySelector("img") as HTMLImageElement | null) ||
+          (target.closest("figure")?.querySelector("img") as HTMLImageElement | null);
+    if (img) {
+      e.preventDefault();
+      e.stopPropagation();
+      openEditImageModal(img);
+    }
   };
 
   // Insert standard Lộc Nam 5-part Template
@@ -2544,7 +2711,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           {/* Image Insertion Button */}
           <button
             type="button"
-            onClick={() => setShowImageModal(true)}
+            onClick={openInsertImageModal}
             className="p-1.5 rounded-lg text-[#34d399] hover:bg-[#16253b] font-bold text-xs flex items-center gap-1.5"
             title="Chèn hình ảnh hoặc tải ảnh từ máy tính"
           >
@@ -2607,6 +2774,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               }}
               contentEditable
               suppressContentEditableWarning
+              onClick={handleVisualEditorClick}
               onFocus={() => {
                 isFocusedRef.current = true;
               }}
@@ -2707,6 +2875,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 }}
                 contentEditable
                 suppressContentEditableWarning
+                onClick={handleVisualEditorClick}
                 onFocus={() => {
                   isFocusedRef.current = true;
                 }}
@@ -3146,29 +3315,44 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* MODAL CHÈN HÌNH ẢNH */}
+      {/* MODAL CHÈN / CHỈNH SỬA HÌNH ẢNH                               */}
       {/* ------------------------------------------------------------- */}
       {showImageModal && (
         <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#0c1825] border-2 border-[#34d399]/50 rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className={`w-full max-w-lg bg-[#0c1825] border-2 ${editingImageElement ? "border-amber-500/50" : "border-[#34d399]/50"} rounded-2xl p-6 shadow-2xl space-y-4`}>
             <div className="flex items-center justify-between border-b border-[#1e344d] pb-3">
-              <h3 className="font-serif font-bold text-base text-[#34d399] uppercase tracking-wide flex items-center gap-2">
-                <ImageIcon className="w-5 h-5 text-[#34d399]" />
-                <span>Chèn Hình Ảnh Vào Bài Viết</span>
+              <h3 className={`font-serif font-bold text-base ${editingImageElement ? "text-[#ffd700]" : "text-[#34d399]"} uppercase tracking-wide flex items-center gap-2`}>
+                <ImageIcon className={`w-5 h-5 ${editingImageElement ? "text-[#ffd700]" : "text-[#34d399]"}`} />
+                <span>{editingImageElement ? "Chỉnh Sửa & Thay Thế Hình Ảnh" : "Chèn Hình Ảnh Vào Bài Viết"}</span>
               </h3>
               <button
                 type="button"
-                onClick={() => setShowImageModal(false)}
+                onClick={() => {
+                  setShowImageModal(false);
+                  setEditingImageElement(null);
+                }}
                 className="text-gray-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
+            {editingImageElement && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-amber-300">Đang chỉnh sửa ảnh hiện có trong bài:</span>
+                  <p className="text-[11px] text-amber-200/90 mt-0.5 leading-relaxed">
+                    Bấm <b>&quot;Tải Lên&quot;</b> để chọn ảnh mới từ máy tính thay thế ảnh này, đổi URL, sửa lại dòng chú thích bên dưới, hoặc bấm nút đỏ <b>&quot;Xóa Ảnh Khỏi Bài Viết&quot;</b> để gỡ bỏ.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-white block uppercase">
-                  Tải Ảnh Lên Từ Máy Tính HOẶC Nhập URL Ảnh
+                  {editingImageElement ? "Đường Dẫn Ảnh (Hoặc Tải Ảnh Mới Thay Thế)" : "Tải Ảnh Lên Từ Máy Tính HOẶC Nhập URL Ảnh"}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -3177,7 +3361,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://... hoặc /images/..."
-                    className="flex-1 bg-[#111c2e] border border-[#1f2d42] focus:border-[#34d399] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none font-mono"
+                    className="flex-1 bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none font-mono"
                   />
                   <label className="px-3.5 py-2.5 bg-[#1f3657] hover:bg-[#284873] text-[#ffd700] rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0 border border-[#2f5587]">
                     <Upload className="w-3.5 h-3.5" />
@@ -3201,8 +3385,8 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   type="text"
                   value={imageCaption}
                   onChange={(e) => setImageCaption(e.target.value)}
-                  placeholder={`Ví dụ: Cận cảnh hoa văn chạm khắc thủ công của ${productName}`}
-                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#34d399] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none"
+                  placeholder={`Ví dụ: Cận cảnh hoa văn chạm khắc thủ công của ${productName || "sản phẩm"}`}
+                  className="w-full bg-[#111c2e] border border-[#1f2d42] focus:border-[#d4af37] text-white text-xs px-4 py-2.5 rounded-xl focus:outline-none"
                 />
               </div>
 
@@ -3212,27 +3396,65 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                   <img
                     src={imageUrl}
                     alt="Preview"
-                    className="max-h-32 mx-auto rounded-lg object-contain"
+                    className="max-h-36 mx-auto rounded-lg object-contain"
                   />
                 </div>
               )}
 
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowImageModal(false)}
-                  className="px-4 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 rounded-xl text-xs font-bold"
-                >
-                  Hủy Bỏ
-                </button>
-                <button
-                  type="button"
-                  onClick={handleInsertImage}
-                  className="px-5 py-2 bg-[#10b981] hover:bg-[#059669] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Chèn Ảnh Ngay</span>
-                </button>
+              <div className="pt-2 flex items-center justify-between gap-2">
+                {editingImageElement ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleDeleteImage}
+                      className="px-3.5 py-2 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded-xl text-xs font-bold border border-rose-500/40 flex items-center gap-1.5 transition-all shadow-sm"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Xóa Ảnh Khỏi Bài Viết</span>
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowImageModal(false);
+                          setEditingImageElement(null);
+                        }}
+                        className="px-4 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 rounded-xl text-xs font-bold"
+                      >
+                        Hủy Bỏ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveImageChanges}
+                        className="px-5 py-2 bg-[#d4af37] hover:bg-[#b8972e] text-[#070c14] font-extrabold rounded-xl text-xs flex items-center gap-1.5 shadow transition-all active:scale-95"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>Lưu Thay Đổi Ảnh</span>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowImageModal(false)}
+                        className="px-4 py-2 bg-[#152236] hover:bg-[#1d2f4a] text-gray-300 rounded-xl text-xs font-bold"
+                      >
+                        Hủy Bỏ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleInsertImage}
+                        className="px-5 py-2 bg-[#10b981] hover:bg-[#059669] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition-all active:scale-95"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Chèn Ảnh Ngay</span>
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
