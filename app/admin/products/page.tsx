@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Plus,
   Search,
@@ -504,6 +504,26 @@ export default function AdminProductsPage() {
       setSaving(false);
     }
   };
+
+  // Keep a stable ref for handleSave so keyboard shortcut always invokes the latest state
+  const handleSaveRef = useRef<() => void>(() => {});
+  handleSaveRef.current = () => {
+    handleSave(undefined, undefined, false);
+  };
+
+  // Keyboard shortcut Ctrl+S / Cmd+S to quickly save without scrolling
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
+        if (modalOpen) {
+          e.preventDefault();
+          handleSaveRef.current();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [modalOpen]);
 
   const handleDelete = async (id: string, name: string) => {
     showConfirm({
@@ -1021,20 +1041,51 @@ export default function AdminProductsPage() {
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
           <div className="relative w-full max-w-7xl bg-[#0c1420] border-2 border-[#d4af37]/40 rounded-2xl shadow-2xl overflow-hidden my-4 flex flex-col max-h-[92vh]">
             {/* Modal Header */}
-            <div className="px-6 py-4 bg-gradient-to-r from-[#111c2e] via-[#142339] to-[#0c1420] border-b border-[#d4af37]/30 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-[#d4af37] animate-pulse"></div>
-                <div>
-                  <h2 className="font-serif font-extrabold text-base sm:text-lg text-[#d4af37] uppercase tracking-wide">
+            <div className="px-4 sm:px-6 py-3.5 bg-gradient-to-r from-[#111c2e] via-[#142339] to-[#0c1420] border-b border-[#d4af37]/30 flex items-center justify-between shrink-0 gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-3 h-3 rounded-full bg-[#d4af37] animate-pulse shrink-0"></div>
+                <div className="min-w-0">
+                  <h2 className="font-serif font-extrabold text-sm sm:text-base md:text-lg text-[#d4af37] uppercase tracking-wide truncate">
                     {editingProduct ? "CHỈNH SỬA BÀI VIẾT SẢN PHẨM" : "SOẠN THẢO BÀI VIẾT SẢN PHẨM MỚI"}
                   </h2>
-                  <p className="text-xs text-gray-400">
-                    Giao diện chuyên nghiệp dạng modular boxes — Cấu hình đa nhánh, nội dung & SEO
+                  <p className="text-[11px] text-gray-400 truncate hidden sm:block">
+                    Hỗ trợ phím tắt <span className="text-[#ffd700] font-mono font-bold">Ctrl+S</span> để lưu tức thì mọi lúc mọi nơi
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
+                {lastSavedAt && (
+                  <span className="hidden md:flex items-center gap-1.5 text-[11px] text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Đã lưu: {lastSavedAt}</span>
+                  </span>
+                )}
+
+                {/* STICKY QUICK SAVE BUTTON */}
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleSave(undefined, undefined, false)}
+                  className="px-3.5 sm:px-5 py-2 bg-gradient-to-r from-[#d4af37] via-[#f5d77f] to-[#d4af37] hover:brightness-110 text-[#070c14] font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                  title="Lưu cập nhật sản phẩm lên website ngay mà không cần cuộn trang (Ctrl+S)"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{saving ? "ĐANG LƯU..." : editingProduct ? "CẬP NHẬT (Ctrl+S)" : "XUẤT BẢN"}</span>
+                </button>
+
+                {/* STICKY SAVE & CLOSE BUTTON */}
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleSave(undefined, undefined, true)}
+                  className="hidden sm:flex px-3 py-2 bg-[#18283f] hover:bg-[#223756] text-[#d4af37] border border-[#d4af37]/40 rounded-xl font-bold text-xs transition-colors items-center gap-1"
+                  title="Lưu tất cả thay đổi và đóng cửa sổ"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Lưu & Đóng</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
@@ -1186,6 +1237,9 @@ export default function AdminProductsPage() {
                         value={formData.description}
                         onChange={(val) => setFormData({ ...formData, description: val })}
                         productName={formData.name || "Sản phẩm Đồ Đồng Lộc Nam"}
+                        onQuickSave={() => handleSave(undefined, undefined, false)}
+                        saving={saving}
+                        lastSavedAt={lastSavedAt}
                       />
                     </div>
                   </div>

@@ -46,6 +46,7 @@ import {
   AlignJustify,
   ChevronDown,
   Wand2,
+  Save,
 } from "lucide-react";
 import { ProductStructuredDescription } from "@/components/product/ProductStructuredDescription";
 import { useToast } from "@/components/admin/AdminToast";
@@ -55,6 +56,9 @@ interface ProductArticleEditorProps {
   value: string;
   onChange: (val: string) => void;
   productName?: string;
+  onQuickSave?: () => void;
+  saving?: boolean;
+  lastSavedAt?: string | null;
 }
 
 // Table parser from Markdown to HTML for WYSIWYG
@@ -565,6 +569,9 @@ export function ProductArticleEditor({
   value,
   onChange,
   productName = "Sản phẩm Đồ Đồng Lộc Nam",
+  onQuickSave,
+  saving = false,
+  lastSavedAt = null,
 }: ProductArticleEditorProps) {
   const { toastSuccess, toastError, toastWarning, confirm: showConfirm } = useToast();
   // Tabs: "visual" (WYSIWYG - default), "code" (raw Markdown), "preview" (web preview), "split" (side-by-side)
@@ -1673,6 +1680,20 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
             <Sparkles className="w-3.5 h-3.5 text-[#ffd700]" />
             <span className="hidden sm:inline">Mẫu Chuẩn Lộc Nam</span>
           </button>
+
+          {/* Quick Save Button if handler provided */}
+          {onQuickSave && (
+            <button
+              type="button"
+              onClick={onQuickSave}
+              disabled={saving}
+              title="Lưu cập nhật bài viết lên website (phím tắt Ctrl+S)"
+              className="px-3 sm:px-3.5 py-1.5 bg-gradient-to-r from-[#ffd700] via-[#f5d77f] to-[#d4af37] text-black font-extrabold rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{saving ? "Đang lưu..." : "Lưu (Ctrl+S)"}</span>
+            </button>
+          )}
 
           {/* Fullscreen Toggle Button */}
           <button
@@ -3004,13 +3025,31 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                       {linkSuccessInfo.newTab ? "Mở trong tab mới (khuyến nghị SEO)" : "Mở trong cùng tab"}
                     </span>
                   </div>
-                  <div className="flex items-start gap-2 pt-2 border-t border-[#1e344d]/70 text-[11px] text-emerald-400 font-semibold">
-                    <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                    <span>Nội dung bài viết đã được cập nhật thành công.</span>
+                  <div className="flex items-start gap-2 pt-2.5 border-t border-[#1e344d]/70 text-[11px] text-amber-300 font-medium bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
+                    <span>
+                      💡 <strong>Bước tiếp theo:</strong> Liên kết đã được gắn vào nội dung bản thảo. Để xuất bản chính thức ra website cho khách xem, bạn có thể bấm <strong>"Lưu Cập Nhật Lên Web Luôn"</strong> ngay bên dưới (hoặc bấm tổ hợp phím <strong>Ctrl + S</strong>).
+                    </span>
                   </div>
                 </div>
 
-                <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5">
+                  {onQuickSave && (
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => {
+                        onQuickSave();
+                        setShowLinkModal(false);
+                        setLinkSuccessInfo(null);
+                      }}
+                      className="px-5 py-2.5 bg-gradient-to-r from-[#ffd700] via-[#f5d77f] to-[#d4af37] hover:brightness-110 text-[#070c14] font-serif font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_25px_rgba(255,215,0,0.4)] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                      title="Lưu ngay toàn bộ bài viết và sản phẩm lên website mà không cần thao tác thêm"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{saving ? "Đang lưu lên web..." : "Lưu Cập Nhật Lên Web Luôn (Ctrl+S)"}</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -3018,7 +3057,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                       setLinkUrl("");
                       setLinkSuccessInfo(null);
                     }}
-                    className="px-4 py-2.5 bg-[#142339] hover:bg-[#1d3353] text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-[#233a59]"
+                    className="px-3.5 py-2.5 bg-[#142339] hover:bg-[#1d3353] text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-[#233a59]"
                   >
                     + Gắn Thêm Liên Kết Khác
                   </button>
@@ -3033,10 +3072,10 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                         textareaRef.current?.focus();
                       }
                     }}
-                    className="px-6 py-2.5 bg-gradient-to-r from-[#dfb755] to-[#b8860b] hover:brightness-110 text-[#070c14] font-serif font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_25px_rgba(223,183,85,0.4)] active:scale-95 transition-all flex items-center gap-2"
+                    className="px-4 py-2.5 bg-[#1e2d42] hover:bg-[#2b3e5a] text-gray-200 hover:text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Tiếp Tục Soạn Thảo Bài Viết</span>
+                    <span>Tiếp Tục Soạn Thảo</span>
                   </button>
                 </div>
               </div>
