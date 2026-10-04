@@ -621,10 +621,10 @@ export function ProductArticleEditor({
   const [customHexColor, setCustomHexColor] = useState("#b45309");
 
   // DOM Refs & Performance Optimization Refs
-  const visualEditorRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const visualEditorRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const isUpdatingFromInternalRef = useRef(false);
-  const lastEmittedMarkdownRef = useRef<string>(value || "");
+  const lastEmittedMarkdownRef = useRef<string>("");
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isFocusedRef = useRef(false);
   const isComposingRef = useRef(false);
@@ -636,12 +636,15 @@ export function ProductArticleEditor({
       debounceTimerRef.current = null;
     }
     if (!visualEditorRef.current) return;
+    // Prevent accidental wipeout if editor DOM hasn't rendered content yet
+    if (!visualEditorRef.current.innerHTML && value) return;
+
     isUpdatingFromInternalRef.current = true;
     const currentHtml = visualEditorRef.current.innerHTML;
     const newMarkdown = htmlToMarkdown(currentHtml);
     lastEmittedMarkdownRef.current = newMarkdown;
     onChange(newMarkdown);
-  }, [onChange]);
+  }, [onChange, value]);
 
   // Handle Visual Editor Input (typing or pasting)
   // When typing, debounces 250ms for buttery smooth 60fps typing without DOM parsing freeze
@@ -664,9 +667,9 @@ export function ProductArticleEditor({
     [flushVisualInput]
   );
 
-  // Sync value to visual editor when value changes externally (e.g. template inserted or product loaded)
+  // Sync value to visual editor when value changes externally (e.g. template inserted, product loaded, or tab switched)
   useEffect(() => {
-    if (isUpdatingFromInternalRef.current || value === lastEmittedMarkdownRef.current) {
+    if (isUpdatingFromInternalRef.current) {
       isUpdatingFromInternalRef.current = false;
       return;
     }
@@ -675,7 +678,7 @@ export function ProductArticleEditor({
       return;
     }
     if (visualEditorRef.current) {
-      const newHtml = markdownToHtml(value);
+      const newHtml = markdownToHtml(value || "");
       if (visualEditorRef.current.innerHTML !== newHtml) {
         visualEditorRef.current.innerHTML = newHtml;
       }
@@ -2293,7 +2296,12 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
             </div>
 
             <div
-              ref={visualEditorRef}
+              ref={(el) => {
+                visualEditorRef.current = el;
+                if (el && (!el.innerHTML || el.innerHTML === "<p><br></p>" || el.innerHTML === "") && value) {
+                  el.innerHTML = markdownToHtml(value);
+                }
+              }}
               contentEditable
               suppressContentEditableWarning
               onFocus={() => {
@@ -2388,7 +2396,12 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 <span>Soạn Thảo Trực Quan (Nền trắng)</span>
               </span>
               <div
-                ref={visualEditorRef}
+                ref={(el) => {
+                  visualEditorRef.current = el;
+                  if (el && (!el.innerHTML || el.innerHTML === "<p><br></p>" || el.innerHTML === "") && value) {
+                    el.innerHTML = markdownToHtml(value);
+                  }
+                }}
                 contentEditable
                 suppressContentEditableWarning
                 onFocus={() => {

@@ -120,8 +120,8 @@ export function ProductDetailClient({
     });
   }, [relatedProducts, router]);
 
-  // Read full product text toggle ("Xem đầy đủ" / "Xem chi tiết chữ sản phẩm")
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Read full product text toggle ("Xem đầy đủ" / "Xem chi tiết chữ sản phẩm") - Mặc định mở rộng để hiển thị bài viết chi tiết
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // Share link copy feedback
   const [copied, setCopied] = useState(false);
@@ -555,6 +555,12 @@ export function ProductDetailClient({
 
               {/* 2. Bài Viết Chi Tiết & Quy Cách Tác Phẩm */}
               <div className="pt-2 text-[#cbd5e1] text-xs sm:text-sm leading-relaxed">
+                <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-[#1c2c3d]/60">
+                  <div className="w-3 h-3 rounded-full bg-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.6)]" />
+                  <h3 className="font-serif text-base sm:text-xl font-extrabold text-[#ffd700] uppercase tracking-wide">
+                    Bài Viết Chi Tiết & Giới Thiệu Tác Phẩm
+                  </h3>
+                </div>
                 <ProductStructuredDescription
                   description={product.description}
                   productName={product.name}
