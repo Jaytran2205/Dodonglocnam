@@ -921,21 +921,165 @@ export function ProductArticleEditor({
 
   // Word-like Highlight (Bút dạ quang) Handler
   const applyHighlight = (hex: string) => {
+    setShowHighlightPicker(false);
+
     if (hex === "none") {
       if (activeTab === "visual" || activeTab === "split") {
-        document.execCommand("removeFormat");
+        visualEditorRef.current?.focus();
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) {
+          toastWarning("Vui lòng đặt con trỏ hoặc bôi đen đoạn chữ cần xóa màu!");
+          return;
+        }
+
+        const range = sel.getRangeAt(0);
+
+        // Helper: unwrap an element completely
+        const unwrap = (el: Element) => {
+          const parent = el.parentNode;
+          if (!parent) return;
+          while (el.firstChild) {
+            parent.insertBefore(el.firstChild, el);
+          }
+          parent.removeChild(el);
+        };
+
+        let removed = false;
+
+        // 1. Check if cursor or selection is inside a <mark> or highlighted element
+        let node: Node | null = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE && node.parentNode) {
+          node = node.parentNode;
+        }
+
+        let parentMark: HTMLElement | null = null;
+        let curr = node as HTMLElement | null;
+        while (curr && curr !== visualEditorRef.current) {
+          if (
+            curr.tagName === "MARK" ||
+            (curr.style && (curr.style.backgroundColor || curr.style.background))
+          ) {
+            parentMark = curr;
+            break;
+          }
+          curr = curr.parentElement;
+        }
+
+        if (parentMark) {
+          if (range.collapsed || range.toString().trim() === parentMark.textContent?.trim()) {
+            unwrap(parentMark);
+            removed = true;
+          } else {
+            const selectedFragment = range.extractContents();
+            const textNode = document.createTextNode(selectedFragment.textContent || "");
+            range.insertNode(textNode);
+            if (!parentMark.textContent || parentMark.textContent.trim() === "") {
+              parentMark.remove();
+            }
+            removed = true;
+          }
+        }
+
+        // 2. Also check any marks intersecting with the range
+        if (visualEditorRef.current) {
+          const allMarks = Array.from(visualEditorRef.current.querySelectorAll("mark"));
+          allMarks.forEach((m) => {
+            if (range.intersectsNode(m)) {
+              unwrap(m);
+              removed = true;
+            }
+          });
+
+          const allSpans = Array.from(
+            visualEditorRef.current.querySelectorAll("span[style*='background'], font[style*='background']")
+          );
+          allSpans.forEach((s) => {
+            if (range.intersectsNode(s)) {
+              const htmlEl = s as HTMLElement;
+              htmlEl.style.backgroundColor = "";
+              htmlEl.style.background = "";
+              if (!htmlEl.getAttribute("style") || htmlEl.style.length === 0) {
+                unwrap(htmlEl);
+              }
+              removed = true;
+            }
+          });
+        }
+
+        visualEditorRef.current?.normalize();
         handleVisualInput(true);
+        toastSuccess("Đã xóa bôi màu điểm nhấn thành công!", "Xóa màu");
+      } else {
+        // Markdown / Raw mode
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const val = textarea.value;
+
+        if (start !== end) {
+          const selected = val.slice(start, end);
+          const cleaned = selected
+            .replace(/\[highlight=[^\]]+\]([\s\S]*?)\[\/highlight\]/gi, "$1")
+            .replace(/==([\s\S]*?)==/g, "$1")
+            .replace(/<mark(?:\s+[^>]*)?>([\s\S]*?)<\/mark>/gi, "$1");
+          const nextVal = val.slice(0, start) + cleaned + val.slice(end);
+          onChange(nextVal);
+          toastSuccess("Đã xóa bôi màu điểm nhấn!", "Xóa màu");
+        } else {
+          const before = val.slice(0, start);
+          const after = val.slice(start);
+          const openIdx = before.lastIndexOf("[highlight=");
+          const closeIdx = after.indexOf("[/highlight]");
+          if (openIdx !== -1 && closeIdx !== -1 && before.indexOf("[/highlight]", openIdx) === -1) {
+            const blockStart = openIdx;
+            const blockEnd = start + closeIdx + "[/highlight]".length;
+            const block = val.slice(blockStart, blockEnd);
+            const cleaned = block.replace(/\[highlight=[^\]]+\]([\s\S]*?)\[\/highlight\]/gi, "$1");
+            const nextVal = val.slice(0, blockStart) + cleaned + val.slice(blockEnd);
+            onChange(nextVal);
+            toastSuccess("Đã xóa bôi màu điểm nhấn!", "Xóa màu");
+          } else {
+            toastWarning("Vui lòng bôi đen đoạn chữ cần xóa màu!");
+          }
+        }
       }
-      setShowHighlightPicker(false);
       return;
     }
+
+    // Applying a highlight color:
     if (activeTab === "visual" || activeTab === "split") {
+      visualEditorRef.current?.focus();
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
         toastWarning("Vui lòng bôi đen đoạn chữ cần bôi màu điểm nhấn!");
         return;
       }
       const range = sel.getRangeAt(0);
+
+      // If selection is already inside a <mark>, simply update color
+      let node: Node | null = range.commonAncestorContainer;
+      if (node.nodeType === Node.TEXT_NODE && node.parentNode) {
+        node = node.parentNode;
+      }
+      let existingMark: HTMLElement | null = null;
+      let curr = node as HTMLElement | null;
+      while (curr && curr !== visualEditorRef.current) {
+        if (curr.tagName === "MARK") {
+          existingMark = curr;
+          break;
+        }
+        curr = curr.parentElement;
+      }
+
+      if (existingMark && range.toString().trim() === existingMark.textContent?.trim()) {
+        existingMark.style.backgroundColor = hex;
+        existingMark.style.color = "#0f172a";
+        handleVisualInput(true);
+        toastSuccess("Đã đổi màu điểm nhấn!");
+        return;
+      }
+
       const mark = document.createElement("mark");
       mark.style.backgroundColor = hex;
       mark.style.padding = "2px 6px";
@@ -944,6 +1088,16 @@ export function ProductArticleEditor({
       mark.style.color = "#0f172a";
       try {
         const content = range.extractContents();
+        const innerMarks = content.querySelectorAll("mark");
+        innerMarks.forEach((im) => {
+          const parent = im.parentNode;
+          if (parent) {
+            while (im.firstChild) {
+              parent.insertBefore(im.firstChild, im);
+            }
+            parent.removeChild(im);
+          }
+        });
         mark.appendChild(content);
         range.insertNode(mark);
         sel.removeAllRanges();
@@ -958,7 +1112,6 @@ export function ProductArticleEditor({
     } else {
       wrapSelection(`[highlight=${hex}]`, `[/highlight]`, "ý chính nổi bật");
     }
-    setShowHighlightPicker(false);
   };
 
   // Word-like Text Align Handler
@@ -2340,6 +2493,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
           <div className="relative flex items-center pr-2 border-r border-[#202f45]">
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 setShowHighlightPicker(!showHighlightPicker);
                 setShowFontSizePicker(false);
@@ -2366,6 +2520,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 </div>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => applyHighlight("#fef08a")}
                   className="w-full text-left px-2.5 py-1.5 rounded-lg bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-200 text-xs font-semibold flex items-center gap-2 border border-yellow-400/30"
                 >
@@ -2374,6 +2529,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 </button>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => applyHighlight("#bbf7d0")}
                   className="w-full text-left px-2.5 py-1.5 rounded-lg bg-emerald-400/20 hover:bg-emerald-400/30 text-emerald-200 text-xs font-semibold flex items-center gap-2 border border-emerald-400/30"
                 >
@@ -2382,6 +2538,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 </button>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => applyHighlight("#bae6fd")}
                   className="w-full text-left px-2.5 py-1.5 rounded-lg bg-sky-400/20 hover:bg-sky-400/30 text-sky-200 text-xs font-semibold flex items-center gap-2 border border-sky-400/30"
                 >
@@ -2390,6 +2547,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 </button>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => applyHighlight("#fed7aa")}
                   className="w-full text-left px-2.5 py-1.5 rounded-lg bg-orange-400/20 hover:bg-orange-400/30 text-orange-200 text-xs font-semibold flex items-center gap-2 border border-orange-400/30"
                 >
@@ -2398,6 +2556,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 </button>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => applyHighlight("#fecdd3")}
                   className="w-full text-left px-2.5 py-1.5 rounded-lg bg-rose-400/20 hover:bg-rose-400/30 text-rose-200 text-xs font-semibold flex items-center gap-2 border border-rose-400/30"
                 >
@@ -2406,10 +2565,11 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
                 </button>
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => applyHighlight("none")}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-white/10 text-gray-400 text-xs font-medium flex items-center gap-2 border border-dashed border-gray-600"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-2 border border-dashed border-rose-500/40 transition-colors"
                 >
-                  <X className="w-3.5 h-3.5 text-gray-400" />
+                  <X className="w-3.5 h-3.5 text-rose-400" />
                   <span>⚪ Xóa Bôi Màu (Mặc Định)</span>
                 </button>
               </div>
