@@ -99,6 +99,27 @@ export function parseMarkdownTableToHtml(tableLines: string[], formatInlineFn: (
   return html;
 }
 
+function sanitizeColor(val: string, fallback: string): string {
+  if (!val) return fallback;
+  const clean = val.trim();
+  if (/^(#[0-9a-fA-F]{3,8}|(?:rgba?|hsla?)\([0-9.,\s%]+\)|[a-zA-Z]+)$/.test(clean)) {
+    return clean;
+  }
+  return fallback;
+}
+
+function normalizeColor(color: string): string {
+  if (!color) return color;
+  const rgbMatch = color.trim().match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)\)$/i);
+  if (rgbMatch) {
+    const r = parseInt(rgbMatch[1], 10).toString(16).padStart(2, "0");
+    const g = parseInt(rgbMatch[2], 10).toString(16).padStart(2, "0");
+    const b = parseInt(rgbMatch[3], 10).toString(16).padStart(2, "0");
+    return `#${r}${g}${b}`;
+  }
+  return color.trim();
+}
+
 // ---------------------------------------------------------------------------
 // CONVERTER 1: Markdown / BBCode -> HTML for Visual WYSIWYG Editor
 // ---------------------------------------------------------------------------
@@ -127,8 +148,11 @@ export function markdownToHtml(md: string): string {
 
     // Highlight / Bút dạ quang: [highlight=#fef08a]text[/highlight] or ==text==
     res = res.replace(
-      /\[highlight=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/highlight\]/gi,
-      '<mark style="background-color: $1; padding: 2px 6px; border-radius: 4px; font-weight: 600;">$2</mark>'
+      /\[highlight=([^\]]+)\]([\s\S]*?)\[\/highlight\]/gi,
+      (match, color, content) => {
+        const safeColor = sanitizeColor(color, "#fef08a");
+        return `<mark style="background-color: ${safeColor}; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${content}</mark>`;
+      }
     );
     res = res.replace(
       /==([\s\S]*?)==/g,
@@ -143,8 +167,11 @@ export function markdownToHtml(md: string): string {
 
     // Color tags: [color=#hex]text[/color]
     res = res.replace(
-      /\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/color\]/gi,
-      '<span style="color: $1; font-weight: 600;">$2</span>'
+      /\[color=([^\]]+)\]([\s\S]*?)\[\/color\]/gi,
+      (match, color, content) => {
+        const safeColor = sanitizeColor(color, "#b45309");
+        return `<span style="color: ${safeColor}; font-weight: 600;">${content}</span>`;
+      }
     );
 
     // Preset color tags: [gold]...[/gold]
@@ -541,7 +568,7 @@ export function htmlToMarkdown(html: string): string {
     }
 
     if (tag === "mark") {
-      const bg = el.style.backgroundColor || "#fef08a";
+      const bg = normalizeColor(el.style.backgroundColor || "#fef08a");
       return `[highlight=${bg}]${childrenMd}[/highlight]`;
     }
 
@@ -572,10 +599,10 @@ export function htmlToMarkdown(html: string): string {
       const bg = el.style.backgroundColor;
       const fs = el.style.fontSize;
       if (color) {
-        res = `[color=${color}]${res}[/color]`;
+        res = `[color=${normalizeColor(color)}]${res}[/color]`;
       }
       if (bg) {
-        res = `[highlight=${bg}]${res}[/highlight]`;
+        res = `[highlight=${normalizeColor(bg)}]${res}[/highlight]`;
       }
       if (fs) {
         const px = parseInt(fs);

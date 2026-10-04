@@ -198,22 +198,32 @@ function OptimizedVideoPlayer({ url, title }: { url: string; title?: string }) {
   return <ArticleVideoPlayer url={url} title={title} />;
 }
 
+function sanitizeColor(val: string, fallback: string): string {
+  if (!val) return fallback;
+  const clean = val.trim();
+  if (/^(#[0-9a-fA-F]{3,8}|(?:rgba?|hsla?)\([0-9.,\s%]+\)|[a-zA-Z]+)$/.test(clean)) {
+    return clean;
+  }
+  return fallback;
+}
+
 // Inline Formatter supporting bold, italic, highlights, font-sizes, colors, links, underlines
 export function renderFormattedInline(text: string): React.ReactNode {
   if (!text) return null;
 
-  const regex = /(<mark(?:\s+style=["'][^"']*["'])?>[\s\S]*?<\/mark>|\[highlight=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/highlight\]|==[\s\S]*?==|\[size=\d+(?:px)?\][\s\S]*?\[\/size\]|<span\s+style=["'][^"']*font-size:\s*\d+px;?[^"']*["']>[\s\S]*?<\/span>|\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\][\s\S]*?\[\/color\]|\[(gold|bronze|jade|sky|red|white)\][\s\S]*?\[\/\2\]|<span\s+style=["'][^"']*color:\s*[^"']+["']>[\s\S]*?<\/span>|\[[^\]]+\]\([^)]+\)|<a\s+[^>]*>[\s\S]*?<\/a>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|<b>[\s\S]*?<\/b>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<i>[\s\S]*?<\/i>|<u>[\s\S]*?<\/u>|~~[\s\S]*?~~|<s>[\s\S]*?<\/s>|<del>[\s\S]*?<\/del>)/gi;
+  const regex = /(<mark(?:\s+style=["'][^"']*["'])?>[\s\S]*?<\/mark>|\[highlight=[^\]]+\][\s\S]*?\[\/highlight\]|==[\s\S]*?==|\[size=\d+(?:px)?\][\s\S]*?\[\/size\]|<span\s+style=["'][^"']*font-size:\s*\d+px;?[^"']*["']>[\s\S]*?<\/span>|\[color=[^\]]+\][\s\S]*?\[\/color\]|\[(?:gold|bronze|jade|sky|red|white)\][\s\S]*?\[\/(?:gold|bronze|jade|sky|red|white)\]|<span\s+style=["'][^"']*color:\s*[^"']+["']>[\s\S]*?<\/span>|\[[^\]]+\]\([^)]+\)|<a\s+[^>]*>[\s\S]*?<\/a>|\*\*[\s\S]*?\*\*|<strong>[\s\S]*?<\/strong>|<b>[\s\S]*?<\/b>|\*[\s\S]*?\*|<em>[\s\S]*?<\/em>|<i>[\s\S]*?<\/i>|<u>[\s\S]*?<\/u>|~~[\s\S]*?~~|<s>[\s\S]*?<\/s>|<del>[\s\S]*?<\/del>)/gi;
 
   const parts = text.split(regex).filter(Boolean);
 
   return parts.map((part, i) => {
-    // 1. Highlight / Bút dạ quang: [highlight=#fef08a]text[/highlight]
-    const hlMatch = part.match(/^\[highlight=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/highlight\]$/i);
+    // 1. Highlight / Bút dạ quang: [highlight=#fef08a]text[/highlight] or [highlight=rgb(...)]text[/highlight]
+    const hlMatch = part.match(/^\[highlight=([^\]]+)\]([\s\S]*?)\[\/highlight\]$/i);
     if (hlMatch) {
+      const bg = sanitizeColor(hlMatch[1], "#fef08a");
       return (
         <mark
           key={i}
-          style={{ backgroundColor: hlMatch[1], color: "#0f172a" }}
+          style={{ backgroundColor: bg, color: "#0f172a" }}
           className="px-1.5 py-0.5 rounded font-semibold inline"
         >
           {renderFormattedInline(hlMatch[2])}
@@ -314,10 +324,10 @@ export function renderFormattedInline(text: string): React.ReactNode {
       );
     }
 
-    // 8. Custom color tag: [color=#ffd700]content[/color]
-    const colorMatch = part.match(/^\[color=(#[a-fA-F0-9]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/color\]$/i);
+    // 8. Custom color tag: [color=#ffd700]content[/color] or [color=rgb(...)]content[/color]
+    const colorMatch = part.match(/^\[color=([^\]]+)\]([\s\S]*?)\[\/color\]$/i);
     if (colorMatch) {
-      const colorVal = colorMatch[1];
+      const colorVal = sanitizeColor(colorMatch[1], "#ffd700");
       const content = colorMatch[2];
       return (
         <span key={i} style={{ color: colorVal }} className="font-semibold inline">
