@@ -1,3 +1,4 @@
+import { siteUrl } from "@/lib/site";
 import React from "react";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -8,6 +9,7 @@ import { projectsData } from "@/data/projects";
 import { Calendar, MapPin, Building2, ArrowRight, ShieldCheck, Award, Phone } from "lucide-react";
 
 export const metadata: Metadata = {
+  alternates: { canonical: siteUrl("/du-an") },
   title: "Dự Án Công Trình Đúc Đồng Tiêu Biểu | Đồ Đồng Lộc Nam",
   description:
     "Tổng hợp các dự án công trình đúc đồng tiêu biểu của xưởng Đúc Đồng Lộc Nam: đúc chuông Đại Hồng Chung, tượng đài Bác Hồ, biển đồng công trình cầu đường, quà tặng doanh nghiệp và không gian thờ cúng gia tiên trên toàn quốc.",

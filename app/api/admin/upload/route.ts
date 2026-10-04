@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
 import prisma from "@/lib/prisma";
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     (session.permissions &&
       (session.permissions.includes("products") ||
         session.permissions.includes("articles") ||
-        session.permissions.includes("landing")));
+        session.permissions.includes("landing") || session.permissions.includes("categories")));
   if (!hasPerm) {
     return NextResponse.json({ success: false, message: "Bạn không có quyền tải tệp lên." }, { status: 403 });
   }
@@ -142,6 +143,7 @@ export async function POST(req: NextRequest) {
       publicUrl = `/api/videos/${uploadedVid.id}/${safeName}`;
     }
 
+    revalidateTag("media");
     return NextResponse.json({
       success: true,
       url: publicUrl,

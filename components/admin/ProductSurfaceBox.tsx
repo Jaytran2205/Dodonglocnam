@@ -41,6 +41,7 @@ export function ProductSurfaceBox({
 
   const handleAddCustom = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!newSurface.trim()) return;
     const item = newSurface.trim();
     if (!customList.includes(item)) {
@@ -127,10 +128,9 @@ export function ProductSurfaceBox({
             <span>+ Thêm bề mặt mới</span>
           </button>
         ) : (
-          <form onSubmit={handleAddCustom} className="space-y-2 pt-1">
+          <div onKeyDown={e => { if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement)) { void handleAddCustom(e); } }} className="space-y-2 pt-1">
             <input
               type="text"
-              required
               value={newSurface}
               onChange={(e) => setNewSurface(e.target.value)}
               placeholder="Tên bề mặt mới..."
@@ -138,7 +138,8 @@ export function ProductSurfaceBox({
             />
             <div className="flex items-center gap-2">
               <button
-                type="submit"
+                type="button"
+                onClick={handleAddCustom}
                 className="px-3 py-1 bg-[#d4af37] text-[#070c14] font-bold text-xs rounded-lg"
               >
                 Thêm
@@ -151,7 +152,7 @@ export function ProductSurfaceBox({
                 Hủy
               </button>
             </div>
-          </form>
+          </div>
         )}
       </div>
     </div>

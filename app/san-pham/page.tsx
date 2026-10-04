@@ -1,3 +1,4 @@
+import { SITE_URL, siteUrl } from "@/lib/site";
 import { LocNamPartners } from "@/components/home/LocNamPartners";
 import React, { cache, Suspense } from "react";
 import prisma from "@/lib/prisma";
@@ -76,13 +77,13 @@ export const metadata: Metadata = {
     "đúc đồng ý yên",
   ].join(", "),
   alternates: {
-    canonical: "https://www.quatanglocnam.com/san-pham",
+    canonical: siteUrl('/san-pham'),
   },
   openGraph: {
     title: "Tất Cả Sản Phẩm Đồ Đồng Cao Cấp | Đồ Đồng Lộc Nam",
     description:
       "Tuyển tập kiệt tác đồ đồng mỹ nghệ thủ công tinh xảo của xưởng Đồ Đồng Lộc Nam - Nam Định. Đồng chuẩn 100%, bảo hành trọn đời.",
-    url: "https://www.quatanglocnam.com/san-pham",
+    url: siteUrl('/san-pham'),
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -114,8 +115,8 @@ export default async function AllProductsPage() {
       {/* Breadcrumb Schema for Google SERP */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-          { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
+          { name: "Trang Chủ", url: SITE_URL },
+          { name: "Sản Phẩm", url: siteUrl('/san-pham') },
         ]}
       />
 

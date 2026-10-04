@@ -1,58 +1,19 @@
 "use client";
 
+import { DEFAULT_HOME_FAVORITES } from "@/lib/home-content";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Heart, ShoppingBag } from "lucide-react";
 import { getWatermarkedImageUrl } from "@/lib/utils";
 
-const defaultProducts = [
-  {
-    id: 1,
-    name: "Thuyền buồm thuận buồm xuôi gió mạ vàng 24k",
-    price: "8.500.000đ",
-    image: "/images/prod_thuyen_buom.jpg",
-    href: "/san-pham/qua-tang-dong",
-    isHighlighted: false,
-  },
-  {
-    id: 2,
-    name: "Tượng ngựa phong thủy mạ vàng",
-    price: "6.800.000đ",
-    image: "/images/prod_tuong_ngua.jpg",
-    href: "/san-pham/tuong-dong",
-    isHighlighted: false,
-  },
-  {
-    id: 3,
-    name: "Tranh thuận buồm xuôi gió mạ vàng",
-    price: "5.200.000đ",
-    image: "/images/prod_tranh_dong.jpg",
-    href: "/san-pham/tranh-dong",
-    isHighlighted: true,
-  },
-  {
-    id: 4,
-    name: "Tượng Di Lặc mạ vàng phúc lộc",
-    price: "4.800.000đ",
-    image: "/images/prod_di_lac.jpg",
-    href: "/san-pham/tuong-dong",
-    isHighlighted: false,
-  },
-  {
-    id: 5,
-    name: "Mặt trống đồng đường kính 80cm khung gỗ",
-    price: "7.900.000đ",
-    image: "/images/prod_mat_trong.jpg",
-    href: "/san-pham/trong-dong",
-    isHighlighted: false,
-  },
-];
+
 
 export function LocNamFavorites() {
   const router = useRouter();
   const [wishlist, setWishlist] = useState<number[]>([]);
-  const [products, setProducts] = useState(defaultProducts);
+  const [products, setProducts] = useState(DEFAULT_HOME_FAVORITES);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -60,7 +21,7 @@ export function LocNamFavorites() {
       .then((data) => {
         if (data.success && data.settings) {
           const s = data.settings;
-          const dynamicFavs = defaultProducts.map((prod, idx) => {
+          const dynamicFavs = DEFAULT_HOME_FAVORITES.map((prod, idx) => {
             const i = idx + 1;
             return {
               ...prod,

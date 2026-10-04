@@ -1,3 +1,4 @@
+import { SITE_URL, siteUrl } from "@/lib/site";
 import { LocNamPartners } from "@/components/home/LocNamPartners";
 import React from "react";
 import Link from "next/link";
@@ -410,6 +411,7 @@ async function getArticle(slug: string): Promise<NormalizedArticle | null> {
       },
     });
 
+    if (dbArt && !dbArt.isPublished) return null;
     if (dbArt) {
       const rawContent = dbArt.content || "";
       const isHtml = /<\/?[a-z][\s\S]*>/i.test(rawContent);
@@ -480,7 +482,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const article = await getArticle(slug);
   if (!article) return { title: "Không tìm thấy bài viết | Đồ Đồng Lộc Nam" };
 
-  const url = `https://www.quatanglocnam.com/tin-tuc/${article.slug}`;
+  const url = `${SITE_URL}/tin-tuc/${article.slug}`;
 
   return {
     title: `${article.title} | Đồ Đồng Lộc Nam`,
@@ -499,7 +501,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       authors: [article.author],
       images: [
         {
-          url: article.image.startsWith("http") ? article.image : `https://www.quatanglocnam.com${article.image}`,
+          url: article.image.startsWith("http") ? article.image : `${SITE_URL}${article.image}`,
           width: 1200,
           height: 630,
           alt: article.title,
@@ -548,15 +550,15 @@ export default async function ArticleDetailPage({ params }: PageProps) {
       .map((a) => ({ slug: a.slug, title: a.title, image: a.image }));
   }
 
-  const articleUrl = `https://www.quatanglocnam.com/tin-tuc/${article.slug}`;
+  const articleUrl = `${SITE_URL}/tin-tuc/${article.slug}`;
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#fbf9f5] text-[#1a1a1a]">
       {/* 1. Breadcrumb Schema */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-          { name: "Tin Tức", url: "https://www.quatanglocnam.com/tin-tuc" },
+          { name: "Trang Chủ", url: SITE_URL },
+          { name: "Tin Tức", url: siteUrl('/tin-tuc') },
           { name: article.title, url: articleUrl },
         ]}
       />
@@ -565,7 +567,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
       <ArticleJsonLd
         title={article.title}
         description={article.summary}
-        image={article.image.startsWith("http") ? article.image : `https://www.quatanglocnam.com${article.image}`}
+        image={article.image.startsWith("http") ? article.image : `${SITE_URL}${article.image}`}
         datePublished={formatIsoDate(article.date)}
         author={article.author}
         url={articleUrl}
@@ -584,7 +586,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
               "worksFor": {
                 "@type": "Organization",
                 "name": "Công ty TNHH Cơ Khí Đúc Lộc Nam",
-                "url": "https://www.quatanglocnam.com",
+                "url": SITE_URL,
                 "address": {
                   "@type": "PostalAddress",
                   "addressLocality": "Ý Yên",

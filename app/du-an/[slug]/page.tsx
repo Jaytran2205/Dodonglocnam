@@ -1,3 +1,4 @@
+import { siteUrl } from "@/lib/site";
 import React from "react";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
@@ -37,6 +38,7 @@ export async function generateMetadata({ params }: ProjectDetailPageProps): Prom
   }
 
   return {
+    alternates: { canonical: siteUrl(`/du-an/${project.slug}`) },
     title: `${project.title} | Đồ Đồng Lộc Nam`,
     description: project.desc,
     openGraph: {

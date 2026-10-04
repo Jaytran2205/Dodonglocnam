@@ -33,6 +33,18 @@ export function getWatermarkedImageUrl(url: string | null | undefined): string {
   return url;
 }
 
+export function parseImageList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string" && !!item.trim()).map(item => item.trim());
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parseImageList(parsed);
+    if (typeof parsed === "string") return parsed.trim() ? [parsed.trim()] : [];
+  } catch { /* Legacy records can contain a plain URL or newline-separated URLs. */ }
+  // Do not split comma-containing query strings or data URLs.
+  return value.split(/\r?\n|,\s*(?=(?:https?:\/\/|\/images\/|\/api\/images\/|\/uploads\/))/).map(item => item.trim()).filter(Boolean);
+}
+
 export function removeVietnameseTones(str: string): string {
   if (!str) return "";
   return str

@@ -1,22 +1,13 @@
 import { MetadataRoute } from "next";
+import { SITE_URL, siteUrl } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.quatanglocnam.com";
-
   return {
-    rules: [
-      {
-        userAgent: "*",
-        allow: "/",
-        disallow: ["/admin/", "/api/", "/_next/"],
-      },
-      {
-        userAgent: "Googlebot",
-        allow: "/",
-        disallow: ["/admin/", "/api/"],
-      },
-    ],
-    sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
+    rules: [{
+      userAgent: "*", allow: "/",
+      // Assets and uploaded media are public. Admin pages have noindex + authentication.
+      disallow: ["/api/admin/", "/api/cron/", "/api/search", "/api/orders", "/api/contact"],
+    }],
+    sitemap: siteUrl("/sitemap.xml"), host: SITE_URL,
   };
 }

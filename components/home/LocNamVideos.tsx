@@ -1,5 +1,7 @@
 "use client";
 
+import { DEFAULT_HOME_VIDEOS } from "@/lib/home-content";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -26,48 +28,7 @@ interface VideoItem {
   active?: boolean;
 }
 
-const defaultVideos: VideoItem[] = [
-  {
-    id: "v1",
-    title: "Trực Tiếp Quy Trình Rót Đồng Đại Hồng Chung 1 Tấn - Chuông Đồng Đỏ Nguyên Chất Ý Yên",
-    category: "QUY TRÌNH ĐÚC ĐỒNG",
-    duration: "05:32",
-    views: "15,420",
-    image: "/images/videos/NUnVlHO1mEU.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=NUnVlHO1mEU",
-    desc: "Cận cảnh quy trình nghệ nhân nấu đồng đỏ nguyên chất và rót khuôn đúc Tôn Tượng Phật & Đại Hồng Chung bằng đồng tại xưởng đúc đồng Lộc Nam.",
-  },
-  {
-    id: "v2",
-    title: "Nghệ Nhân Chạm Khắc Long Phụng Trên Bề Mặt Trống Đồng Đông Sơn - Tinh Xảo Từng Chi Tiết",
-    category: "CHẠM KHẮC THỦ CÔNG",
-    duration: "08:15",
-    views: "28,910",
-    image: "/images/videos/wmWQK2MBn3c.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=wmWQK2MBn3c",
-    desc: "Từng đường nét hoa văn chạm tỉ mỉ bằng tay thể hiện tay nghề thượng thừa của nghệ nhân đúc đồng Lộc Nam.",
-  },
-  {
-    id: "v3",
-    title: "Hướng Dẫn Phân Biệt Đồng Thật Chuẩn Cát Tút Với Đồng Pha Kém Chất Lượng Ngoài Thị Trường",
-    category: "KIẾN THỨC ĐỒ THỜ",
-    duration: "04:45",
-    views: "42,150",
-    image: "/images/videos/o-vHwLilgjM.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=o-vHwLilgjM",
-    desc: "Kinh nghiệm thực tế chọn đồng chuẩn, giữ màu bền đẹp hàng trăm năm không bị oxy hóa hay hoen gỉ.",
-  },
-  {
-    id: "v4",
-    title: "Bàn Giao Bộ Đỉnh Đồng Cát Tút Cao Cấp Cho Biệt Thự Gia Chủ Tại Starlake Tây Hồ",
-    category: "BÀN GIAO CÔNG TRÌNH",
-    duration: "06:20",
-    views: "19,800",
-    image: "/images/videos/ctwWCrZZwk4.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=ctwWCrZZwk4",
-    desc: "Trọn bộ đỉnh đồng cát tút ngũ sự an vị trang nghiêm trên ban thờ gia tiên của khách hàng VIP tại Hà Nội.",
-  },
-];
+
 
 function getEmbedUrl(url: string): { type: "youtube" | "video"; src: string } {
   if (!url) return { type: "youtube", src: "" };
@@ -93,7 +54,7 @@ function getEmbedUrl(url: string): { type: "youtube" | "video"; src: string } {
 }
 
 export function LocNamVideos() {
-  const [videos, setVideos] = useState<VideoItem[]>(defaultVideos);
+  const [videos, setVideos] = useState<VideoItem[]>(DEFAULT_HOME_VIDEOS);
   const [sectionMeta, setSectionMeta] = useState({
     subtitle: "THƯ VIỆN VIDEO THỰC TẾ",
     title: "VIDEO QUY TRÌNH CHẾ TÁC & SẢN PHẨM",

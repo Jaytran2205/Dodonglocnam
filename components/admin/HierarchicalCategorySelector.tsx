@@ -464,6 +464,7 @@ export function HierarchicalCategorySelector({
   // Inline submit new category/subcategory
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!newCatName.trim()) return;
 
     setAddingCat(true);
@@ -921,13 +922,12 @@ export function HierarchicalCategorySelector({
             <span>+ Thêm danh mục mới</span>
           </button>
         ) : (
-          <form onSubmit={handleCreateCategory} className="space-y-2 pt-1">
+          <div onKeyDown={e => { if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement)) { void handleCreateCategory(e); } }} className="space-y-2 pt-1">
             <div className="text-[11px] font-bold text-[#ffd700] uppercase">
               Thêm danh mục / Nhánh mới
             </div>
             <input
               type="text"
-              required
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
               placeholder="Tên danh mục mới..."
@@ -954,7 +954,8 @@ export function HierarchicalCategorySelector({
 
             <div className="flex items-center gap-2 pt-1">
               <button
-                type="submit"
+                type="button"
+                onClick={handleCreateCategory}
                 disabled={addingCat || !newCatName.trim()}
                 className="px-3 py-1.5 bg-gradient-to-r from-[#d4af37] to-[#e5b869] text-[#070c14] font-bold text-xs rounded-lg flex items-center gap-1 disabled:opacity-50"
               >
@@ -976,7 +977,7 @@ export function HierarchicalCategorySelector({
                 Hủy
               </button>
             </div>
-          </form>
+          </div>
         )}
 
         {addSuccess && (

@@ -1,5 +1,7 @@
 "use client";
 
+import { SITE_URL, siteUrl } from "@/lib/site";
+
 import React, { useState, useMemo } from "react";
 import {
   Globe,
@@ -46,7 +48,7 @@ export function ProductSeoBox({
       ? description.slice(0, 160).replace(/[#*`_[\]()]/g, "") + "..."
       : "Sản phẩm đúc đồng thủ công tinh xảo, phôi đồng thanh khiết 100%, bảo hành trọn đời từ làng nghề Ý Yên - Nam Định.");
 
-  const liveUrl = `https://www.quatanglocnam.com/san-pham/${slug || "san-pham-doc-ban"}`;
+  const liveUrl = `${SITE_URL}/san-pham/${slug || "san-pham-doc-ban"}`;
 
   // SEO Score Calculation based on focus keyword & best practices
   const seoAudit = useMemo(() => {

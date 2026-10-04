@@ -1,3 +1,4 @@
+import { SITE_URL, siteUrl } from "@/lib/site";
 import { LocNamPartners } from "@/components/home/LocNamPartners";
 import React from "react";
 import { Metadata } from "next";
@@ -20,13 +21,13 @@ export const metadata: Metadata = {
     "báo giá đồ thờ bằng đồng",
   ].join(", "),
   alternates: {
-    canonical: "https://www.quatanglocnam.com/lien-he",
+    canonical: siteUrl('/lien-he'),
   },
   openGraph: {
     title: "Liên Hệ Xưởng Đúc Đồ Đồng Lộc Nam | Hotline & Showroom",
     description:
       "Địa chỉ showroom Hà Nội và xưởng đúc truyền thống Ý Yên Nam Định của Đồ Đồng Lộc Nam.",
-    url: "https://www.quatanglocnam.com/lien-he",
+    url: siteUrl('/lien-he'),
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -53,8 +54,8 @@ export default function ContactPage() {
       {/* Breadcrumb Schema for Google */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-          { name: "Liên Hệ", url: "https://www.quatanglocnam.com/lien-he" },
+          { name: "Trang Chủ", url: SITE_URL },
+          { name: "Liên Hệ", url: siteUrl('/lien-he') },
         ]}
       />
 

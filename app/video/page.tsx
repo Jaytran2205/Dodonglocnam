@@ -1,3 +1,4 @@
+import { SITE_URL, siteUrl } from "@/lib/site";
 import { LocNamPartners } from "@/components/home/LocNamPartners";
 import { Video as VideoIcon } from "lucide-react";
 import { Metadata } from "next";
@@ -22,13 +23,13 @@ export const metadata: Metadata = {
     "đồ đồng lộc nam",
   ].join(", "),
   alternates: {
-    canonical: "https://www.quatanglocnam.com/video",
+    canonical: siteUrl('/video'),
   },
   openGraph: {
     title: "Thư Viện Video Quy Trình Đúc Đồng | Đồ Đồng Lộc Nam",
     description:
       "Video thực tế quy trình đúc đồng truyền thống và chế tác quà tặng cao cấp mạ vàng 24k.",
-    url: "https://www.quatanglocnam.com/video",
+    url: siteUrl('/video'),
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -116,8 +117,8 @@ export default async function VideoPage() {
       {/* Breadcrumb Schema for Google */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-          { name: "Video", url: "https://www.quatanglocnam.com/video" },
+          { name: "Trang Chủ", url: SITE_URL },
+          { name: "Video", url: siteUrl('/video') },
         ]}
       />
 

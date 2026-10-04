@@ -1,19 +1,16 @@
+import { loadSettings } from "@/lib/settings";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
-import { revalidatePath } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { logActivity } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const settings = await prisma.setting.findMany();
-    const settingsMap: { [key: string]: string } = {};
-    settings.forEach((s) => {
-      settingsMap[s.key] = s.value;
-    });
-    return NextResponse.json({ success: true, settings: settingsMap, list: settings });
+    const settingsMap = await loadSettings();
+    return NextResponse.json({ success: true, settings: settingsMap });
   } catch (error: any) {
     console.error("GET Settings Error:", error);
     return NextResponse.json({ success: false, message: "Lỗi tải cấu hình" }, { status: 500 });
@@ -62,6 +59,7 @@ export async function POST(req: NextRequest) {
       await prisma.$transaction(operations);
 
       try {
+        revalidateTag("settings");
         revalidatePath("/", "layout");
       } catch {}
 
@@ -116,6 +114,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+      revalidateTag("settings");
       revalidatePath("/", "layout");
     } catch {}
 

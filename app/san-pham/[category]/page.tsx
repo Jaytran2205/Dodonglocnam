@@ -1,3 +1,6 @@
+import { parseImageList } from "@/lib/utils";
+import { getCatalog } from "@/lib/catalog";
+import { SITE_URL, siteUrl, categoryPath } from "@/lib/site";
 import React, { cache } from "react";
 import prisma from "@/lib/prisma";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
@@ -52,24 +55,18 @@ const getCachedRelatedProducts = cache(
   )
 );
 
+// Render database-backed category/product pages on their first request (ISR),
+// rather than freezing a build machine's fallback catalogue into these routes.
 export async function generateStaticParams() {
-  const mainCategories = DEFAULT_HIERARCHICAL_CATEGORIES.map((c) => ({
-    category: c.slug,
-  }));
-  const extraCategories = [
-    { category: "qua-tang-dong" },
-    { category: "qua-tang" },
-    { category: "cup-golf" },
-    { category: "vat-pham-my-nghe" },
-    { category: "thi-cong-tu-duong" },
-    { category: "duc-chuong-cong-trinh" },
-  ];
-  return [...mainCategories, ...extraCategories];
+  return [];
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const categorySlug = params.category;
-  const mainCatData = findMainCategory(categorySlug);
+  const destination = categoryPath(categorySlug);
+  if (destination !== `/san-pham/${categorySlug}`) redirect(destination);
+  const catalog = await getCatalog();
+  const mainCatData = findMainCategory(categorySlug, catalog);
   const category = !mainCatData
     ? await prisma.category
         .findUnique({
@@ -100,10 +97,10 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       "duc-chuong-cong-trinh": "Xưởng đúc chuông đồng đại hồng chung nhà chùa, phục dựng trống đồng Đông Sơn, đúc tượng đài công trình chất lượng đỉnh cao từ làng nghề Nam Định.",
     };
 
-    const title = categoryTitles[categorySlug] || `${catName} Cao Cấp | Đồ Đồng Lộc Nam`;
+    const title = mainCatData?.seoTitle || (mainCatData ? `${catName} Cao Cấp | Đồ Đồng Lộc Nam` : categoryTitles[categorySlug] || `${catName} Cao Cấp | Đồ Đồng Lộc Nam`);
     const description =
+      mainCatData?.description || category?.description ||
       categoryDescriptions[categorySlug] ||
-      mainCatData?.description ||
       `Danh mục ${catName} thủ công tinh xảo tại Đồ Đồng Lộc Nam - Nam Định. Đảm bảo phôi đồng thanh khiết 100%, bảo hành trọn đời.`;
 
     return {
@@ -119,12 +116,12 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
         "đồ đồng cao cấp",
       ].join(", "),
       alternates: {
-        canonical: `https://www.quatanglocnam.com/san-pham/${categorySlug}`,
+        canonical: `${SITE_URL}/san-pham/${categorySlug}`,
       },
       openGraph: {
         title: title,
         description: description,
-        url: `https://www.quatanglocnam.com/san-pham/${categorySlug}`,
+        url: `${SITE_URL}/san-pham/${categorySlug}`,
         siteName: "Đồ Đồng Lộc Nam",
         locale: "vi_VN",
         type: "website",
@@ -155,12 +152,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   }
 
   if (product) {
-    let parsedImages: string[] = [];
-    try {
-      parsedImages = JSON.parse(product.images);
-    } catch {
-      parsedImages = [product.images || "/images/hero_golden_ship.jpg"];
-    }
+    const parsedImages = parseImageList(product.images);
     const mainImage = parsedImages[0] || "/images/hero_golden_ship.jpg";
 
     return {
@@ -169,13 +161,13 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
         product.shortDescription ||
         `Mua ${product.name} chất lượng cao, đúc thủ công từ phôi đồng nguyên chất tại làng nghề Ý Yên, Nam Định. Bảo hành trọn đời, giao hàng toàn quốc.`,
       alternates: {
-        canonical: `https://www.quatanglocnam.com/san-pham/${product.slug}`,
+        canonical: `${SITE_URL}/san-pham/${product.slug}`,
       },
       openGraph: {
         title: `${product.name} | Đồ Đồng Lộc Nam`,
         description: product.shortDescription || `Chi tiết sản phẩm ${product.name}`,
-        url: `https://www.quatanglocnam.com/san-pham/${product.slug}`,
-        images: [{ url: mainImage.startsWith("http") ? mainImage : `https://www.quatanglocnam.com${mainImage}` }],
+        url: `${SITE_URL}/san-pham/${product.slug}`,
+        images: [{ url: mainImage.startsWith("http") ? mainImage : `${SITE_URL}${mainImage}` }],
       },
     };
   }
@@ -186,6 +178,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
+  const catalog = await getCatalog();
   const categorySlug = params.category;
 
   if (categorySlug === "qua-tang-dong" || categorySlug === "qua-tang") {
@@ -217,7 +210,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     permanentRedirect(`/san-pham/${legacyRedirectMap[categorySlug]}`);
   }
 
-  const mainCategoryData = findMainCategory(categorySlug);
+  const mainCategoryData = findMainCategory(categorySlug, catalog);
 
   // Check if category exists in DB only if not found in static subcategories
   const dbCategory = !mainCategoryData
@@ -255,9 +248,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
           <BreadcrumbJsonLd
             items={[
-              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-              { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
-              { name: catName, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
+              { name: "Trang Chủ", url: SITE_URL },
+              { name: "Sản Phẩm", url: siteUrl('/san-pham') },
+              { name: catName, url: `${SITE_URL}/san-pham/${categorySlug}` },
             ]}
           />
 
@@ -326,9 +319,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
         <BreadcrumbJsonLd
           items={[
-            { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-            { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
-            { name: catName, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
+            { name: "Trang Chủ", url: SITE_URL },
+            { name: "Sản Phẩm", url: siteUrl('/san-pham') },
+            { name: catName, url: `${SITE_URL}/san-pham/${categorySlug}` },
           ]}
         />
 
@@ -366,22 +359,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   if (product) {
     const relatedProductsData = await getCachedRelatedProducts(product.categoryId, product.id);
 
-    let parsedImages: string[] = [];
-    try {
-      parsedImages = JSON.parse(product.images);
-    } catch {
-      parsedImages = [product.images || "/images/hero_golden_ship.jpg"];
-    }
+    const parsedImages = parseImageList(product.images);
 
-    const fullUrl = `https://www.quatanglocnam.com/san-pham/${product.slug}`;
+    const fullUrl = `${SITE_URL}/san-pham/${product.slug}`;
 
     const relatedProducts = relatedProductsData.map((rel) => {
-      let relImages: string[] = [];
-      try {
-        relImages = JSON.parse(rel.images);
-      } catch {
-        relImages = [rel.images || "/images/hero_golden_ship.jpg"];
-      }
+      const relImages = parseImageList(rel.images);
       return {
         id: rel.id,
         name: rel.name,
@@ -422,7 +405,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <BreadcrumbJsonLd
           items={breadcrumbItems.map((b) => ({
             name: b.name,
-            url: b.url ? `https://www.quatanglocnam.com${b.url}` : fullUrl,
+            url: b.url ? `${SITE_URL}${b.url}` : fullUrl,
           }))}
         />
 
@@ -430,9 +413,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           name={product.name}
           description={product.shortDescription || product.description || product.name}
           images={parsedImages.map((img) =>
-            img.startsWith("http") ? img : `https://www.quatanglocnam.com${img}`
+            img.startsWith("http") ? img : `${SITE_URL}${img}`
           )}
           price={product.price}
+          inStock={product.inStock}
           categoryName={product.category.name}
           url={fullUrl}
           sku={`LOCNAM-${product.slug.toUpperCase()}`}

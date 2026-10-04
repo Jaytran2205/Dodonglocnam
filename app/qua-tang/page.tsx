@@ -1,3 +1,5 @@
+import { getCatalog } from "@/lib/catalog";
+import { SITE_URL, siteUrl } from "@/lib/site";
 import React from "react";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -13,9 +15,10 @@ import { findMainCategory } from "@/lib/subcategories-data";
 export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const mainCatData = findMainCategory("qua-tang");
-  const title = "Quà Tặng Mạ Vàng 24K, Quà Tặng Doanh Nghiệp & Phong Thủy | Đồ Đồng Lộc Nam";
-  const description =
+  const catalog = await getCatalog();
+  const mainCatData = findMainCategory("qua-tang", catalog);
+  const title = mainCatData?.seoTitle || "Quà Tặng Mạ Vàng 24K, Quà Tặng Doanh Nghiệp & Phong Thủy | Đồ Đồng Lộc Nam";
+  const description = mainCatData?.description ||
     "Tổng hợp các mẫu quà tặng bằng đồng mạ vàng 24k cao cấp: quà tặng doanh nghiệp, đối tác, sự kiện đại lễ, quà mừng tân gia, mừng thọ và vật phẩm phong thủy chiêu tài Đồ Đồng Lộc Nam.";
 
   return {
@@ -31,12 +34,12 @@ export async function generateMetadata(): Promise<Metadata> {
       "quà tặng lộc nam",
     ].join(", "),
     alternates: {
-      canonical: "https://www.quatanglocnam.com/qua-tang",
+      canonical: siteUrl('/qua-tang'),
     },
     openGraph: {
       title,
       description,
-      url: "https://www.quatanglocnam.com/qua-tang",
+      url: siteUrl('/qua-tang'),
       siteName: "Đồ Đồng Lộc Nam",
       locale: "vi_VN",
       type: "website",
@@ -58,15 +61,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function QuaTangPage() {
-  const mainCategoryData = findMainCategory("qua-tang");
+  const catalog = await getCatalog();
+  const mainCategoryData = findMainCategory("qua-tang", catalog);
 
   if (!mainCategoryData) {
     notFound();
   }
 
-  const catName = "Quà Tặng";
+  const catName = mainCategoryData.name;
   const catBanner = mainCategoryData.banner || "/images/collections/cat_qua_tang.jpg";
-  const catDesc = undefined;
+  const catDesc = mainCategoryData.description;
 
   const breadcrumbs = [
     { name: "Trang chủ", url: "/" },
@@ -84,8 +88,8 @@ export default async function QuaTangPage() {
     <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-          { name: "Quà Tặng", url: "https://www.quatanglocnam.com/qua-tang" },
+          { name: "Trang Chủ", url: SITE_URL },
+          { name: "Quà Tặng", url: siteUrl('/qua-tang') },
         ]}
       />
 

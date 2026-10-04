@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminImage } from "@/components/admin/AdminImage";
+
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Plus,
@@ -146,6 +148,7 @@ const ARTICLE_CATEGORIES_TREE = [
 ];
 
 export default function AdminArticlesPage() {
+  const editRequestRef = useRef(0);
   const [articles, setArticles] = useState<any[]>([]);
   const { toastSuccess, toastError, toastWarning, confirm: showConfirm } = useToast();
   const [loading, setLoading] = useState(true);
@@ -229,7 +232,7 @@ export default function AdminArticlesPage() {
   const fetchArticles = async (silent = false) => {
     if (!silent && articles.length === 0) setLoading(true);
     try {
-      const res = await fetch("/api/admin/articles");
+      const res = await fetch("/api/admin/articles?view=list");
       const data = await res.json();
       if (data.success) setArticles(data.articles);
     } catch (e) {
@@ -258,6 +261,7 @@ export default function AdminArticlesPage() {
   }, [articles]);
 
   const openCreate = () => {
+    editRequestRef.current++;
     setLastSavedAt(null);
     setEditingArt(null);
     setFormData({
@@ -272,7 +276,17 @@ export default function AdminArticlesPage() {
     setModalOpen(true);
   };
 
-  const openEdit = (art: any) => {
+  const openEdit = async (summary: any) => {
+    const requestId = ++editRequestRef.current;
+    let art;
+    try {
+      const res = await fetch(`/api/admin/articles?id=${encodeURIComponent(summary.id)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được bài viết");
+      if (requestId !== editRequestRef.current) return;
+      art = data.article;
+    } catch (error) { toastError(error instanceof Error ? error.message : "Không tải được bài viết"); return; }
+
     setLastSavedAt(null);
     setEditingArt(art);
     setFormData({
@@ -508,7 +522,7 @@ export default function AdminArticlesPage() {
                   <tr key={art.id} className="hover:bg-[#111c2e]/60 transition-colors">
                     <td className="py-3 px-4 text-center">
                       <div className="w-12 h-12 rounded-lg bg-white/5 border border-[#1f2d42] overflow-hidden p-1">
-                        <img
+                        <AdminImage
                           src={art.thumbnail || "/images/do-tho-cung.jpg"}
                           alt={art.title}
                           className="w-full h-full object-cover rounded"
@@ -1042,7 +1056,7 @@ export default function AdminArticlesPage() {
                     <div className="p-4 space-y-3">
                       <div className="relative aspect-video w-full rounded-lg bg-[#070c14] border border-[#1f2d42] overflow-hidden flex items-center justify-center">
                         {formData.thumbnail ? (
-                          <img
+                          <AdminImage
                             src={formData.thumbnail}
                             alt="Ảnh bài viết"
                             className="w-full h-full object-cover"

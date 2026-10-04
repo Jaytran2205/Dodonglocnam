@@ -1,3 +1,4 @@
+import { SITE_URL, siteUrl, serializeJsonLd } from "@/lib/site";
 import React from "react";
 
 interface BreadcrumbItem {
@@ -20,7 +21,7 @@ export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -33,6 +34,7 @@ interface ProductJsonLdProps {
   categoryName: string;
   url: string;
   sku?: string;
+  inStock: boolean;
 }
 
 export function ProductJsonLd({
@@ -43,12 +45,13 @@ export function ProductJsonLd({
   categoryName,
   url,
   sku,
+  inStock,
 }: ProductJsonLdProps) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: name,
-    image: images.length > 0 ? images : ["https://dodonglocnam.com/images/hero_golden_ship.jpg"],
+    image: images.length > 0 ? images : [siteUrl('/images/hero_golden_ship.jpg')],
     description: description || `Sản phẩm mỹ nghệ thủ công ${name} cao cấp từ Đồ Đồng Lộc Nam`,
     sku: sku || `LOCNAM-${name.replace(/\s+/g, "-").toUpperCase()}`,
     category: categoryName,
@@ -56,33 +59,25 @@ export function ProductJsonLd({
       "@type": "Brand",
       name: "Đồ Đồng Lộc Nam",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "5.0",
-      reviewCount: "48",
-      bestRating: "5",
-      worstRating: "1",
-    },
-    offers: {
+    ...(typeof price === "number" && Number.isFinite(price) && price > 0 ? { offers: {
       "@type": "Offer",
       url: url,
       priceCurrency: "VND",
-      price: price ? price.toString() : "0",
-      priceValidUntil: "2028-12-31",
-      availability: "https://schema.org/InStock",
+      price: price.toString(),
+      availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: {
         "@type": "Organization",
         name: "Đồ Đồng Lộc Nam",
-        url: "https://dodonglocnam.com",
+        url: SITE_URL,
       },
-    },
+    } } : {}),
   };
 
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -109,7 +104,7 @@ export function FaqJsonLd({ faqs }: { faqs: FaqItem[] }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -147,7 +142,7 @@ export function ArticleJsonLd({
       name: "Đồ Đồng Lộc Nam",
       logo: {
         "@type": "ImageObject",
-        url: "https://dodonglocnam.com/images/logo.png",
+        url: siteUrl('/images/logo.png'),
       },
     },
     mainEntityOfPage: {
@@ -159,7 +154,7 @@ export function ArticleJsonLd({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -167,7 +162,7 @@ export function ArticleJsonLd({
 export function LocalBusinessJsonLd({
   name = "Đồ Đồng Lộc Nam",
   hotline = "0836 122 222 - 0846 699 997",
-  url = "https://dodonglocnam.com",
+  url = SITE_URL,
 }: {
   name?: string;
   hotline?: string;
@@ -177,8 +172,8 @@ export function LocalBusinessJsonLd({
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name: name,
-    image: "https://dodonglocnam.com/images/logo.png",
-    "@id": "https://dodonglocnam.com/#localbusiness",
+    image: siteUrl('/images/logo.png'),
+    "@id": siteUrl('/#localbusiness'),
     url: url,
     telephone: ["0836122222", "0846699997"],
     priceRange: "500000 - 500000000 VND",
@@ -220,7 +215,7 @@ export function LocalBusinessJsonLd({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }

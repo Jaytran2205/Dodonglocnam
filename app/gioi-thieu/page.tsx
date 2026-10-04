@@ -1,3 +1,4 @@
+import { SITE_URL, siteUrl } from "@/lib/site";
 import { LocNamPartners } from "@/components/home/LocNamPartners";
 import React from "react";
 import Link from "next/link";
@@ -24,13 +25,13 @@ export const metadata: Metadata = {
     "đồ đồng nam định",
   ].join(", "),
   alternates: {
-    canonical: "https://www.quatanglocnam.com/gioi-thieu",
+    canonical: siteUrl('/gioi-thieu'),
   },
   openGraph: {
     title: "Giới Thiệu Xưởng Đúc Đồ Đồng Lộc Nam | Tinh Hoa Ý Yên Nam Định",
     description:
       "Lịch sử phát triển và sứ mệnh gìn giữ tinh hoa đúc đồng Việt Nam của thương hiệu Đồ Đồng Lộc Nam.",
-    url: "https://www.quatanglocnam.com/gioi-thieu",
+    url: siteUrl('/gioi-thieu'),
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -118,8 +119,8 @@ export default async function AboutPage() {
       {/* Breadcrumb Schema for Google */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-          { name: "Giới Thiệu", url: "https://www.quatanglocnam.com/gioi-thieu" },
+          { name: "Trang Chủ", url: SITE_URL },
+          { name: "Giới Thiệu", url: siteUrl('/gioi-thieu') },
         ]}
       />
 

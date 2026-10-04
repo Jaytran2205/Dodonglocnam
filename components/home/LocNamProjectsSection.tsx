@@ -54,7 +54,7 @@ export function LocNamProjectsSection() {
               className="relative aspect-[16/10] sm:aspect-[16/10] overflow-hidden bg-[#0c1825] block group/img"
             >
               <img
-                src={`${mainProject.image.split("?")[0]}?v=clean_cat_v6`}
+                src={mainProject.image}
                 alt={mainProject.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 loading="lazy"
@@ -140,7 +140,7 @@ export function LocNamProjectsSection() {
                   className="relative w-full sm:w-36 lg:w-32 xl:w-36 aspect-[16/11] sm:aspect-auto sm:h-auto rounded-lg overflow-hidden bg-[#0c1825] shrink-0 block"
                 >
                   <img
-                    src={`${project.image.split("?")[0]}?v=clean_cat_v6`}
+                    src={project.image}
                     alt={project.title}
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                     loading="lazy"

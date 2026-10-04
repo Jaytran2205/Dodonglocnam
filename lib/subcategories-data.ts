@@ -17,6 +17,7 @@ export interface SubCategoryItem {
 
 export interface MainCategoryData {
   name: string;
+  seoTitle?: string;
   slug: string;
   aliases?: string[];
   banner?: string;
@@ -356,14 +357,14 @@ export const DEFAULT_HIERARCHICAL_CATEGORIES: MainCategoryData[] = [
   },
 ];
 
-export function findMainCategory(catSlug: string): MainCategoryData | undefined {
-  return DEFAULT_HIERARCHICAL_CATEGORIES.find(
+export function findMainCategory(catSlug: string, catalog: MainCategoryData[] = DEFAULT_HIERARCHICAL_CATEGORIES): MainCategoryData | undefined {
+  return catalog.find(
     (c) => c.slug === catSlug || (c.aliases && c.aliases.includes(catSlug))
   );
 }
 
-export function findSubCategory(catSlug: string, subSlug: string): SubCategoryItem | undefined {
-  const cat = findMainCategory(catSlug);
+export function findSubCategory(catSlug: string, subSlug: string, catalog: MainCategoryData[] = DEFAULT_HIERARCHICAL_CATEGORIES): SubCategoryItem | undefined {
+  const cat = findMainCategory(catSlug, catalog);
   if (!cat) return undefined;
   return cat.subCategories.find(
     (s) => s.id === subSlug || (s.aliases && s.aliases.includes(subSlug))
@@ -373,9 +374,10 @@ export function findSubCategory(catSlug: string, subSlug: string): SubCategoryIt
 export function findDetailCategory(
   catSlug: string,
   subSlug: string,
-  detailSlug: string
+  detailSlug: string,
+  catalog: MainCategoryData[] = DEFAULT_HIERARCHICAL_CATEGORIES
 ): DetailCategoryItem | undefined {
-  const sub = findSubCategory(catSlug, subSlug);
+  const sub = findSubCategory(catSlug, subSlug, catalog);
   if (!sub || !sub.children) return undefined;
   return sub.children.find(
     (d) => d.id === detailSlug || (d.aliases && d.aliases.includes(detailSlug))
@@ -574,4 +576,3 @@ export function getSubCatInfoForProduct(
 
   return null;
 }
-

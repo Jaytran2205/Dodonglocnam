@@ -49,12 +49,10 @@ export function ProductTagsBox({ tagsString, onChange }: ProductTagsBoxProps) {
 
   const handleInputSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!inputVal.trim()) return;
-    inputVal
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .forEach(addTag);
+    const additions = inputVal.split(",").map(tag => tag.trim()).filter(Boolean);
+    onChange(Array.from(new Set([...currentTags, ...additions])).join(", "));
     setInputVal("");
   };
 
@@ -74,7 +72,7 @@ export function ProductTagsBox({ tagsString, onChange }: ProductTagsBoxProps) {
 
       <div className="p-4 space-y-3 text-xs">
         {/* Input & Add Button */}
-        <form onSubmit={handleInputSubmit} className="flex gap-2">
+        <div onKeyDown={e => { if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement)) { void handleInputSubmit(e); } }} className="flex gap-2">
           <input
             type="text"
             value={inputVal}
@@ -83,12 +81,13 @@ export function ProductTagsBox({ tagsString, onChange }: ProductTagsBoxProps) {
             className="flex-1 bg-[#111c2e] border border-[#202f45] focus:border-[#d4af37] text-white text-xs px-3 py-2 rounded-xl focus:outline-none"
           />
           <button
-            type="submit"
+            type="button"
+                onClick={handleInputSubmit}
             className="px-4 py-2 bg-[#1b2a40] hover:bg-[#253957] text-[#d4af37] border border-[#d4af37]/30 font-bold rounded-xl transition-colors shrink-0"
           >
             Thêm
           </button>
-        </form>
+        </div>
 
         <p className="text-[11px] text-gray-400">
           Phân tách các thẻ bằng dấu phẩy (,).

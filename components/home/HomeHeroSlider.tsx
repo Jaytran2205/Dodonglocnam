@@ -1,5 +1,7 @@
 "use client";
 
+import { DEFAULT_HOME_SLIDES } from "@/lib/home-content";
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
@@ -13,43 +15,10 @@ export interface BannerSlide {
   active?: boolean;
 }
 
-const DEFAULT_SLIDES: BannerSlide[] = [
-  {
-    id: "banner-he-thong-showroom",
-    title: "HỆ THỐNG 1 XƯỞNG SẢN XUẤT & 3 CỬA HÀNG TRƯNG BÀY",
-    subtitle: "Đúc Đồng Gia Truyền Dương Bá Tiến - Hà Nội, Nam Định, Ninh Bình",
-    image: "/images/banners/banner_he_thong_showroom_xuong_v3.webp",
-    link: "/gioi-thieu",
-    active: true,
-  },
-  {
-    id: "banner-thiet-ke-thi-cong",
-    title: "THIẾT KẾ - ĐÚC - THI CÔNG CÁC CÔNG TRÌNH TRÊN TOÀN QUỐC",
-    subtitle: "Hotline: 0836 122 222 - 0846 699 997 | Đúc Đồng Lộc Nam",
-    image: "/images/banners/banner_thiet_ke_thi_cong_toan_quoc_v3.webp",
-    link: "/du-an",
-    active: true,
-  },
-  {
-    id: "3",
-    title: "THIẾT KẾ CHẾ TÁC QUÀ TẶNG THEO YÊU CẦU - KIẾN TẠO DẤU ẤN THƯƠNG HIỆU",
-    subtitle: "Quà Tặng Doanh Nghiệp, Hội Nghị, Cúp Vinh Danh, Thuyền Buồm Mạ Vàng",
-    image: "/images/banners/banner_che_tac_qua_tang_v2.webp",
-    link: "/san-pham/qua-tang-dong",
-    active: true,
-  },
-  {
-    id: "banner-dat-vang-thi-cong",
-    title: "NHẬN DÁT VÀNG - THI CÔNG DỰ ÁN TRÊN TOÀN QUỐC",
-    subtitle: "Hotline: 0836 122 222 - 0846 699 997 | Đúc Đồng Lộc Nam",
-    image: "/images/banners/banner_dat_vang_thi_cong_v2.webp",
-    link: "/san-pham/do-tho-cung",
-    active: true,
-  },
-];
+
 
 export function HomeHeroSlider() {
-  const [slides, setSlides] = useState<BannerSlide[]>(DEFAULT_SLIDES);
+  const [slides, setSlides] = useState<BannerSlide[]>(DEFAULT_HOME_SLIDES);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [autoplayDelay, setAutoplayDelay] = useState(5000);
@@ -82,7 +51,7 @@ export function HomeHeroSlider() {
 
           if (s.home_slider_autoplay) {
             const delay = parseInt(s.home_slider_autoplay, 10);
-            if (!isNaN(delay) && delay >= 2000) {
+            if (!isNaN(delay) && (delay === 0 || delay >= 2000)) {
               setAutoplayDelay(delay);
             }
           }

@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminImage } from "@/components/admin/AdminImage";
+
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bold,
@@ -342,7 +344,7 @@ export function markdownToHtml(md: string): string {
       htmlBlocks.push(
         `<figure data-image-block="true" class="my-4 text-center group relative inline-block max-w-full select-none cursor-pointer">
           <div class="relative inline-block overflow-hidden rounded-xl shadow-md border border-slate-200">
-            <img src="${safeSrc}" alt="${safeAlt}" class="max-h-80 mx-auto object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.01]" />
+            <AdminImage src="${safeSrc}" alt="${safeAlt}" class="max-h-80 mx-auto object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.01]" />
             <div class="image-edit-overlay absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity cursor-pointer text-white text-xs font-semibold">
               <span class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5 pointer-events-none transition-transform active:scale-95">
                 ✏️ Bấm để sửa hoặc thay ảnh
@@ -3393,7 +3395,7 @@ Trong phong thủy, tác phẩm mang nguồn năng lượng kim khí dương m�
               {imageUrl && (
                 <div className="p-2 rounded-xl bg-black/50 border border-[#1e344d] text-center">
                   <p className="text-[11px] text-gray-400 mb-1">Xem trước ảnh:</p>
-                  <img
+                  <AdminImage
                     src={imageUrl}
                     alt="Preview"
                     className="max-h-36 mx-auto rounded-lg object-contain"

@@ -1,3 +1,4 @@
+import { SITE_URL, siteUrl, serializeJsonLd } from "@/lib/site";
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
@@ -44,14 +45,11 @@ export const metadata: Metadata = {
     address: true,
     telephone: true,
   },
-  metadataBase: new URL("https://www.quatanglocnam.com"),
-  alternates: {
-    canonical: "/",
-  },
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     title: "Đồ Đồng Lộc Nam | Đúc Đồng Chân Dung & Đồ Đồng Nam Định Đẹp Tinh Xảo",
     description: "Xưởng đúc đồng Lộc Nam - Đỉnh cao nghệ thuật đúc đồng truyền thống Nam Định. Chuyên đúc tượng đồng chân dung, đỉnh đồng thờ cúng, tượng danh nhân, tranh đồng mạ vàng cao cấp.",
-    url: "https://www.quatanglocnam.com",
+    url: SITE_URL,
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -76,10 +74,10 @@ export default function RootLayout({
     "@type": "LocalBusiness",
     "name": "Đồ Đồng Lộc Nam",
     "alternateName": "Đồ Đồng Lộc Nam - Đúc Đồng Ý Yên Nam Định",
-    "image": "https://www.quatanglocnam.com/images/logo.png",
+    "image": siteUrl('/images/logo.png'),
     "telephone": ["0836122222", "0846699997"],
     "email": "dodonglocnam1102@gmail.com",
-    "url": "https://www.quatanglocnam.com",
+    "url": SITE_URL,
     "priceRange": "VNĐ",
     "hasMap": "https://maps.app.goo.gl/5rQAVSTNhDzQtMebA",
     "address": {
@@ -188,7 +186,7 @@ export default function RootLayout({
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
         {/* Google Analytics 4 (GA4) loaded lazily on idle */}
         <Script

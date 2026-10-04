@@ -1,5 +1,7 @@
 "use client";
 
+import { DEFAULT_FACILITY_SETTINGS } from "@/lib/home-content";
+
 import React, { useState, useEffect } from "react";
 import {
   MapPin,
@@ -13,35 +15,7 @@ import {
 } from "lucide-react";
 
 export function LocNamPartners() {
-  const [settings, setSettings] = useState<any>({
-    factory_name: "Xưởng Sản Xuất Đúc Đồng Gia Truyền",
-    factory_address: "829C+CJ5, Ý Yên, Ninh Bình, Việt Nam",
-    factory_hotline: "0846 699 997",
-    factory_map_url: "https://maps.app.goo.gl/5rQAVSTNhDzQtMebA",
-    factory_image: "/images/xuong_duc.jpg",
-    factory_desc: "Xưởng đúc quy mô lớn hơn 2.000m² với lò đúc thủ công truyền thống và đội ngũ hơn 30 nghệ nhân đúc tượng đồng, đồ thờ ngũ sự và đúc Đại Hồng Chung bậc nhất Việt Nam.",
-
-    cs1_name: "Showroom 1 - Cơ Sở Chính Nam Định",
-    cs1_address: "Đường 57A - Thị trấn Lâm - Ý Yên - Nam Định",
-    cs1_hotline: "0846.699.997",
-    cs1_map_url: "https://maps.google.com/?q=Đường+57A,+Thị+trấn+Lâm,+Ý+Yên,+Nam+Định",
-    cs1_image: "/images/showroom_1.jpg",
-    cs1_desc: "Showroom chính 4 tầng bề thế trưng bày hàng nghìn bộ đồ thờ đồng cát tút ngũ sự, tượng đồng chân dung truyền thần, đỉnh đồng khảm ngũ sắc và các tác phẩm đúc đồng độc bản.",
-
-    cs2_name: "Showroom 2 - KCN Ý Yên Ninh Bình",
-    cs2_address: "Khu Công Nghiệp - Ý Yên - Ninh Bình",
-    cs2_hotline: "0846 699 997",
-    cs2_map_url: "https://maps.app.goo.gl/JkVaZ9c9g4jGfoyH7",
-    cs2_image: "/images/showroom_2.jpg",
-    cs2_desc: "Tòa nhà trung tâm trưng bày quy mô lớn hiện đại: tượng Phật cỡ lớn, trống đồng Đông Sơn đúc dày dặn, tranh đồng dát vàng 24k và đồ đồng mỹ nghệ hoàng gia.",
-
-    cs3_name: "Showroom 3 - Thủ Đô Hà Nội",
-    cs3_address: "164A4 Nguyễn Cảnh Dị - Hoàng Mai - Hà Nội",
-    cs3_hotline: "0846 699 997",
-    cs3_map_url: "https://maps.google.com/?q=164A4+Nguyễn+Cảnh+Dị,+Định+Công,+Hoàng+Mai,+Hà+Nội",
-    cs3_image: "/images/showroom_3.jpg",
-    cs3_desc: "Trung tâm quà tặng mạ vàng 24k, mô hình thuyền buồm phong thủy 'Thuận Buồm Xuôi Gió', tranh dát vàng và quà biếu đối tác doanh nghiệp, ngoại giao cao cấp.",
-  });
+  const [settings, setSettings] = useState<any>(DEFAULT_FACILITY_SETTINGS);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -192,7 +166,7 @@ export function LocNamPartners() {
             <div className="order-1 lg:order-2 lg:col-span-7 h-[210px] sm:h-[290px] md:h-[340px] lg:h-full relative overflow-hidden bg-[#e8dfd1]/30">
               <img
                 key={current.id}
-                src={current.image ? `${current.image.split("?")[0]}?v=clean_cat_v6` : "/images/showroom_1.jpg"}
+                src={current.image || "/images/showroom_1.jpg"}
                 alt={current.name}
                 className={`w-full h-full object-cover ${current.objectPos || "object-center"} transition-all duration-700 animate-fadeIn`}
                 loading="lazy"
@@ -293,7 +267,7 @@ export function LocNamPartners() {
                   {/* Mini Photo Thumbnail */}
                   <div className="w-8 h-7 sm:w-10 sm:h-8 rounded overflow-hidden bg-[#e8dfd1] flex-shrink-0 border border-[#d8cdbc]">
                     <img
-                      src={b.image ? `${b.image.split("?")[0]}?v=clean_cat_v6` : "/images/showroom_1.jpg"}
+                      src={b.image || "/images/showroom_1.jpg"}
                       alt={b.name}
                       className="w-full h-full object-cover"
                     />

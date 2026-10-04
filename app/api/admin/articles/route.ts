@@ -1,3 +1,4 @@
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
@@ -5,12 +6,24 @@ import { logActivity } from "@/lib/activity-logger";
 
 export async function GET(req: NextRequest) {
   const session = await getAdminSession(req);
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (id) {
+    const article = await prisma.article.findFirst({ where: { id, ...(!session ? { isPublished: true } : {}) } });
+    return article ? NextResponse.json({ success: true, article }) : NextResponse.json({ success: false, message: "Không tìm thấy bài viết." }, { status: 404 });
+  }
   const where: any = {};
   if (!session) {
     where.isPublished = true;
   }
+  if (searchParams.get("facilityOnly") === "1") where.slug = { in: ["nghe-nhan-duong-ba-tien", "xuong-san-xuat-duc-dong-loc-nam"] };
   const articles = await prisma.article.findMany({
     where,
+    ...(searchParams.get("view") === "list" ? { select: {
+      id: true, title: true, slug: true, summary: true, thumbnail: true, category: true, tags: true,
+      isPublished: true, viewCount: true, publishedAt: true, createdAt: true, updatedAt: true,
+      subCategoryId: true, categoryIds: true, subCategoryIds: true,
+    } } : {}),
     orderBy: { publishedAt: "desc" }
   });
   return NextResponse.json({ success: true, articles });
@@ -56,6 +69,8 @@ export async function POST(req: NextRequest) {
         isPublished: isPublished !== undefined ? Boolean(isPublished) : true
       }
     });
+
+    revalidateTag("articles"); revalidateTag("media"); revalidatePath("/", "layout"); revalidatePath("/sitemap.xml");
 
     logActivity({
       req,
@@ -107,6 +122,8 @@ export async function PUT(req: NextRequest) {
       },
     });
 
+    revalidateTag("articles"); revalidateTag("media"); revalidatePath("/", "layout"); revalidatePath("/sitemap.xml");
+
     logActivity({
       req,
       session,
@@ -146,7 +163,9 @@ export async function DELETE(req: NextRequest) {
     await prisma.article.delete({ where: { id } });
 
     if (existing) {
-      logActivity({
+      revalidateTag("articles"); revalidateTag("media"); revalidatePath("/", "layout"); revalidatePath("/sitemap.xml");
+
+    logActivity({
         req,
         session,
         action: "DELETE",

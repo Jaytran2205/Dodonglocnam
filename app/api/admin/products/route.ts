@@ -1,5 +1,6 @@
+import type { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { logActivity } from "@/lib/activity-logger";
@@ -34,6 +35,11 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (id) {
+    const product = await prisma.product.findUnique({ where: { id }, include: { category: true } });
+    return product ? NextResponse.json({ success: true, product }) : NextResponse.json({ success: false, message: "Không tìm thấy sản phẩm." }, { status: 404 });
+  }
   const categoryId = searchParams.get("categoryId");
   const search = searchParams.get("search");
 
@@ -46,12 +52,19 @@ export async function GET(req: NextRequest) {
     ];
   }
 
-  const products = await prisma.product.findMany({
+  const query: Prisma.ProductFindManyArgs = {
     where,
-    include: { category: true },
+    ...(searchParams.get("view") === "list" ? { select: {
+      id: true, name: true, slug: true, price: true, originalPrice: true, images: true,
+      material: true, dimensions: true, weight: true, shortDescription: true,
+      isFeatured: true, inStock: true, order: true, categoryId: true, subCategoryId: true,
+      categoryIds: true, subCategoryIds: true, tags: true, createdAt: true, updatedAt: true,
+      category: { select: { id: true, name: true, slug: true } },
+    } } : { include: { category: true } }),
     orderBy: { createdAt: "desc" }
-  });
+  };
 
+  const products = await prisma.product.findMany(query);
   return NextResponse.json({ success: true, products });
 }
 
@@ -119,7 +132,7 @@ export async function POST(req: NextRequest) {
       include: { category: true }
     });
 
-    try { revalidatePath("/", "layout"); } catch {}
+    try { revalidateTag("products"); revalidateTag("media"); revalidatePath("/", "layout"); } catch {}
 
     logActivity({
       req,
@@ -228,7 +241,7 @@ export async function PUT(req: NextRequest) {
       include: { category: true }
     });
 
-    try { revalidatePath("/", "layout"); } catch {}
+    try { revalidateTag("products"); revalidateTag("media"); revalidatePath("/", "layout"); } catch {}
 
     logActivity({
       req,
@@ -284,7 +297,7 @@ export async function DELETE(req: NextRequest) {
       select: { name: true, price: true, categoryId: true },
     });
     await prisma.product.delete({ where: { id } });
-    try { revalidatePath("/", "layout"); } catch {}
+    try { revalidateTag("products"); revalidateTag("media"); revalidatePath("/", "layout"); } catch {}
 
     logActivity({
       req,

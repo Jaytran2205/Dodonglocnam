@@ -22,6 +22,8 @@ export async function GET(req: NextRequest) {
   const where: any = {};
   if (status && status !== "ALL") where.status = status;
 
+  if (searchParams.get("countOnly") === "1") return NextResponse.json({ success: true, count: await prisma.order.count({ where }) });
+
   const orders = await prisma.order.findMany({
     where,
     include: { items: true },

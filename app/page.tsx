@@ -1,3 +1,7 @@
+import { getSettings } from "@/lib/settings";
+import { homeCategories } from "@/lib/home-content";
+import type { Metadata } from "next";
+import { SITE_URL, siteUrl } from "@/lib/site";
 import React from "react";
 import { ModernHeader } from "@/components/common/ModernHeader";
 import { HomeHeroSlider } from "@/components/home/HomeHeroSlider";
@@ -13,8 +17,10 @@ import { FloatingContact } from "@/components/common/FloatingContact";
 import { FaqJsonLd } from "@/components/seo/JsonLd";
 
 export const revalidate = 3600;
+export const metadata: Metadata = { alternates: { canonical: siteUrl("/") } };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await getSettings();
   const homeFaqs = [
     {
       question: "Đồ Đồng Lộc Nam có nguồn gốc xuất xứ từ đâu?",
@@ -42,12 +48,12 @@ export default function HomePage() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Đồ Đồng Lộc Nam",
-    url: "https://www.quatanglocnam.com",
+    url: SITE_URL,
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://www.quatanglocnam.com/san-pham?search={search_term_string}",
+        urlTemplate: siteUrl('/san-pham?search={search_term_string}'),
       },
       "query-input": "required name=search_term_string",
     },
@@ -83,7 +89,7 @@ export default function HomePage() {
         <ModernFeatures />
 
         {/* 4. Highlight Categories: SẢN PHẨM NỔI BẬT */}
-        <LocNamCategories />
+        <LocNamCategories categories={homeCategories(settings)} />
 
         {/* 5. Favorite Products: SẢN PHẨM ĐƯỢC YÊU THÍCH */}
         <LocNamFavorites />

@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminImage } from "@/components/admin/AdminImage";
+
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Plus,
@@ -45,11 +47,13 @@ import {
   getSubCatInfoForProduct,
   removeVietnameseTones,
 } from "@/lib/subcategories-data";
-import { formatPrice, slugify } from "@/lib/utils";
+import { formatPrice, slugify, parseImageList } from "@/lib/utils";
 import { useToast } from "@/components/admin/AdminToast";
 
 export default function AdminProductsPage() {
   const { toastSuccess, toastError, toastWarning, toastInfo, confirm: showConfirm } = useToast();
+  const editRequestRef = useRef(0);
+  const [productPage, setProductPage] = useState(1);
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [catalog, setCatalog] = useState<MainCategoryData[]>(DEFAULT_HIERARCHICAL_CATEGORIES);
@@ -130,7 +134,7 @@ export default function AdminProductsPage() {
   const fetchProducts = async (forceRefresh = false) => {
     if (!forceRefresh) {
       try {
-        const cached = sessionStorage.getItem("locnam_admin_products_cache");
+        const cached = sessionStorage.getItem("locnam_admin_products_cache_v2");
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed.products && Array.isArray(parsed.products)) {
@@ -152,7 +156,7 @@ export default function AdminProductsPage() {
 
     try {
       const [res, catRes] = await Promise.all([
-        fetch("/api/admin/products"),
+        fetch("/api/admin/products?view=list"),
         fetch("/api/admin/categories"),
       ]);
       const [data, catData] = await Promise.all([res.json(), catRes.json()]);
@@ -163,14 +167,14 @@ export default function AdminProductsPage() {
       if (catData.success) {
         setCategories(catData.categories);
         if (!formData.categoryId && catData.categories.length > 0) {
-          setFormData((prev) => ({ ...prev, categoryId: catData.categories[0].id }));
+          setFormData((prev) => prev.categoryId ? prev : ({ ...prev, categoryId: catData.categories[0].id }));
         }
       }
 
       if (data.success && catData.success) {
         try {
           sessionStorage.setItem(
-            "locnam_admin_products_cache",
+            "locnam_admin_products_cache_v2",
             JSON.stringify({
               products: data.products,
               categories: catData.categories,
@@ -254,8 +258,11 @@ export default function AdminProductsPage() {
     return result;
   }, [selectedCat, categories, catalog]);
 
+  useEffect(() => setProductPage(1), [search, selectedCat, selectedSubCat, stockFilter, sortBy]);
+
   // Open Create Modal
   const openCreateModal = () => {
+    editRequestRef.current++;
     setLastSavedAt(null);
     setEditingProduct(null);
     setCustomSlug("");
@@ -290,21 +297,23 @@ export default function AdminProductsPage() {
   };
 
   // Open Edit Modal
-  const openEditModal = (prod: any) => {
+  const openEditModal = async (summary: any) => {
+    const requestId = ++editRequestRef.current;
+    let prod;
+    try {
+      const res = await fetch(`/api/admin/products?id=${encodeURIComponent(summary.id)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được sản phẩm");
+      if (requestId !== editRequestRef.current) return;
+      prod = data.product;
+    } catch (error) { toastError(error instanceof Error ? error.message : "Không tải được sản phẩm"); return; }
+
     setLastSavedAt(null);
     setEditingProduct(prod);
     setCustomSlug(prod.slug || "");
     setIsEditingSlug(false);
 
-    let parsedImgs: string[] = [];
-    try {
-      const parsed = JSON.parse(prod.images);
-      parsedImgs = Array.isArray(parsed) ? parsed : [prod.images];
-    } catch {
-      parsedImgs = prod.images
-        ? prod.images.split(",").map((s: string) => s.trim()).filter(Boolean)
-        : [];
-    }
+    const parsedImgs = parseImageList(prod.images);
 
     const defaultLabels = [
       "Ảnh chính / Mặt trước",
@@ -472,14 +481,14 @@ export default function AdminProductsPage() {
 
         // Update sessionStorage cache quietly
         try {
-          const cached = sessionStorage.getItem("locnam_admin_products_cache");
+          const cached = sessionStorage.getItem("locnam_admin_products_cache_v2");
           if (cached) {
             const parsed = JSON.parse(cached);
             if (Array.isArray(parsed.products)) {
               const idx = parsed.products.findIndex((p: any) => p.id === savedProd.id);
               if (idx >= 0) parsed.products[idx] = { ...parsed.products[idx], ...savedProd };
               else parsed.products.unshift(savedProd);
-              sessionStorage.setItem("locnam_admin_products_cache", JSON.stringify(parsed));
+              sessionStorage.setItem("locnam_admin_products_cache_v2", JSON.stringify(parsed));
             }
           }
         } catch (_) {}
@@ -540,12 +549,12 @@ export default function AdminProductsPage() {
             setProducts((prev) => prev.filter((p) => p.id !== id));
             // Update session cache
             try {
-              const cached = sessionStorage.getItem("locnam_admin_products_cache");
+              const cached = sessionStorage.getItem("locnam_admin_products_cache_v2");
               if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Array.isArray(parsed.products)) {
                   parsed.products = parsed.products.filter((p: any) => p.id !== id);
-                  sessionStorage.setItem("locnam_admin_products_cache", JSON.stringify(parsed));
+                  sessionStorage.setItem("locnam_admin_products_cache_v2", JSON.stringify(parsed));
                 }
               }
             } catch (_) {}
@@ -876,6 +885,12 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
+      <div className="flex items-center justify-end gap-3 my-3 text-sm text-[#cbd5e1]">
+        <button type="button" className="px-3 py-2 border border-[#34465e] rounded-lg disabled:opacity-40" disabled={productPage <= 1} onClick={() => setProductPage(p => Math.max(1, Math.min(p, Math.ceil(filteredProducts.length / 40)) - 1))}>Trang trước</button>
+        <span>Trang {Math.min(productPage, Math.max(1, Math.ceil(filteredProducts.length / 40)))} / {Math.max(1, Math.ceil(filteredProducts.length / 40))}</span>
+        <button type="button" className="px-3 py-2 border border-[#34465e] rounded-lg disabled:opacity-40" disabled={productPage >= Math.ceil(filteredProducts.length / 40)} onClick={() => setProductPage(p => p + 1)}>Trang sau</button>
+      </div>
+
       {/* Products Table */}
       <div className="bg-[#0c1420] border border-[#d4af37]/20 rounded-2xl shadow-xl overflow-hidden">
         {loading ? (
@@ -903,14 +918,8 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1f2d42]/60">
-                {filteredProducts.map((prod) => {
-                  let img = "/images/hero_golden_ship.jpg";
-                  try {
-                    const parsed = JSON.parse(prod.images);
-                    img = Array.isArray(parsed) && parsed[0] ? parsed[0] : prod.images;
-                  } catch {
-                    img = prod.images || "/images/hero_golden_ship.jpg";
-                  }
+                {filteredProducts.slice((Math.min(productPage, Math.max(1, Math.ceil(filteredProducts.length / 40))) - 1) * 40, Math.min(productPage, Math.max(1, Math.ceil(filteredProducts.length / 40))) * 40).map((prod) => {
+                  const img = parseImageList(prod.images)[0] || "/images/hero_golden_ship.jpg";
 
                   const subBranchName = getSubCatNameForProduct(prod);
 
@@ -918,7 +927,7 @@ export default function AdminProductsPage() {
                     <tr key={prod.id} className="hover:bg-[#111c2e]/60 transition-colors">
                       <td className="py-3 px-4 text-center">
                         <div className="w-12 h-12 rounded-lg bg-white/5 border border-[#1f2d42] overflow-hidden p-1 flex items-center justify-center">
-                          <img
+                          <AdminImage
                             src={img}
                             alt={prod.name}
                             className="w-full h-full object-contain rounded"
@@ -1617,7 +1626,7 @@ export default function AdminProductsPage() {
                             {/* Thumbnail */}
                             <div className="relative aspect-square w-full rounded-lg bg-[#070c14] border border-[#1f2d42] overflow-hidden flex items-center justify-center">
                               {angle.url ? (
-                                <img
+                                <AdminImage
                                   src={angle.url}
                                   alt={angle.label}
                                   className="w-full h-full object-contain"

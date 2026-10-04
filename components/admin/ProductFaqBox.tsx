@@ -32,6 +32,7 @@ export function ProductFaqBox({ onInsertFaqToDescription }: ProductFaqBoxProps) 
 
   const handleAddFaq = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!newQ.trim() || !newA.trim()) return;
     setFaqs([...faqs, { q: newQ.trim(), a: newA.trim() }]);
     setNewQ("");
@@ -127,10 +128,9 @@ export function ProductFaqBox({ onInsertFaqToDescription }: ProductFaqBoxProps) 
             <span>+ Thêm câu hỏi mới</span>
           </button>
         ) : (
-          <form onSubmit={handleAddFaq} className="p-3 bg-[#111c2e] border border-[#202f45] rounded-xl space-y-2">
+          <div onKeyDown={e => { if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement)) { void handleAddFaq(e); } }} className="p-3 bg-[#111c2e] border border-[#202f45] rounded-xl space-y-2">
             <input
               type="text"
-              required
               value={newQ}
               onChange={(e) => setNewQ(e.target.value)}
               placeholder="Câu hỏi (ví dụ: Bảo hành bao lâu?)..."
@@ -138,7 +138,6 @@ export function ProductFaqBox({ onInsertFaqToDescription }: ProductFaqBoxProps) 
             />
             <textarea
               rows={2}
-              required
               value={newA}
               onChange={(e) => setNewA(e.target.value)}
               placeholder="Câu trả lời giải đáp thắc mắc của khách..."
@@ -146,7 +145,8 @@ export function ProductFaqBox({ onInsertFaqToDescription }: ProductFaqBoxProps) 
             />
             <div className="flex items-center gap-2">
               <button
-                type="submit"
+                type="button"
+                onClick={handleAddFaq}
                 className="px-3 py-1 bg-[#d4af37] text-[#070c14] font-bold text-xs rounded-lg"
               >
                 Thêm câu hỏi
@@ -159,7 +159,7 @@ export function ProductFaqBox({ onInsertFaqToDescription }: ProductFaqBoxProps) 
                 Hủy
               </button>
             </div>
-          </form>
+          </div>
         )}
       </div>
     </div>

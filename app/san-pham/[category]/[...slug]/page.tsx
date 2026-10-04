@@ -1,3 +1,6 @@
+import { parseImageList } from "@/lib/utils";
+import { getCatalog } from "@/lib/catalog";
+import { SITE_URL, siteUrl } from "@/lib/site";
 import React, { cache } from "react";
 import prisma from "@/lib/prisma";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
@@ -89,17 +92,27 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
+  const catalog = await getCatalog();
   const { category: categorySlug, slug: slugs } = params;
   const lastSlug = slugs[slugs.length - 1];
   const firstSlug = slugs[0];
   const secondSlug = slugs[1];
+  let canonicalPath = `/san-pham/${categorySlug}/${slugs.join("/")}`;
+  const canonicalMain = findMainCategory(categorySlug, catalog);
+  const canonicalSub = canonicalMain && findSubCategory(canonicalMain.slug, firstSlug, catalog);
+  const canonicalDetail = canonicalSub && findDetailCategory(canonicalMain!.slug, canonicalSub.id, secondSlug, catalog);
+  if (canonicalSub) {
+    const prefix = canonicalMain!.slug === "qua-tang" ? "/qua-tang" : `/san-pham/${canonicalMain!.slug}`;
+    canonicalPath = `${prefix}/${canonicalSub.id}${canonicalDetail ? `/${canonicalDetail.id}` : secondSlug === "all" || secondSlug === "tat-ca" ? "/tat-ca" : ""}`;
+  }
 
   // 1. Check if it's a detail category or subcategory FIRST
-  const mainCat = findMainCategory(categorySlug);
+  const mainCat = findMainCategory(categorySlug, catalog);
   if (secondSlug === "tat-ca" || secondSlug === "all") {
-    const sub = findSubCategory(categorySlug, firstSlug);
+    const sub = findSubCategory(categorySlug, firstSlug, catalog);
     if (sub) {
       return {
+        alternates: { canonical: siteUrl(canonicalPath) },
         title: `Tất Cả Sản Phẩm ${sub.name} Bằng Đồng Cao Cấp | Đồ Đồng Lộc Nam`,
         description: `Xem toàn bộ sản phẩm ${sub.name} đúc thủ công tinh xảo tại Đồ Đồng Lộc Nam.`,
       };
@@ -107,9 +120,10 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   }
 
   if (secondSlug) {
-    const detail = findDetailCategory(categorySlug, firstSlug, secondSlug);
+    const detail = findDetailCategory(categorySlug, firstSlug, secondSlug, catalog);
     if (detail) {
       return {
+        alternates: { canonical: siteUrl(canonicalPath) },
         title: `${detail.name} Bằng Đồng Cao Cấp Ý Yên | Đồ Đồng Lộc Nam`,
         description: `Tuyển tập các mẫu ${detail.name} bằng đồng đúc thủ công tinh xảo, chất lượng đỉnh cao, phôi đồng thanh khiết tại Đồ Đồng Lộc Nam.`,
       };
@@ -117,9 +131,10 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   }
 
   if (firstSlug && slugs.length === 1) {
-    const sub = findSubCategory(categorySlug, firstSlug);
+    const sub = findSubCategory(categorySlug, firstSlug, catalog);
     if (sub) {
       return {
+        alternates: { canonical: siteUrl(canonicalPath) },
         title: `${sub.name} Bằng Đồng Cao Cấp | Đồ Đồng Lộc Nam`,
         description: `Danh mục ${sub.name} đúc thủ công tinh xảo từ xưởng đúc đồng Lộc Nam Ý Yên Nam Định. Đảm bảo chất lượng, bảo hành dài hạn.`,
       };
@@ -137,37 +152,33 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
   }
 
   if (product) {
-    let parsedImages: string[] = [];
-    try {
-      parsedImages = JSON.parse(product.images);
-    } catch {
-      parsedImages = [product.images || "/images/hero_golden_ship.jpg"];
-    }
+    canonicalPath = `/san-pham/${product.slug}`;
+    const parsedImages = parseImageList(product.images);
     const mainImage = parsedImages[0] || "/images/hero_golden_ship.jpg";
 
     return {
+        alternates: { canonical: siteUrl(canonicalPath) },
       title: `${product.name} - Đúc Đồng Thủ Công Tinh Xảo | Đồ Đồng Lộc Nam`,
       description:
         product.shortDescription ||
         `Mua ${product.name} chất lượng cao, đúc thủ công từ phôi đồng nguyên chất tại làng nghề Ý Yên, Nam Định. Bảo hành trọn đời, giao hàng toàn quốc.`,
-      alternates: {
-        canonical: `https://www.quatanglocnam.com/san-pham/${product.slug}`,
-      },
       openGraph: {
         title: `${product.name} | Đồ Đồng Lộc Nam`,
         description: product.shortDescription || `Chi tiết sản phẩm ${product.name}`,
-        url: `https://www.quatanglocnam.com/san-pham/${product.slug}`,
-        images: [{ url: mainImage.startsWith("http") ? mainImage : `https://www.quatanglocnam.com${mainImage}` }],
+        url: `${SITE_URL}/san-pham/${product.slug}`,
+        images: [{ url: mainImage.startsWith("http") ? mainImage : `${SITE_URL}${mainImage}` }],
       },
     };
   }
 
   return {
+        alternates: { canonical: siteUrl(canonicalPath) },
     title: "Sản Phẩm Đồ Đồng Cao Cấp | Đồ Đồng Lộc Nam",
   };
 }
 
 export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
+  const catalog = await getCatalog();
   const { category: categorySlug, slug: slugs } = params;
 
   if (categorySlug === "qua-tang-dong" || categorySlug === "qua-tang") {
@@ -182,9 +193,9 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
   const secondSlug = slugs[1];
   const lastSlug = slugs[slugs.length - 1];
 
-  const mainCat = findMainCategory(categorySlug);
-  const subCategory = firstSlug ? findSubCategory(categorySlug, firstSlug) : undefined;
-  const detailCategory = (firstSlug && secondSlug) ? findDetailCategory(categorySlug, firstSlug, secondSlug) : undefined;
+  const mainCat = findMainCategory(categorySlug, catalog);
+  const subCategory = firstSlug ? findSubCategory(categorySlug, firstSlug, catalog) : undefined;
+  const detailCategory = (firstSlug && secondSlug) ? findDetailCategory(categorySlug, firstSlug, secondSlug, catalog) : undefined;
 
   // =========================================================================
   // CASE 1: CATEGORY HIERARCHY NAVIGATION (LEVEL 4 GRID OR LEVEL 5 LISTING)
@@ -215,10 +226,10 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
           <BreadcrumbJsonLd
             items={[
-              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-              { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
-              { name: mainCat.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
-              { name: subCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
+              { name: "Trang Chủ", url: SITE_URL },
+              { name: "Sản Phẩm", url: siteUrl('/san-pham') },
+              { name: mainCat.name, url: `${SITE_URL}/san-pham/${categorySlug}` },
+              { name: subCategory.name, url: `${SITE_URL}/san-pham/${categorySlug}/${subCategory.id}` },
             ]}
           />
 
@@ -272,12 +283,12 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
           <BreadcrumbJsonLd
             items={[
-              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-              { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
-              { name: mainCat.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
-              { name: subCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
+              { name: "Trang Chủ", url: SITE_URL },
+              { name: "Sản Phẩm", url: siteUrl('/san-pham') },
+              { name: mainCat.name, url: `${SITE_URL}/san-pham/${categorySlug}` },
+              { name: subCategory.name, url: `${SITE_URL}/san-pham/${categorySlug}/${subCategory.id}` },
               ...(detailCategory
-                ? [{ name: detailCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}/${detailCategory.id}` }]
+                ? [{ name: detailCategory.name, url: `${SITE_URL}/san-pham/${categorySlug}/${subCategory.id}/${detailCategory.id}` }]
                 : []),
             ]}
           />
@@ -329,10 +340,10 @@ export default async function CategoryCatchAllPage({ params }: SlugPageProps) {
         <div className="min-h-screen flex flex-col justify-between bg-[#070e17] text-white">
           <BreadcrumbJsonLd
             items={[
-              { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-              { name: "Sản Phẩm", url: "https://www.quatanglocnam.com/san-pham" },
-              { name: mainCat.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}` },
-              { name: subCategory.name, url: `https://www.quatanglocnam.com/san-pham/${categorySlug}/${subCategory.id}` },
+              { name: "Trang Chủ", url: SITE_URL },
+              { name: "Sản Phẩm", url: siteUrl('/san-pham') },
+              { name: mainCat.name, url: `${SITE_URL}/san-pham/${categorySlug}` },
+              { name: subCategory.name, url: `${SITE_URL}/san-pham/${categorySlug}/${subCategory.id}` },
             ]}
           />
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminImage } from "@/components/admin/AdminImage";
+
 import React, { useState, useMemo } from "react";
 import {
   Sparkles,
@@ -125,7 +127,7 @@ export function ArticleSeoAnalyzer({
   // Image count inside content
   const contentImagesCount = useMemo(() => {
     const mdImages = (content.match(/!\[.*?\]\(.*?\)/g) || []).length;
-    const htmlImages = (content.match(/<img[^>]+>/gi) || []).length;
+    const htmlImages = (content.match(/<AdminImage[^>]+>/gi) || []).length;
     return mdImages + htmlImages;
   }, [content]);
 

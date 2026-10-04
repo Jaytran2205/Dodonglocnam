@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminImage } from "@/components/admin/AdminImage";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ArrowRight, Sparkles } from "lucide-react";
@@ -46,7 +48,7 @@ export default function AdminLoginPage() {
         {/* Brand Logo & Header */}
         <div className="text-center space-y-3">
           <div className="w-20 h-20 mx-auto rounded-2xl border border-[#d4af37]/60 p-2 bg-white shadow-[0_0_25px_rgba(212,175,55,0.35)] flex items-center justify-center">
-            <img src="/images/logo.png" alt="Logo Lộc Nam" className="w-full h-full object-contain" />
+            <AdminImage src="/images/logo.png" alt="Logo Lộc Nam" className="w-full h-full object-contain" />
           </div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#d4af37]/15 border border-[#d4af37]/30 text-[#d4af37] text-[10px] font-bold uppercase tracking-widest">
             <Sparkles className="w-3 h-3" />

@@ -1,6 +1,8 @@
 "use client";
 
-import React from "react";
+import { DEFAULT_HOME_REVIEWS } from "@/lib/home-content";
+
+import React, { useEffect, useState } from "react";
 import {
   Star,
   Quote,
@@ -11,131 +13,18 @@ import {
 } from "lucide-react";
 
 export function LocNamBrandEssence() {
-  const defaultReviews = [
-    {
-      id: 1,
-      name: "Bác Nguyễn Văn Thành",
-      title: "Trưởng ban khánh tiết họ Nguyễn",
-      location: "Ý Yên, Nam Định",
-      avatar: "VT",
-      rating: 5,
-      date: "15/08/2026",
-      product: "Bộ Đỉnh Đồng Ngũ Sự Cát Tút 70cm",
-      image: "/images/locnam_real/locnam_bo_do_tho.jpg",
-      tag: "ĐỒ THỜ GIA TIÊN",
-      comment:
-        "Đặt bộ ngũ sự thờ gia tiên cho nhà thờ họ, cả họ đều tấm tắc khen ngợi. Nước đồng vàng bóng đều, đúc dày dặn và chắc nịch, hoa văn rồng chạm tay sắc sảo. Giao hàng tận nơi đóng kiện gỗ rất cẩn thận.",
-    },
-    {
-      id: 2,
-      name: "Chị Lê Hoàng Mai",
-      title: "Giám đốc nhân sự Tech Group",
-      location: "Thanh Xuân, Hà Nội",
-      avatar: "HM",
-      rating: 5,
-      date: "08/08/2026",
-      product: "Mô hình thuyền buồm mạ vàng 24k",
-      image: "/images/hero_golden_ship.jpg",
-      tag: "QUÀ TẶNG PHONG THỦY",
-      comment:
-        "Công ty mình đặt 10 mô hình thuyền buồm mạ vàng làm quà tri ân khách hàng VIP dịp kỷ niệm thành lập. Hộp quà bọc nhung đỏ sang trọng, có chứng nhận mạ vàng 24k rõ ràng. Khách hàng nhận ai cũng ưng ý.",
-    },
-    {
-      id: 3,
-      name: "Anh Vũ Đình Khoa",
-      title: "Chủ chuỗi nhà hàng ẩm thực",
-      location: "Quận 1, TP. Hồ Chí Minh",
-      avatar: "VK",
-      rating: 5,
-      date: "29/07/2026",
-      product: "Tượng phong thủy mạ vàng 24k",
-      image: "/images/du_an/tuong-than-tai-da-nang.jpg",
-      tag: "TƯỢNG PHONG THỦY",
-      comment:
-        "Tượng đúc rất thần thái, từng nét chạm khắc uy dũng, mạ vàng 24k sáng bóng và mịn màng không một tì vết. Dịch vụ tư vấn của xưởng Lộc Nam rất nhiệt tình, hỗ trợ chuyển phát nhanh an toàn vào Sài Gòn.",
-    },
-    {
-      id: 4,
-      name: "Bác Phạm Minh Trí",
-      title: "Cựu chiến binh - Cán bộ hưu trí",
-      location: "Cầu Giấy, Hà Nội",
-      avatar: "MT",
-      rating: 5,
-      date: "18/07/2026",
-      product: "Tranh đồng Vinh Quy Bái Tổ dát vàng",
-      image: "/images/locnam_real/locnam_tranh_vinh_quy.jpg",
-      tag: "TRANH ĐỒNG DÁT VÀNG",
-      comment:
-        "Bức tranh đồng dát vàng 24k treo phòng khách rất sáng và ấm cúng. Nghệ nhân lành nghề làm tỉ mỉ từng mái đình, cây đa, đoàn rước kiệu. Rất xứng đáng là thương hiệu gia truyền số 1 làng nghề Ý Yên.",
-    },
-    {
-      id: 5,
-      name: "Anh Trần Quốc Bảo",
-      title: "Tổng Giám Đốc Công Ty BĐS",
-      location: "Hải Châu, Đà Nẵng",
-      avatar: "QB",
-      rating: 5,
-      date: "05/07/2026",
-      product: "Trống đồng Đông Sơn mạ vàng 1m",
-      image: "/images/du_an/150-trong-dong-tong-cong-ty-dong-bac.jpg",
-      tag: "TRỐNG ĐỒNG ĐÔNG SƠN",
-      comment:
-        "Trống đồng đặt tại sảnh công ty tạo điểm nhấn văn hóa cực kỳ uy nghiêm và trang trọng. Khách đối tác quốc tế ghé thăm đều khen ngợi tinh hoa chế tác của người Việt. Rất hài lòng!",
-    },
-    {
-      id: 6,
-      name: "Đại Đức Thích Tâm Minh",
-      title: "Trụ Trì Chùa Phúc Lâm",
-      location: "Gia Viễn, Ninh Bình",
-      avatar: "TM",
-      rating: 5,
-      date: "22/06/2026",
-      product: "Đúc Đại Hồng Chung 1.2 Tấn & Tượng Phật",
-      image: "/images/du_an/dai-hong-chung-thai-nguyen.jpg",
-      tag: "ĐÚC CHUÔNG CÔNG TRÌNH",
-      comment:
-        "Tiếng chuông ngân vang thanh thoát, âm thanh trầm ấm lan toả khắp làng quê. Quy trình nấu đồng rót khuôn của nghệ nhân Lộc Nam rất trang nghiêm, bài bản và chu đáo.",
-    },
-    {
-      id: 7,
-      name: "Anh Bùi Hoàng Long",
-      title: "Chủ tịch HĐQT Tập đoàn Xây dựng",
-      location: "Starlake Tây Hồ, Hà Nội",
-      avatar: "HL",
-      rating: 5,
-      date: "12/06/2026",
-      product: "Đỉnh Đồng Thất Lân Vờn Cầu Khảm Tam Khí",
-      image: "/images/locnam_real/locnam_dinh_dong.jpg",
-      tag: "ĐỈNH ĐỒNG CAO CẤP",
-      comment:
-        "Đỉnh đồng phong thủy cao 1m35 khảm vàng 9999, bạc trắng và đồng đỏ tam khí tinh hoa bậc nhất. Đặt vào phòng khách biệt thự toát lên đẳng cấp vương giả và phong thủy cực tốt!",
-    },
-    {
-      id: 8,
-      name: "Chị Đỗ Thu Trang",
-      title: "Việt kiều Đức đặt hàng gia tiên",
-      location: "Berlin, CHLB Đức",
-      avatar: "TT",
-      rating: 5,
-      date: "01/06/2026",
-      product: "Đôi Hạc Thờ Bằng Đồng Đỏ Cỡ Lớn",
-      image: "/images/locnam_real/locnam_hac_tho.jpg",
-      tag: "ĐỒ THỜ PHONG THỦY",
-      comment:
-        "Dù ở nước ngoài nhưng mình rất yên tâm khi đặt hàng của xưởng Lộc Nam. Nghệ nhân quay video đúc tượng và đóng thùng xốp gỗ chuyên nghiệp gửi sang Đức an toàn nguyên vẹn 100%.",
-    },
-  ];
 
-  const [reviews, setReviews] = React.useState(defaultReviews);
+
+  const [reviews, setReviews] = React.useState(DEFAULT_HOME_REVIEWS);
 
   React.useEffect(() => {
-    fetch("/api/admin/landing-page")
+    fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
         if (data.success && data.settings) {
           const s = data.settings;
           setReviews(
-            defaultReviews.map((item, idx) => {
+            DEFAULT_HOME_REVIEWS.map((item, idx) => {
               const prefix = `rev${idx + 1}_`;
               return {
                 ...item,

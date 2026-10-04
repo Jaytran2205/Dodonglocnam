@@ -1,3 +1,4 @@
+import { SITE_URL, siteUrl } from "@/lib/site";
 import { LocNamPartners } from "@/components/home/LocNamPartners";
 import Link from "next/link";
 import { Metadata } from "next";
@@ -20,13 +21,13 @@ export const metadata: Metadata = {
     "đồ đồng lộc nam",
   ].join(", "),
   alternates: {
-    canonical: "https://www.quatanglocnam.com/bo-suu-tap",
+    canonical: siteUrl('/bo-suu-tap'),
   },
   openGraph: {
     title: "Bộ Sưu Tập Đồ Đồng & Quà Tặng Mạ Vàng Độc Bản | Đồ Đồng Lộc Nam",
     description:
       "Tuyển tập các tuyệt tác đồng đúc thủ công và quà tặng mạ vàng sang trọng của xưởng Lộc Nam.",
-    url: "https://www.quatanglocnam.com/bo-suu-tap",
+    url: siteUrl('/bo-suu-tap'),
     siteName: "Đồ Đồng Lộc Nam",
     locale: "vi_VN",
     type: "website",
@@ -92,8 +93,8 @@ export default function CollectionPage() {
       {/* Breadcrumb Schema for Google */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Trang Chủ", url: "https://www.quatanglocnam.com" },
-          { name: "Bộ Sưu Tập", url: "https://www.quatanglocnam.com/bo-suu-tap" },
+          { name: "Trang Chủ", url: SITE_URL },
+          { name: "Bộ Sưu Tập", url: siteUrl('/bo-suu-tap') },
         ]}
       />
 

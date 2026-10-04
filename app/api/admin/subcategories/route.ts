@@ -2,45 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
 import { DEFAULT_HIERARCHICAL_CATEGORIES, MainCategoryData } from "@/lib/subcategories-data";
-import { revalidatePath } from "next/cache";
-import fs from "fs";
-import path from "path";
+import { loadCatalog } from "@/lib/catalog";
+import { revalidateTag, revalidatePath } from "next/cache";
 
+export const dynamic = "force-dynamic";
 export async function GET() {
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: "subcategories_catalog" },
-    });
-
-    if (setting && setting.value) {
-      try {
-        const parsed = JSON.parse(setting.value);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const merged = parsed.map((cat: any) => {
-            const def = DEFAULT_HIERARCHICAL_CATEGORIES.find((d) => d.slug === cat.slug);
-            return {
-              ...cat,
-              banner: cat.banner || def?.banner || "/images/trong-dong-viet-nam.jpg",
-            };
-          });
-          return NextResponse.json({ success: true, data: merged });
-        }
-      } catch (err) {
-        console.error("Parse admin subcategories_catalog error:", err);
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: DEFAULT_HIERARCHICAL_CATEGORIES,
-    });
-  } catch (error: any) {
-    console.error("Admin GET Subcategories Error:", error);
-    return NextResponse.json(
-      { success: false, message: "Lỗi tải danh mục thẻ con", data: DEFAULT_HIERARCHICAL_CATEGORIES },
-      { status: 500 }
-    );
-  }
+  try { return NextResponse.json({ success: true, data: await loadCatalog() }); }
+  catch (error) { console.error("Catalogue error:", error); return NextResponse.json({ success: false, message: "Không tải được danh mục." }, { status: 500 }); }
 }
 
 export async function POST(req: NextRequest) {
@@ -66,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const slugSet = new Set<string>();
     for (const cat of catalog) {
-      if (!cat || typeof cat !== "object" || !cat.slug || typeof cat.slug !== "string" || !cat.name || typeof cat.name !== "string") {
+      if (!cat || typeof cat !== "object" || !cat.slug || typeof cat.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cat.slug) || !cat.name || typeof cat.name !== "string") {
         return NextResponse.json(
           { success: false, message: "Mỗi danh mục phải có định danh slug và tên hợp lệ." },
           { status: 400 }
@@ -81,8 +49,19 @@ export async function POST(req: NextRequest) {
       slugSet.add(cat.slug);
     }
 
+    for (const cat of catalog) {
+      if (!Array.isArray(cat.subCategories) || !cat.name.trim()) return NextResponse.json({ success: false, message: "Tên và danh sách danh mục con không hợp lệ." }, { status: 400 });
+      const validateItems = (items: any[]) => {
+        const ids = new Set<string>();
+        return items.every(item => item && typeof item.id === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id) && !ids.has(item.id) && !!ids.add(item.id) && typeof item.name === "string" && item.name.trim() && typeof item.keyword === "string" && typeof item.image === "string");
+      };
+      if (!validateItems(cat.subCategories) || cat.subCategories.some((sub: any) => sub.children && (!Array.isArray(sub.children) || !validateItems(sub.children)))) {
+        return NextResponse.json({ success: false, message: "Danh mục con phải có tên, đường dẫn hợp lệ và không trùng nhau." }, { status: 400 });
+      }
+    }
+    await prisma.$transaction([
     // 1. Save to Database Setting table (persistent source of truth across Vercel deployments)
-    await prisma.setting.upsert({
+    prisma.setting.upsert({
       where: { key: "subcategories_catalog" },
       update: {
         value: JSON.stringify(catalog),
@@ -94,7 +73,15 @@ export async function POST(req: NextRequest) {
         group: "GENERAL",
         description: "Danh sách thẻ nhóm sản phẩm con (Subcategories) hiển thị trên web",
       },
-    });
+    }),
+    ...catalog.map((cat: MainCategoryData) => prisma.category.updateMany({
+      where: { slug: { in: [cat.slug, ...(cat.aliases || [])] } },
+      data: { name: cat.name.trim(), ...(cat.description !== undefined ? { description: cat.description } : {}) },
+    })),
+    ]);
+    revalidateTag("catalog"); revalidateTag("categories"); revalidateTag("settings");
+    revalidatePath("/", "layout");
+    revalidatePath("/sitemap.xml");
 
     // 2. Purge Next.js Cache for storefront pages
     try {

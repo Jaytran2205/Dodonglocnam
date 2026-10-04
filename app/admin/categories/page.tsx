@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import { AdminImage } from "@/components/admin/AdminImage";
+
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Plus,
   Edit2,
@@ -54,7 +56,9 @@ export default function AdminCategoriesPage() {
   const [savingMain, setSavingMain] = useState(false);
 
   // TAB 2: SUBCATEGORIES CATALOG STATE
-  const [catalog, setCatalog] = useState<MainCategoryData[]>(DEFAULT_HIERARCHICAL_CATEGORIES);
+  const [catalog, setCatalog] = useState<MainCategoryData[]>([]);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const catalogRequestId = useRef(0);
   const [selectedMainSlug, setSelectedMainSlug] = useState<string>("tranh-dong");
   const [subSearch, setSubSearch] = useState<string>("");
   const [savingSub, setSavingSub] = useState(false);
@@ -100,13 +104,19 @@ export default function AdminCategoriesPage() {
 
   // Fetch Subcategories Catalog
   const fetchSubcategories = async () => {
+    const requestId = ++catalogRequestId.current;
+    setCatalogLoaded(false);
     try {
-      const res = await fetch("/api/admin/subcategories");
+      const res = await fetch("/api/admin/subcategories", { cache: "no-store" });
       const data = await res.json();
+      if (requestId !== catalogRequestId.current) return;
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
         setCatalog(data.data);
-      }
+        setCatalogLoaded(true);
+      } else { throw new Error(data.message || "Không tải được danh mục"); }
     } catch (e) {
+      if (requestId !== catalogRequestId.current) return;
+      toastError("Không tải được danh mục. Vui lòng tải lại trước khi chỉnh sửa.");
       console.error("Error fetching subcategories:", e);
     }
   };
@@ -156,6 +166,7 @@ export default function AdminCategoriesPage() {
       if (data.success) {
         setModalOpen(false);
         fetchCategories();
+        fetchSubcategories();
         toastSuccess(editingCat ? `Đã cập nhật danh mục "${formData.name}"!` : `Đã tạo danh mục mới "${formData.name}"!`, "Thành công 🎉");
       } else {
         toastError(data.message || "Lỗi lưu danh mục", "Lỗi lưu");
@@ -565,6 +576,7 @@ export default function AdminCategoriesPage() {
   };
 
   const handleSaveAllSubcategories = async () => {
+    if (!catalogLoaded || savingSub || uploadingSubImage || uploadingChildImage) return;
     setSavingSub(true);
     setSubSaveSuccess(false);
     try {
@@ -691,6 +703,20 @@ export default function AdminCategoriesPage() {
             </div>
           </div>
 
+          <div className="bg-[#0c1420] border border-[#1f2d42] p-4 rounded-2xl space-y-3">
+            <h3 className="text-white font-semibold">Tên và nội dung danh mục</h3>
+            {([['name', 'Tên danh mục hiển thị'], ['seoTitle', 'Tiêu đề SEO (để trống để tạo tự động)'], ['description', 'Mô tả danh mục']] as const).map(([field, label]) => (
+              <label key={field} className="block text-sm text-[#cbd5e1]">{label}
+                <input className="w-full mt-1 px-3 py-2 bg-[#111c2e] border border-[#34465e] rounded-lg text-white focus:outline-none focus:border-[#dfb755]"
+                  disabled={!catalogLoaded}
+                  value={currentCategoryData[field] || ''}
+                  onChange={e => setCatalog(prev => prev.map(cat => cat.slug === selectedMainSlug ? { ...cat, [field]: e.target.value } : cat))} />
+              </label>
+            ))}
+            <p className="text-sm text-[#cbd5e1]">Bấm Lưu tất cả để cập nhật trên website. Đổi tên giữ nguyên đường dẫn và liên kết sản phẩm.</p>
+            <Link href="/admin/landing-page?tab=featured_categories#home-categories" className="inline-block text-sm text-[#dfb755] underline underline-offset-4">Chọn danh mục đưa lên trang chủ</Link>
+          </div>
+
           {/* Category Banner Management Card */}
           <div className="bg-[#0c1420] border border-[#ffd700]/30 p-4 sm:p-5 rounded-2xl shadow-xl space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
@@ -709,7 +735,7 @@ export default function AdminCategoriesPage() {
               <div className="sm:col-span-5">
                 <div className="aspect-[24/8] max-h-36 rounded-xl overflow-hidden bg-[#111c2e] border border-[#1f2d42] relative flex items-center justify-center">
                   {currentCategoryData.banner ? (
-                    <img
+                    <AdminImage
                       src={currentCategoryData.banner}
                       alt={`Banner ${currentCategoryData.name}`}
                       className="w-full h-full object-cover"
@@ -800,7 +826,7 @@ export default function AdminCategoriesPage() {
 
               <button
                 onClick={handleSaveAllSubcategories}
-                disabled={savingSub}
+                disabled={savingSub || !catalogLoaded || uploadingSubImage || uploadingChildImage}
                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50"
               >
                 {savingSub ? (
@@ -892,7 +918,7 @@ export default function AdminCategoriesPage() {
 
                     {/* Image Box */}
                     <div className="aspect-[4/3] bg-[#050c14] relative p-3 flex items-center justify-center overflow-hidden border-b border-[#1f2d42]">
-                      <img
+                      <AdminImage
                         src={sub.image || "/images/hero_golden_ship.jpg"}
                         alt={sub.name}
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
@@ -1057,7 +1083,7 @@ export default function AdminCategoriesPage() {
                                   <div className="grid grid-cols-12 gap-2.5 items-center">
                                     {/* Child Image Preview with Upload */}
                                     <div className="col-span-4 aspect-[4/3] rounded-lg overflow-hidden bg-[#050c14] border border-[#1f2d42] relative group/img flex items-center justify-center">
-                                      <img
+                                      <AdminImage
                                         src={child.image || "/images/hero_golden_ship.jpg"}
                                         alt={child.name}
                                         className="w-full h-full object-contain"
@@ -1146,7 +1172,7 @@ export default function AdminCategoriesPage() {
             <button
               type="button"
               onClick={handleSaveAllSubcategories}
-              disabled={savingSub}
+              disabled={savingSub || !catalogLoaded || uploadingSubImage || uploadingChildImage}
               className="w-full sm:w-auto px-8 py-2.5 bg-gradient-to-r from-[#dfb755] via-[#f5db8b] to-[#b8860b] text-[#070c14] font-serif font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_4px_15px_rgba(223,183,85,0.4)] hover:brightness-110 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {savingSub ? (
@@ -1214,7 +1240,7 @@ export default function AdminCategoriesPage() {
                   >
                     <div className="space-y-3">
                       <div className="aspect-[16/10] rounded-xl overflow-hidden bg-white/5 relative p-2 border border-[#1f2d42]">
-                        <img
+                        <AdminImage
                           src={cat.image || "/images/hero_golden_ship.jpg"}
                           alt={cat.name}
                           className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
@@ -1367,7 +1393,7 @@ export default function AdminCategoriesPage() {
                 <div className="space-y-1">
                   <span className="text-[10px] text-[#94a3b8]">Xem trước ảnh:</span>
                   <div className="w-24 h-20 bg-black/50 rounded-xl border border-[#1f2d42] overflow-hidden p-1 flex items-center justify-center">
-                    <img
+                    <AdminImage
                       src={newSubData.image}
                       alt="Preview"
                       className="w-full h-full object-contain"
@@ -1455,7 +1481,7 @@ export default function AdminCategoriesPage() {
                 </label>
 
                 <div className="aspect-[4/3] rounded-xl overflow-hidden bg-[#070c14] border border-[#1f2d42] relative flex items-center justify-center p-2">
-                  <img
+                  <AdminImage
                     src={newChildData.image || "/images/hero_golden_ship.jpg"}
                     alt="Preview"
                     className="w-full h-full object-contain"

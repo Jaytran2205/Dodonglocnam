@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminImage } from "@/components/admin/AdminImage";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -495,7 +497,7 @@ export default function AdminDashboardPage() {
                 >
                   <div className="space-y-2">
                     <div className="aspect-square rounded-lg overflow-hidden bg-white/5 relative p-2">
-                      <img
+                      <AdminImage
                         src={thumb}
                         alt={prod.name}
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"

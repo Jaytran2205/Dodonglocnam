@@ -1,3 +1,4 @@
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/admin-auth";
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { name, description, image, order } = await req.json();
-    if (!name) {
+    if (typeof name !== "string" || !name.trim()) {
       return NextResponse.json({ success: false, message: "Tên danh mục là bắt buộc." }, { status: 400 });
     }
 
@@ -38,13 +39,15 @@ export async function POST(req: NextRequest) {
 
     const category = await prisma.category.create({
       data: {
-        name,
+        name: name.trim(),
         slug,
         description,
         image,
         order: order ? parseInt(order) : 0
       }
     });
+
+    revalidateTag("categories"); revalidateTag("catalog"); revalidatePath("/", "layout"); revalidatePath("/sitemap.xml");
 
     logActivity({
       req,
@@ -75,19 +78,21 @@ export async function PUT(req: NextRequest) {
 
   try {
     const { id, name, description, image, order } = await req.json();
-    if (!id || !name) {
+    if (!id || typeof name !== "string" || !name.trim()) {
       return NextResponse.json({ success: false, message: "Thiếu ID hoặc tên danh mục." }, { status: 400 });
     }
 
     const category = await prisma.category.update({
       where: { id },
       data: {
-        name,
+        name: name.trim(),
         description,
         image,
         order: order ? parseInt(order) : 0
       }
     });
+
+    revalidateTag("categories"); revalidateTag("catalog"); revalidatePath("/", "layout"); revalidatePath("/sitemap.xml");
 
     logActivity({
       req,
@@ -138,6 +143,8 @@ export async function DELETE(req: NextRequest) {
     }
 
     await prisma.category.delete({ where: { id } });
+
+    revalidateTag("categories"); revalidateTag("catalog"); revalidatePath("/", "layout"); revalidatePath("/sitemap.xml");
 
     logActivity({
       req,
