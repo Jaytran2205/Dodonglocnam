@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 
@@ -50,29 +50,7 @@ const defaultCollectionCategories = [
 ];
 
 export function LocNamCategories() {
-  const [collectionCategories, setCollectionCategories] = useState(defaultCollectionCategories);
-
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.settings) {
-          const s = data.settings;
-          const dynamicCats = defaultCollectionCategories.map((cat, idx) => {
-            const i = idx + 1;
-            return {
-              ...cat,
-              title: s[`cat${i}_title`] || cat.title,
-              subtitle: s[`cat${i}_desc`] || s[`cat${i}_subtitle`] || cat.subtitle,
-              image: s[`cat${i}_image`] || cat.image,
-              href: s[`cat${i}_link`] || s[`cat${i}_href`] || cat.href,
-            };
-          });
-          setCollectionCategories(dynamicCats);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const collectionCategories = defaultCollectionCategories;
 
   return (
     <section className="bg-[#fcfaf6] py-10 sm:py-12 px-4 sm:px-6 lg:px-8 border-b border-[#ece5d8]">

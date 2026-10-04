@@ -60,31 +60,36 @@ export default function AdminLandingPageManager() {
     hero_btn2_text: "TƯ VẤN QUÀ TẶNG",
     hero_btn2_link: "/lien-he",
 
-    // 5 Featured Categories (Sản phẩm nổi bật - Ảnh 3)
-    cat1_title: "ĐỒ THỜ CÚNG",
-    cat1_desc: "Đỉnh đồng, tam sự, ngũ sự",
-    cat1_image: "/images/locnam_real/locnam_bo_do_tho.jpg",
-    cat1_link: "/san-pham/do-tho-cung",
+    // 6 Featured Categories (Sản phẩm nổi bật)
+    cat1_title: "TRỐNG ĐỒNG",
+    cat1_desc: "Trống đồng lưu niệm, quà tặng ngoại giao",
+    cat1_image: "/images/collections/cat_trong_dong.jpg?v=clean_cat_v6",
+    cat1_link: "/san-pham/trong-dong",
 
-    cat2_title: "TƯỢNG ĐỒNG",
-    cat2_desc: "Tượng truyền thần, Phật, danh nhân",
-    cat2_image: "/images/cat_phong_thuy.jpg",
-    cat2_link: "/san-pham/tuong-dong",
+    cat2_title: "TRANH ĐỒNG CAO CẤP",
+    cat2_desc: "Tranh Thuận Buồm Xuôi Gió mạ vàng 24k",
+    cat2_image: "/images/collections/cat_tranh_dong.jpg?v=clean_cat_v6",
+    cat2_link: "/san-pham/tranh-dong",
 
-    cat3_title: "TRANH ĐỒNG",
-    cat3_desc: "Tranh mạ vàng 24k, phong thủy",
-    cat3_image: "/images/locnam_real/locnam_tranh_dong_que.jpg",
-    cat3_link: "/san-pham/tranh-dong",
+    cat3_title: "TƯỢNG ĐỒNG",
+    cat3_desc: "Tượng Phật Bà Quan Âm mạ vàng tòa sen",
+    cat3_image: "/images/collections/cat_tuong_dong.jpg?v=clean_cat_v6",
+    cat3_link: "/san-pham/tuong-dong",
 
-    cat4_title: "TRỐNG ĐỒNG",
-    cat4_desc: "Trống Đông Sơn, mặt trống lưu niệm",
-    cat4_image: "/images/locnam_real/locnam_trong_dong.jpg",
-    cat4_link: "/san-pham/trong-dong",
+    cat4_title: "ĐỒ THỜ CÚNG",
+    cat4_desc: "Đỉnh đồng, tam sự, ngũ sự gia truyền",
+    cat4_image: "/images/collections/cat_do_tho.jpg?v=clean_cat_v6",
+    cat4_link: "/san-pham/do-tho-cung",
 
-    cat5_title: "QUÀ TẶNG BẰNG ĐỒNG",
-    cat5_desc: "Quà doanh nghiệp, sự kiện, phong thủy",
-    cat5_image: "/images/cat_doanh_nghiep.jpg",
+    cat5_title: "QUÀ TẶNG DOANH NGHIỆP",
+    cat5_desc: "Mô hình thuyền buồm mạ vàng, quà tặng đối tác",
+    cat5_image: "/images/collections/cat_cup_golf.jpg?v=clean_cat_v6",
     cat5_link: "/san-pham/qua-tang-dong",
+
+    cat6_title: "LINH VẬT 12 CON GIÁP",
+    cat6_desc: "Bộ tượng phong thủy, mã thượng phong hầu",
+    cat6_image: "/images/collections/cat_linh_vat_12_con_giap.jpg?v=clean_cat_v6",
+    cat6_link: "/san-pham/tuong-dong?sub=linh-vat-12-con-giap",
 
     // 5 Favorite Products (Sản phẩm được yêu thích - Ảnh 2)
     fav1_name: "Thuyền buồm thuận buồm xuôi gió mạ vàng 24k",
