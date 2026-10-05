@@ -97,6 +97,7 @@ export default function AdminCategoriesPage() {
     image: "/images/hero_golden_ship.jpg",
   });
   const [expandedSubIds, setExpandedSubIds] = useState<Record<string, boolean>>({});
+  const [managingSubId, setManagingSubId] = useState<string | null>(null);
 
   // Modal edit single subcategory
   const [editingSubIndex, setEditingSubIndex] = useState<number | null>(null);
@@ -240,6 +241,11 @@ export default function AdminCategoriesPage() {
     });
   }, [currentCategoryData, subSearch]);
 
+  const managingSub = useMemo(() => {
+    if (!managingSubId) return null;
+    return currentCategoryData.subCategories.find((s) => s.id === managingSubId) || null;
+  }, [currentCategoryData, managingSubId]);
+
   const handleUpdateCategoryBanner = (newBannerUrl: string) => {
     setCatalog((prev) =>
       prev.map((cat) => {
@@ -341,10 +347,11 @@ export default function AdminCategoriesPage() {
   };
 
   // --- CHILD CATEGORY HANDLERS (CẤP CON / CẤP CUỐI) ---
+  // Authored & optimized by jaydev - Accordion toggle defaults to collapsed for consistent grid height
   const toggleExpandSub = (subId: string) => {
     setExpandedSubIds((prev) => ({
       ...prev,
-      [subId]: prev[subId] === undefined ? false : !prev[subId],
+      [subId]: !prev[subId],
     }));
   };
 
@@ -892,290 +899,303 @@ export default function AdminCategoriesPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredSubCategories.map((sub, idx) => (
-                  <div
-                    key={sub.id}
-                    className="bg-[#0c1420] border-2 border-[#1f2d42] hover:border-[#dfb755] rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col justify-between group relative"
-                  >
-                    {/* Upper Bar: Index, Move & Delete Controls */}
-                    <div className="p-2.5 bg-[#111c2e] border-b border-[#1f2d42] flex items-center justify-between text-xs">
-                      <span className="font-mono text-[11px] text-[#dfb755] font-bold bg-[#070c14] px-2 py-0.5 rounded border border-[#dfb755]/30">
-                        #{idx + 1}
-                      </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                {/* Authored & optimized by jaydev - Balanced uniform grid preventing uneven height stretching */}
+                {filteredSubCategories.map((sub, idx) => {
+                  const hasChildren = sub.children && sub.children.length > 0;
+                  const isInlineExpanded = !!expandedSubIds[sub.id];
 
-                      <div className="flex items-center gap-1">
-                        {/* Move Left / Up */}
-                        <button
-                          onClick={() => handleMoveSub(sub.id, "up")}
-                          disabled={idx === 0}
-                          className="p-1 text-gray-400 hover:text-white hover:bg-[#1f2d42] rounded disabled:opacity-30"
-                          title="Di chuyển lên trước"
-                        >
-                          <ArrowUp className="w-3.5 h-3.5" />
-                        </button>
-                        {/* Move Right / Down */}
-                        <button
-                          onClick={() => handleMoveSub(sub.id, "down")}
-                          disabled={idx === filteredSubCategories.length - 1}
-                          className="p-1 text-gray-400 hover:text-white hover:bg-[#1f2d42] rounded disabled:opacity-30"
-                          title="Di chuyển xuống sau"
-                        >
-                          <ArrowDown className="w-3.5 h-3.5" />
-                        </button>
-                        {/* Delete Button */}
-                        <button
-                          onClick={() => handleDeleteSub(sub.id, sub.name)}
-                          className="p-1 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded ml-1"
-                          title="Xóa thẻ này"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Image Box */}
-                    <div className="aspect-[4/3] bg-[#050c14] relative p-3 flex items-center justify-center overflow-hidden border-b border-[#1f2d42]">
-                      <AdminImage
-                        src={sub.image || "/images/hero_golden_ship.jpg"}
-                        alt={sub.name}
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                      />
-
-                      {/* Change Image Button Overlay */}
-                      <label className="absolute bottom-2 right-2 px-2.5 py-1 bg-black/80 hover:bg-[#dfb755] text-white hover:text-black rounded-lg text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1 shadow-md border border-white/20">
-                        <Upload className="w-3 h-3" />
-                        <span>Đổi Ảnh</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleUploadImageForSub(e, sub.id)}
-                        />
-                      </label>
-                    </div>
-
-                    {/* Lower Form Fields */}
-                    <div className="bg-white p-4 space-y-3">
-                      {/* Name Input */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-[#0c1825] uppercase mb-1">
-                          Tên Thẻ Con (Hiển thị ngoài web):
-                        </label>
-                        <input
-                          type="text"
-                          value={sub.name}
-                          onChange={(e) =>
-                            handleUpdateSubField(sub.id, "name", e.target.value)
-                          }
-                          className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:border-[#dfb755] text-[#0c1825] font-serif font-extrabold text-xs px-3 py-1.5 rounded-lg focus:outline-none uppercase"
-                        />
-                      </div>
-
-                      {/* Keyword Input */}
-                      <div>
-                        <label className="block text-[10px] font-bold text-[#475569] uppercase mb-1">
-                          Từ Khóa Lọc Sản Phẩm (Keyword):
-                        </label>
-                        <input
-                          type="text"
-                          value={sub.keyword}
-                          onChange={(e) =>
-                            handleUpdateSubField(sub.id, "keyword", e.target.value)
-                          }
-                          placeholder="Ví dụ: bát mã, thuận buồm..."
-                          className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:border-[#dfb755] text-[#334155] text-xs px-3 py-1.5 rounded-lg focus:outline-none"
-                        />
-                      </div>
-
-                      {/* Image URL Input */}
-                      <div>
-                        <label className="block text-[10px] font-medium text-[#64748b] mb-1">
-                          Đường dẫn ảnh (URL):
-                        </label>
-                        <input
-                          type="text"
-                          value={sub.image}
-                          onChange={(e) =>
-                            handleUpdateSubField(sub.id, "image", e.target.value)
-                          }
-                          className="w-full bg-[#f8fafc] border border-[#cbd5e1] text-[#64748b] text-[11px] px-2.5 py-1 rounded-lg focus:outline-none font-mono"
-                        />
-                      </div>
-
-                      {/* Button Preview "XEM TẤT CẢ" */}
-                      <div className="pt-1 flex items-center justify-center">
-                        <span className="bg-[#f0ad1b] text-black font-black text-[10px] px-5 py-1.5 rounded-full uppercase tracking-wider shadow-sm select-none pointer-events-none">
-                          XEM TẤT CẢ (DEMO)
+                  return (
+                    <div
+                      key={sub.id}
+                      className="bg-[#0c1420] border-2 border-[#1f2d42] hover:border-[#dfb755]/70 rounded-2xl overflow-hidden shadow-xl transition-all flex flex-col group relative"
+                    >
+                      {/* Upper Bar: Index, Move & Delete Controls */}
+                      <div className="p-2.5 bg-[#111c2e] border-b border-[#1f2d42] flex items-center justify-between text-xs">
+                        <span className="font-mono text-[11px] text-[#dfb755] font-bold bg-[#070c14] px-2 py-0.5 rounded border border-[#dfb755]/30">
+                          #{idx + 1}
                         </span>
-                      </div>
-                    </div>
 
-                    {/* HIERARCHICAL CHILD CARDS: "THẺ CON CẤP CUỐI" */}
-                    <div className="border-t-2 border-[#1f2d42] bg-[#070e17] p-3.5 space-y-3">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          {/* Move Left / Up */}
                           <button
-                            type="button"
-                            onClick={() => toggleExpandSub(sub.id)}
-                            className="flex items-center gap-1.5 text-xs font-serif font-black uppercase text-[#ffd700] hover:text-white transition-colors"
+                            onClick={() => handleMoveSub(sub.id, "up")}
+                            disabled={idx === 0}
+                            className="p-1 text-gray-400 hover:text-white hover:bg-[#1f2d42] rounded disabled:opacity-30"
+                            title="Di chuyển lên trước"
                           >
-                            <FolderTree className="w-3.5 h-3.5 text-[#ffd700]" />
-                            <span>Thẻ Con Cấp Cuối ({sub.children?.length || 0})</span>
-                            {expandedSubIds[sub.id] === false ? (
-                              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-                            ) : (
-                              <ChevronUp className="w-3.5 h-3.5 text-gray-400" />
-                            )}
+                            <ArrowUp className="w-3.5 h-3.5" />
                           </button>
-                          {sub.children && sub.children.length > 0 && (
-                            <span className="text-[9px] bg-[#ffd700]/15 text-[#ffd700] px-2 py-0.5 rounded-full font-bold border border-[#ffd700]/30 uppercase">
-                              Lưới Cấp 2
-                            </span>
+                          {/* Move Right / Down */}
+                          <button
+                            onClick={() => handleMoveSub(sub.id, "down")}
+                            disabled={idx === filteredSubCategories.length - 1}
+                            className="p-1 text-gray-400 hover:text-white hover:bg-[#1f2d42] rounded disabled:opacity-30"
+                            title="Di chuyển xuống sau"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDeleteSub(sub.id, sub.name)}
+                            className="p-1 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded ml-1"
+                            title="Xóa thẻ này"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Image Box */}
+                      <div className="aspect-[4/3] bg-[#050c14] relative p-3 flex items-center justify-center overflow-hidden border-b border-[#1f2d42]">
+                        <AdminImage
+                          src={sub.image || "/images/hero_golden_ship.jpg"}
+                          alt={sub.name}
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                        />
+
+                        {/* Change Image Button Overlay */}
+                        <label className="absolute bottom-2 right-2 px-2.5 py-1 bg-black/80 hover:bg-[#dfb755] text-white hover:text-black rounded-lg text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1 shadow-md border border-white/20">
+                          <Upload className="w-3 h-3" />
+                          <span>Đổi Ảnh</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleUploadImageForSub(e, sub.id)}
+                          />
+                        </label>
+                      </div>
+
+                      {/* Lower Form Fields: Styled in Premium Dark-Navy Slate Matching Admin */}
+                      <div className="bg-[#0e1726] p-4 space-y-3 border-t border-[#1e2f47]">
+                        {/* Name Input */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-[#dfb755] uppercase tracking-wider mb-1">
+                            Tên Thẻ Con (Hiển thị ngoài web):
+                          </label>
+                          <input
+                            type="text"
+                            value={sub.name}
+                            onChange={(e) =>
+                              handleUpdateSubField(sub.id, "name", e.target.value)
+                            }
+                            className="w-full bg-[#070d16] border border-[#23354d] focus:border-[#dfb755] text-white font-serif font-extrabold text-xs px-3 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#dfb755]/50 transition-all uppercase"
+                          />
+                        </div>
+
+                        {/* Keyword Input */}
+                        <div>
+                          <label className="block text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider mb-1">
+                            Từ Khóa Lọc Sản Phẩm (Keyword):
+                          </label>
+                          <input
+                            type="text"
+                            value={sub.keyword}
+                            onChange={(e) =>
+                              handleUpdateSubField(sub.id, "keyword", e.target.value)
+                            }
+                            placeholder="Ví dụ: bát mã, thuận buồm..."
+                            className="w-full bg-[#070d16] border border-[#23354d] focus:border-[#dfb755] text-[#cbd5e1] text-xs px-3 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#dfb755]/50 transition-all"
+                          />
+                        </div>
+
+                        {/* Image URL Input */}
+                        <div>
+                          <label className="block text-[10px] font-medium text-[#64748b] uppercase tracking-wider mb-1">
+                            Đường dẫn ảnh (URL):
+                          </label>
+                          <input
+                            type="text"
+                            value={sub.image}
+                            onChange={(e) =>
+                              handleUpdateSubField(sub.id, "image", e.target.value)
+                            }
+                            className="w-full bg-[#070d16] border border-[#23354d] text-[#94a3b8] text-[11px] px-2.5 py-1.5 rounded-xl focus:outline-none font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Card Footer: Child Categories Controls & Indicators */}
+                      <div className="border-t border-[#1e2f47] bg-[#070c14] p-3 space-y-2 mt-auto">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          {hasChildren ? (
+                            <>
+                              <div className="flex items-center gap-1.5">
+                                <FolderTree className="w-3.5 h-3.5 text-[#dfb755]" />
+                                <span className="text-xs font-serif font-black uppercase text-[#dfb755]">
+                                  Thẻ Con ({sub.children?.length || 0})
+                                </span>
+                                <span className="text-[9px] bg-[#dfb755]/15 text-[#dfb755] px-1.5 py-0.5 rounded-full font-bold border border-[#dfb755]/30 uppercase">
+                                  Lưới Cấp 2
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                {/* Dedicated Modal Manager Trigger */}
+                                <button
+                                  type="button"
+                                  onClick={() => setManagingSubId(sub.id)}
+                                  className="px-2.5 py-1 bg-[#1a293d] hover:bg-[#dfb755] text-[#dfb755] hover:text-black rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 border border-[#dfb755]/40 shadow-sm"
+                                  title="Mở cửa sổ quản lý chi tiết toàn bộ thẻ con"
+                                >
+                                  <span>Quản Lý ({sub.children?.length || 0})</span>
+                                </button>
+
+                                {/* Inline Accordion Toggle */}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpandSub(sub.id)}
+                                  className="p-1 text-gray-400 hover:text-white bg-[#111c2e] hover:bg-[#1a293d] rounded-lg transition-colors border border-[#1e2d42]"
+                                  title={isInlineExpanded ? "Thu gọn xem nhanh" : "Xem nhanh thẻ con inline"}
+                                >
+                                  {isInlineExpanded ? (
+                                    <ChevronUp className="w-3.5 h-3.5 text-[#dfb755]" />
+                                  ) : (
+                                    <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                                  )}
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-[11px] text-[#64748b] flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+                                Thẻ đơn (Chưa phân nhánh con)
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenAddChildModal(sub.id, sub.name)}
+                                className="px-2.5 py-1 bg-[#1e293b] hover:bg-[#dfb755] text-gray-300 hover:text-black rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 border border-slate-700/60 shadow-sm"
+                              >
+                                <Plus className="w-3 h-3" />
+                                <span>+ Thêm Thẻ Con</span>
+                              </button>
+                            </>
                           )}
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleOpenAddChildModal(sub.id, sub.name)}
-                          className="px-2.5 py-1 bg-[#1e2d42] hover:bg-[#ffd700] text-gray-200 hover:text-black rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 border border-gray-700 shadow-sm"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>+ Thêm Thẻ Con Cấp Cuối</span>
-                        </button>
-                      </div>
+                        {/* Inline Accordion for Child Cards (Expanded on click) */}
+                        {hasChildren && isInlineExpanded && (
+                          <div className="space-y-2.5 pt-2 border-t border-[#1a2638] animate-in fade-in duration-200">
+                            <div className="flex items-center justify-between text-[10px] text-[#94a3b8]">
+                              <span>Xem nhanh ({sub.children?.length} thẻ con):</span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenAddChildModal(sub.id, sub.name)}
+                                className="text-[#dfb755] hover:underline font-bold flex items-center gap-0.5"
+                              >
+                                <Plus className="w-2.5 h-2.5" />
+                                Thêm thẻ con
+                              </button>
+                            </div>
 
-                      {/* Expanded Child List */}
-                      {expandedSubIds[sub.id] !== false && (
-                        <>
-                          {sub.children && sub.children.length > 0 ? (
-                            <div className="space-y-3 pt-1">
-                              {sub.children.map((child, cIdx) => (
-                                <div
-                                  key={child.id}
-                                  className="bg-[#0c1420] border border-[#2a3d58] hover:border-[#ffd700]/60 rounded-xl p-3 space-y-2.5 shadow-md transition-all relative group/child"
-                                >
-                                  {/* Child Upper Bar: Index & Move & Delete */}
-                                  <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[#1f2d42]">
-                                    <div className="flex items-center gap-1.5">
-                                      <CornerDownRight className="w-3 h-3 text-[#ffd700]" />
-                                      <span className="font-mono text-[10px] font-bold text-[#ffd700] bg-[#111c2e] px-1.5 py-0.5 rounded border border-[#ffd700]/30">
-                                        #{idx + 1}.{cIdx + 1}
-                                      </span>
-                                      <span className="text-[11px] font-bold text-white truncate max-w-[140px]">
-                                        {child.name}
-                                      </span>
-                                    </div>
-
-                                    <div className="flex items-center gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleMoveChild(sub.id, child.id, "up")}
-                                        disabled={cIdx === 0}
-                                        className="p-1 text-gray-400 hover:text-white hover:bg-[#1f2d42] rounded disabled:opacity-30"
-                                        title="Di chuyển lên"
-                                      >
-                                        <ArrowUp className="w-3 h-3" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleMoveChild(sub.id, child.id, "down")}
-                                        disabled={cIdx === sub.children!.length - 1}
-                                        className="p-1 text-gray-400 hover:text-white hover:bg-[#1f2d42] rounded disabled:opacity-30"
-                                        title="Di chuyển xuống"
-                                      >
-                                        <ArrowDown className="w-3 h-3" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDeleteChild(sub.id, child.id, child.name)}
-                                        className="p-1 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded ml-1"
-                                        title="Xóa thẻ con này"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
-                                    </div>
+                            {sub.children!.map((child, cIdx) => (
+                              <div
+                                key={child.id}
+                                className="bg-[#09101a] border border-[#1e2f47] hover:border-[#dfb755]/50 rounded-xl p-2.5 space-y-2 shadow-sm transition-all"
+                              >
+                                {/* Child Upper Bar: Index & Move & Delete */}
+                                <div className="flex items-center justify-between text-xs pb-1 border-b border-[#172335]">
+                                  <div className="flex items-center gap-1.5">
+                                    <CornerDownRight className="w-3 h-3 text-[#dfb755]" />
+                                    <span className="font-mono text-[10px] font-bold text-[#dfb755] bg-[#111c2e] px-1.5 py-0.5 rounded border border-[#dfb755]/30">
+                                      #{idx + 1}.{cIdx + 1}
+                                    </span>
+                                    <span className="text-[11px] font-bold text-white truncate max-w-[130px]">
+                                      {child.name}
+                                    </span>
                                   </div>
 
-                                  {/* Child Image & Inputs Row */}
-                                  <div className="grid grid-cols-12 gap-2.5 items-center">
-                                    {/* Child Image Preview with Upload */}
-                                    <div className="col-span-4 aspect-[4/3] rounded-lg overflow-hidden bg-[#050c14] border border-[#1f2d42] relative group/img flex items-center justify-center">
-                                      <AdminImage
-                                        src={child.image || "/images/hero_golden_ship.jpg"}
-                                        alt={child.name}
-                                        className="w-full h-full object-contain"
+                                  <div className="flex items-center gap-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMoveChild(sub.id, child.id, "up")}
+                                      disabled={cIdx === 0}
+                                      className="p-1 text-gray-400 hover:text-white disabled:opacity-30"
+                                      title="Di chuyển lên"
+                                    >
+                                      <ArrowUp className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMoveChild(sub.id, child.id, "down")}
+                                      disabled={cIdx === sub.children!.length - 1}
+                                      className="p-1 text-gray-400 hover:text-white disabled:opacity-30"
+                                      title="Di chuyển xuống"
+                                    >
+                                      <ArrowDown className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteChild(sub.id, child.id, child.name)}
+                                      className="p-1 text-rose-400 hover:text-rose-200 ml-0.5"
+                                      title="Xóa thẻ con"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Child Image & Inputs Row */}
+                                <div className="grid grid-cols-12 gap-2 items-center">
+                                  <div className="col-span-4 aspect-[4/3] rounded-lg overflow-hidden bg-[#050c14] border border-[#1f2d42] relative group/img flex items-center justify-center">
+                                    <AdminImage
+                                      src={child.image || "/images/hero_golden_ship.jpg"}
+                                      alt={child.name}
+                                      className="w-full h-full object-contain"
+                                    />
+                                    <label className="absolute inset-0 bg-black/70 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center text-white cursor-pointer transition-opacity">
+                                      <Upload className="w-3.5 h-3.5 text-[#dfb755] mb-0.5" />
+                                      <span className="text-[8px] font-bold">Đổi ảnh</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => handleUploadImageForChild(e, sub.id, child.id)}
                                       />
-                                      <label className="absolute inset-0 bg-black/70 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center text-white cursor-pointer transition-opacity">
-                                        <Upload className="w-4 h-4 text-[#ffd700] mb-0.5" />
-                                        <span className="text-[9px] font-bold">Đổi ảnh</span>
-                                        <input
-                                          type="file"
-                                          accept="image/*"
-                                          className="hidden"
-                                          onChange={(e) => handleUploadImageForChild(e, sub.id, child.id)}
-                                        />
-                                      </label>
-                                    </div>
-
-                                    {/* Child Inputs */}
-                                    <div className="col-span-8 space-y-1.5">
-                                      <div>
-                                        <label className="block text-[9px] font-bold text-gray-400 uppercase">
-                                          Tên Thẻ Con Cấp Cuối:
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={child.name}
-                                          onChange={(e) =>
-                                            handleUpdateChildField(sub.id, child.id, "name", e.target.value)
-                                          }
-                                          className="w-full bg-[#111c2e] border border-[#2a3d58] focus:border-[#ffd700] text-white font-bold text-[11px] px-2 py-1 rounded focus:outline-none"
-                                        />
-                                      </div>
-
-                                      <div>
-                                        <label className="block text-[9px] font-bold text-gray-400 uppercase">
-                                          Từ Khóa Lọc (Keyword):
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={child.keyword}
-                                          onChange={(e) =>
-                                            handleUpdateChildField(sub.id, child.id, "keyword", e.target.value)
-                                          }
-                                          placeholder="Từ khóa..."
-                                          className="w-full bg-[#111c2e] border border-[#2a3d58] focus:border-[#ffd700] text-gray-300 text-[10px] px-2 py-1 rounded focus:outline-none"
-                                        />
-                                      </div>
-                                    </div>
+                                    </label>
                                   </div>
 
-                                  {/* Child Image URL Input */}
-                                  <div>
+                                  <div className="col-span-8 space-y-1">
                                     <input
                                       type="text"
-                                      value={child.image}
+                                      value={child.name}
                                       onChange={(e) =>
-                                        handleUpdateChildField(sub.id, child.id, "image", e.target.value)
+                                        handleUpdateChildField(sub.id, child.id, "name", e.target.value)
                                       }
-                                      placeholder="/images/..."
-                                      className="w-full bg-[#070c14] border border-[#1f2d42] text-[#94a3b8] text-[9px] px-2 py-0.5 rounded focus:outline-none font-mono"
+                                      placeholder="Tên thẻ con..."
+                                      className="w-full bg-[#111c2e] border border-[#23354d] focus:border-[#dfb755] text-white font-bold text-[11px] px-2 py-1 rounded focus:outline-none"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={child.keyword}
+                                      onChange={(e) =>
+                                        handleUpdateChildField(sub.id, child.id, "keyword", e.target.value)
+                                      }
+                                      placeholder="Từ khóa..."
+                                      className="w-full bg-[#111c2e] border border-[#23354d] focus:border-[#dfb755] text-gray-300 text-[10px] px-2 py-1 rounded focus:outline-none"
                                     />
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-2.5 px-3 bg-[#0a121e] rounded-xl border border-dashed border-[#1f2d42] text-[10px] text-gray-400">
-                              Đây là thẻ đơn trực tiếp. Bấm &quot;+ Thêm Thẻ Con Cấp Cuối&quot; để phân nhánh thẻ này.
-                            </div>
-                          )}
-                        </>
-                      )}
+
+                                <input
+                                  type="text"
+                                  value={child.image}
+                                  onChange={(e) =>
+                                    handleUpdateChildField(sub.id, child.id, "image", e.target.value)
+                                  }
+                                  placeholder="/images/..."
+                                  className="w-full bg-[#050c14] border border-[#1f2d42] text-[#94a3b8] text-[9px] px-2 py-0.5 rounded focus:outline-none font-mono"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1554,6 +1574,199 @@ export default function AdminCategoriesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: QUẢN LÝ TẤT CẢ THẺ CON CẤP CUỐI CỦA THẺ CHA (DEDICATED MODAL)      */}
+      {/* ========================================================================= */}
+      {managingSubId && managingSub && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-[#0c1420] border-2 border-[#dfb755] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-5 bg-gradient-to-r from-[#111c2e] via-[#0e1726] to-[#0c1420] border-b border-[#dfb755]/30 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#dfb755]/15 border border-[#dfb755]/40 flex items-center justify-center text-[#dfb755]">
+                  <FolderTree className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-serif font-extrabold text-base text-[#dfb755] uppercase tracking-wide">
+                      QUẢN LÝ THẺ CON CẤP CUỐI
+                    </h3>
+                    <span className="text-[10px] font-bold bg-[#dfb755]/20 text-[#dfb755] px-2 py-0.5 rounded-full border border-[#dfb755]/30">
+                      {managingSub.children?.length || 0} thẻ con
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#94a3b8] mt-0.5">
+                    Thuộc nhánh: <strong className="text-white">{managingSub.name}</strong> • Danh mục: <strong className="text-[#cbd5e1]">{currentCategoryData.name}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenAddChildModal(managingSub.id, managingSub.name)}
+                  className="px-3.5 py-2 bg-gradient-to-r from-[#dfb755] to-[#b8860b] hover:brightness-110 text-[#070c14] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Thêm Thẻ Con Mới</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setManagingSubId(null)}
+                  className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-[#152236] transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="p-5 overflow-y-auto space-y-4 flex-1 scrollbar-thin scrollbar-thumb-slate-700">
+              {(!managingSub.children || managingSub.children.length === 0) ? (
+                <div className="text-center py-16 bg-[#080e18] rounded-2xl border border-dashed border-[#1f2d42] text-gray-400 space-y-3">
+                  <Package className="w-12 h-12 mx-auto text-gray-600" />
+                  <p className="text-sm font-semibold">Chưa có thẻ con cấp cuối nào trong nhánh &quot;{managingSub.name}&quot;.</p>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddChildModal(managingSub.id, managingSub.name)}
+                    className="px-4 py-2 bg-[#dfb755] text-black font-bold text-xs rounded-xl"
+                  >
+                    + Thêm Thẻ Con Đầu Tiên
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {managingSub.children.map((child, cIdx) => (
+                    <div
+                      key={child.id}
+                      className="bg-[#09101a] border border-[#1e2f47] hover:border-[#dfb755]/50 rounded-2xl p-4 space-y-3 shadow-lg transition-all group"
+                    >
+                      {/* Child Upper Bar: Index & Order & Delete */}
+                      <div className="flex items-center justify-between pb-2 border-b border-[#1b2b3f]">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-extrabold text-[#dfb755] bg-[#111c2e] px-2 py-0.5 rounded-lg border border-[#dfb755]/30">
+                            #{cIdx + 1}
+                          </span>
+                          <span className="text-xs font-bold text-white truncate max-w-[180px]">
+                            {child.name}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveChild(managingSub.id, child.id, "up")}
+                            disabled={cIdx === 0}
+                            className="p-1.5 text-gray-400 hover:text-white hover:bg-[#1a293d] rounded-lg disabled:opacity-30 transition-colors"
+                            title="Di chuyển lên trước"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveChild(managingSub.id, child.id, "down")}
+                            disabled={cIdx === managingSub.children!.length - 1}
+                            className="p-1.5 text-gray-400 hover:text-white hover:bg-[#1a293d] rounded-lg disabled:opacity-30 transition-colors"
+                            title="Di chuyển xuống sau"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteChild(managingSub.id, child.id, child.name)}
+                            className="p-1.5 text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 rounded-lg ml-1 transition-colors"
+                            title="Xóa thẻ con này"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Child Image & Inputs Grid */}
+                      <div className="grid grid-cols-12 gap-3 items-center">
+                        {/* Image with upload */}
+                        <div className="col-span-4 aspect-[4/3] rounded-xl overflow-hidden bg-[#050c14] border border-[#1f2d42] relative group/img flex items-center justify-center">
+                          <AdminImage
+                            src={child.image || "/images/hero_golden_ship.jpg"}
+                            alt={child.name}
+                            className="w-full h-full object-contain"
+                          />
+                          <label className="absolute inset-0 bg-black/75 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center text-white cursor-pointer transition-opacity">
+                            <Upload className="w-4 h-4 text-[#dfb755] mb-1" />
+                            <span className="text-[10px] font-bold">Đổi ảnh</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleUploadImageForChild(e, managingSub.id, child.id)}
+                            />
+                          </label>
+                        </div>
+
+                        {/* Inputs */}
+                        <div className="col-span-8 space-y-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-[#dfb755] uppercase tracking-wider mb-0.5">
+                              Tên Thẻ Con Cấp Cuối:
+                            </label>
+                            <input
+                              type="text"
+                              value={child.name}
+                              onChange={(e) => handleUpdateChildField(managingSub.id, child.id, "name", e.target.value)}
+                              className="w-full bg-[#111c2e] border border-[#22354e] focus:border-[#dfb755] text-white font-bold text-xs px-2.5 py-1.5 rounded-lg focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider mb-0.5">
+                              Từ Khóa Lọc (Keyword):
+                            </label>
+                            <input
+                              type="text"
+                              value={child.keyword}
+                              onChange={(e) => handleUpdateChildField(managingSub.id, child.id, "keyword", e.target.value)}
+                              placeholder="Từ khóa..."
+                              className="w-full bg-[#111c2e] border border-[#22354e] focus:border-[#dfb755] text-[#cbd5e1] text-xs px-2.5 py-1.5 rounded-lg focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Child Image URL */}
+                      <div>
+                        <label className="block text-[9px] font-medium text-[#64748b] mb-0.5">
+                          Đường dẫn ảnh (URL):
+                        </label>
+                        <input
+                          type="text"
+                          value={child.image}
+                          onChange={(e) => handleUpdateChildField(managingSub.id, child.id, "image", e.target.value)}
+                          placeholder="/images/..."
+                          className="w-full bg-[#050c14] border border-[#1f2d42] text-[#94a3b8] text-[10px] px-2.5 py-1 rounded-lg focus:outline-none font-mono"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-[#0a111c] border-t border-[#1f2d42] flex items-center justify-between gap-3 shrink-0">
+              <span className="text-[11px] text-[#94a3b8]">
+                * Mọi thay đổi danh mục con sẽ được áp dụng khi bấm &quot;Lưu Tất Cả Thẻ Con&quot; trên trang chính.
+              </span>
+              <button
+                type="button"
+                onClick={() => setManagingSubId(null)}
+                className="px-5 py-2 bg-gradient-to-r from-[#dfb755] to-[#b8860b] hover:brightness-110 text-[#070c14] font-bold text-xs rounded-xl shadow-md transition-all active:scale-95"
+              >
+                Hoàn Tất & Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}
