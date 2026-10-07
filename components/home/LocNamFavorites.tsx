@@ -61,10 +61,10 @@ export function LocNamFavorites() {
       <div className="max-w-[1440px] mx-auto">
         {/* Section Header */}
         <div className="text-center mb-8 sm:mb-10">
-          <div className="text-[#b8860b] font-serif text-[11px] sm:text-xs font-bold tracking-[0.25em] uppercase mb-1.5 flex items-center justify-center gap-2">
-            <span className="w-8 h-[1px] bg-[#b8860b]/40"></span>
+          <div className="text-[#785500] font-serif text-[11px] sm:text-xs font-bold tracking-[0.25em] uppercase mb-1.5 flex items-center justify-center gap-2">
+            <span className="w-8 h-[1px] bg-[#785500]/40"></span>
             <span>TUYỆT TÁC CHẾ TÁC</span>
-            <span className="w-8 h-[1px] bg-[#b8860b]/40"></span>
+            <span className="w-8 h-[1px] bg-[#785500]/40"></span>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1a2533] tracking-wider uppercase">
             SẢN PHẨM ĐƯỢC YÊU THÍCH
@@ -99,7 +99,7 @@ export function LocNamFavorites() {
                     className="block aspect-square w-full rounded-xl overflow-hidden bg-white border border-[#f5eee2] p-2 relative flex items-center justify-center"
                   >
                     {/* Badge LỘC NAM */}
-                    <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded bg-[#fff9ee] border border-[#f3e5c8] text-[#b8860b] text-[10px] font-bold tracking-wider shadow-xs">
+                    <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded bg-[#fff9ee] border border-[#e6d7be] text-[#785500] text-[10px] font-bold tracking-wider shadow-xs">
                       LỘC NAM
                     </span>
 
@@ -121,7 +121,7 @@ export function LocNamFavorites() {
                   {/* Product Title */}
                   <div className="pt-2.5 pb-1">
                     <Link href={prod.href} prefetch={true}>
-                      <h3 className="font-serif text-[12px] sm:text-[13px] font-bold text-[#231b15] group-hover:text-[#b8860b] transition-colors line-clamp-2 leading-snug min-h-[36px]">
+                      <h3 className="font-serif text-[12px] sm:text-[13px] font-bold text-[#231b15] group-hover:text-[#785500] transition-colors line-clamp-2 leading-snug min-h-[36px]">
                         {prod.name}
                       </h3>
                     </Link>
@@ -130,15 +130,15 @@ export function LocNamFavorites() {
 
                 {/* Price & Action Icons Row */}
                 <div className="flex items-center justify-between pt-2 mt-auto border-t border-gray-100">
-                  <span className="font-serif font-extrabold text-sm sm:text-[15px] text-[#b8860b]">
+                  <span className="font-serif font-extrabold text-sm sm:text-[15px] text-[#785500]">
                     {prod.price}
                   </span>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={(e) => toggleWishlist(prod.id, e)}
-                      className="p-1 text-gray-300 hover:text-red-500 transition-colors"
+                      className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 transition-colors"
                       title="Yêu thích"
                       aria-label="Yêu thích"
                     >
@@ -151,7 +151,7 @@ export function LocNamFavorites() {
                     <Link
                       href={prod.href}
                       prefetch={true}
-                      className="p-1 text-gray-300 hover:text-[#b8860b] transition-colors"
+                      className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-400 hover:text-[#785500] hover:bg-gray-100 transition-colors"
                       title="Đặt mua sản phẩm"
                       aria-label="Đặt mua"
                     >

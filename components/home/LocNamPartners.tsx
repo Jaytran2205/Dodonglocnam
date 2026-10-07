@@ -119,14 +119,14 @@ export function LocNamPartners() {
         {/* Section Header with Responsive Flex */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
           <div className="space-y-1">
-            <div className="text-[#996515] font-serif text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-1.5 mb-0.5">
+            <div className="text-[#785500] font-serif text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-1.5 mb-0.5">
               <Sparkles className="w-3.5 h-3.5 text-[#b8860b] flex-shrink-0" />
               <span>HỆ THỐNG CỬA HÀNG & XƯỞNG ĐÚC GIA TRUYỀN</span>
             </div>
             <h2 className="font-serif text-xl sm:text-3xl lg:text-4xl font-extrabold text-[#111c2a] tracking-wide uppercase leading-tight">
               HỆ THỐNG CƠ SỞ ĐỒ ĐỒNG LỘC NAM
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748b] font-light max-w-2xl">
+            <p className="text-xs sm:text-sm text-[#475569] font-light max-w-2xl">
               Hệ thống 3 Showroom lớn & 1 Xưởng đúc truyền thống – Trình chiếu tự động, bấm chọn để xem chi tiết.
             </p>
           </div>
@@ -136,17 +136,17 @@ export function LocNamPartners() {
             <button
               onClick={handlePrev}
               aria-label="Cơ sở trước"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-[#d8cdbc] hover:border-[#b8860b] text-[#111c2a] hover:text-[#b8860b] flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 touch-manipulation"
+              className="w-11 h-11 sm:w-10 sm:h-10 min-w-[44px] min-h-[44px] rounded-xl bg-white border border-[#d8cdbc] hover:border-[#b8860b] text-[#111c2a] hover:text-[#b8860b] flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 touch-manipulation"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-bold text-[#996515] px-1">
+            <span className="text-xs font-bold text-[#785500] px-1">
               0{currentIndex + 1} / 0{branches.length}
             </span>
             <button
               onClick={handleNext}
               aria-label="Cơ sở tiếp theo"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-[#d8cdbc] hover:border-[#b8860b] text-[#111c2a] hover:text-[#b8860b] flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 touch-manipulation"
+              className="w-11 h-11 sm:w-10 sm:h-10 min-w-[44px] min-h-[44px] rounded-xl bg-white border border-[#d8cdbc] hover:border-[#b8860b] text-[#111c2a] hover:text-[#b8860b] flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 touch-manipulation"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -231,7 +231,7 @@ export function LocNamPartners() {
               <div className="pt-1 sm:pt-2 grid grid-cols-2 gap-2 sm:gap-3">
                 <a
                   href={`tel:${current.cleanPhone}`}
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#111c2a] hover:bg-[#1e2f42] text-white text-xs sm:text-sm font-semibold transition-all shadow-sm active:scale-95 text-center touch-manipulation min-h-[42px]"
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#111c2a] hover:bg-[#1e2f42] text-white text-xs sm:text-sm font-semibold transition-all shadow-sm active:scale-95 text-center touch-manipulation min-h-[48px]"
                 >
                   <Phone className="w-3.5 h-3.5 text-[#dfb755]" />
                   <span>Gọi Ngay</span>
@@ -241,7 +241,7 @@ export function LocNamPartners() {
                   href={current.mapUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#b8860b] hover:bg-[#a07408] text-white text-xs sm:text-sm font-semibold shadow-sm transition-all active:scale-95 text-center touch-manipulation min-h-[42px]"
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#b8860b] hover:bg-[#a07408] text-white text-xs sm:text-sm font-semibold shadow-sm transition-all active:scale-95 text-center touch-manipulation min-h-[48px]"
                 >
                   <Navigation className="w-3.5 h-3.5" />
                   <span>Chỉ Đường</span>
@@ -261,7 +261,7 @@ export function LocNamPartners() {
                   className={`p-2.5 sm:p-3.5 text-left transition-all duration-200 flex items-center gap-2 sm:gap-3 border-r border-b sm:border-b-0 border-[#e8dfd1] last:border-r-0 touch-manipulation min-h-[48px] ${
                     isSelected
                       ? "bg-white text-[#111c2a] border-b-2 sm:border-b-2 border-b-[#b8860b] shadow-sm font-semibold"
-                      : "text-[#64748b] hover:text-[#111c2a] hover:bg-[#f1ebe0]"
+                      : "text-[#475569] hover:text-[#111c2a] hover:bg-[#f1ebe0]"
                   }`}
                 >
                   {/* Mini Photo Thumbnail */}
@@ -274,7 +274,7 @@ export function LocNamPartners() {
                   </div>
                   <div className="overflow-hidden min-w-0">
                     <div className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider truncate ${
-                      isSelected ? "text-[#996515]" : "text-[#786a55]"
+                      isSelected ? "text-[#785500]" : "text-[#5c4e3c]"
                     }`}>
                       {b.tag}
                     </div>

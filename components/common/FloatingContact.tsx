@@ -156,7 +156,8 @@ export function FloatingContact({
               href="https://maps.app.goo.gl/5rQAVSTNhDzQtMebA"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center py-1 group active:scale-90 transition-transform duration-200"
+              aria-label="Định vị showroom Lộc Nam trên Google Maps"
+              className="flex flex-col items-center justify-center py-1 group active:scale-90 transition-transform duration-200 min-h-[48px]"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#dc2626] to-[#b91c1c] border border-[#fca5a5]/60 flex items-center justify-center text-white group-hover:scale-105 transition-transform shadow-md">
                 <MapPin className="w-4 h-4 text-white animate-bounce" />
@@ -169,7 +170,8 @@ export function FloatingContact({
             {/* 2. GỌI HOTLINE 1 */}
             <a
               href={`tel:${cleanPhone1}`}
-              className="flex flex-col items-center justify-center py-1 px-1 bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#0b1622] rounded-xl font-bold shadow-md border border-[#ffe082] active:scale-95 transition-transform"
+              aria-label="Gọi hotline 0836 122 222"
+              className="flex flex-col items-center justify-center py-1 px-1 bg-gradient-to-r from-[#dfb755] to-[#b8860b] text-[#0b1622] rounded-xl font-bold shadow-md border border-[#ffe082] active:scale-95 transition-transform min-h-[48px]"
             >
               <Phone className="w-4 h-4 fill-[#0b1622] animate-pulse" />
               <span className="text-[9px] font-black tracking-tight mt-0.5 whitespace-nowrap">0836.122.222</span>
@@ -178,7 +180,8 @@ export function FloatingContact({
             {/* 3. GỌI HOTLINE 2 */}
             <a
               href={`tel:${cleanPhone2}`}
-              className="flex flex-col items-center justify-center py-1 px-1 bg-gradient-to-r from-[#996515] to-[#6d460d] text-[#ffe082] rounded-xl font-bold shadow-md border border-[#dfb755]/50 active:scale-95 transition-transform"
+              aria-label="Gọi hotline 0846 699 997"
+              className="flex flex-col items-center justify-center py-1 px-1 bg-gradient-to-r from-[#996515] to-[#6d460d] text-[#ffe082] rounded-xl font-bold shadow-md border border-[#dfb755]/50 active:scale-95 transition-transform min-h-[48px]"
             >
               <Phone className="w-4 h-4 fill-[#ffe082] animate-pulse" />
               <span className="text-[9px] font-black tracking-tight mt-0.5 whitespace-nowrap">0846.699.997</span>
@@ -189,7 +192,8 @@ export function FloatingContact({
               href={`https://zalo.me/${cleanZalo}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center py-1 group active:scale-90 transition-transform duration-200"
+              aria-label="Nhắn tin qua Zalo"
+              className="flex flex-col items-center justify-center py-1 group active:scale-90 transition-transform duration-200 min-h-[48px]"
             >
               <div className="w-8 h-8 rounded-full bg-[#0068FF] shadow-md flex items-center justify-center text-white font-black text-[9px] tracking-tighter group-hover:scale-105 transition-transform border border-white/40">
                 Zalo

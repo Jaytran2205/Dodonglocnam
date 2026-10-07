@@ -258,7 +258,7 @@ export function ModernFooter() {
                 <Link
                   key={idx}
                   href={item.href}
-                  className="block hover:text-[#dfb755] hover:translate-x-1 transition-all py-0.5"
+                  className="block hover:text-[#dfb755] hover:translate-x-1 transition-all py-1.5"
                 >
                   › {item.name}
                 </Link>
@@ -268,7 +268,7 @@ export function ModernFooter() {
         </div>
 
         {/* Bottom copyright */}
-        <div className="mt-10 pt-6 border-t border-[#1c2c3d] flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-xs text-[#64748b]">
+        <div className="mt-10 pt-6 border-t border-[#1c2c3d] flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-xs text-[#94a3b8]">
           <div>
             © 2026 ĐỒ ĐỒNG LỘC NAM - Quà tặng tinh hoa - Nâng tầm giá trị. Tất cả quyền được bảo lưu.
           </div>

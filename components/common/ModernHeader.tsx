@@ -326,11 +326,11 @@ export function ModernHeader() {
                   }
                 }}
                 placeholder="Bạn muốn tìm gì?"
-                className="w-full pl-4 sm:pl-5 pr-11 py-2.5 sm:py-3 rounded-full bg-white text-gray-900 placeholder-gray-500 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#dfb755] shadow-inner"
+                className="w-full pl-4 sm:pl-5 pr-12 py-2.5 sm:py-3 rounded-full bg-white text-gray-900 placeholder-gray-500 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#dfb755] shadow-inner"
               />
               <button
                 type="submit"
-                className="absolute right-3.5 text-gray-600 hover:text-[#b8860b] flex items-center justify-center transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 text-gray-600 hover:text-[#b8860b] flex items-center justify-center transition-colors rounded-full"
                 aria-label="Tìm kiếm"
               >
                 <Search className="w-5 h-5" />
@@ -397,7 +397,7 @@ export function ModernHeader() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="shrink-0 w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center text-white hover:text-[#ffd700] active:scale-95 transition-all"
+            className="shrink-0 w-12 h-12 flex items-center justify-center text-white hover:text-[#ffd700] active:scale-95 transition-all"
             aria-label="Mở menu điều hướng"
           >
             {mobileMenuOpen ? (

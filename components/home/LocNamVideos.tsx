@@ -108,14 +108,14 @@ export function LocNamVideos() {
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
           <div className="space-y-1">
-            <div className="text-[#a67c2e] font-serif text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-1.5 mb-0.5">
+            <div className="text-[#785500] font-serif text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-1.5 mb-0.5">
               <VideoIcon className="w-3.5 h-3.5 text-[#dfb755] flex-shrink-0" />
               <span>{sectionMeta.subtitle}</span>
             </div>
             <h2 className="font-serif text-xl sm:text-3xl lg:text-4xl font-extrabold text-[#1a2533] tracking-wide uppercase leading-tight">
               {sectionMeta.title}
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748b] font-light max-w-2xl">
+            <p className="text-xs sm:text-sm text-[#475569] font-light max-w-2xl">
               {sectionMeta.desc}
             </p>
           </div>
@@ -215,7 +215,7 @@ export function LocNamVideos() {
           {videos.length > 1 && (
             <button
               onClick={() => setShowAllMobile(!showAllMobile)}
-              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#fbf9f4] border-2 border-[#dfb755]/70 text-[#0c1825] font-bold text-xs shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation min-h-[44px]"
+              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#fbf9f4] border-2 border-[#dfb755]/70 text-[#0c1825] font-bold text-xs shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all touch-manipulation min-h-[48px]"
             >
               <span>
                 {showAllMobile
@@ -232,7 +232,7 @@ export function LocNamVideos() {
 
           <Link
             href="/video"
-            className="w-full py-2.5 px-4 rounded-xl bg-[#0c1825] text-white hover:text-[#ffd700] font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all touch-manipulation text-center"
+            className="w-full py-3 px-4 rounded-xl bg-[#0c1825] text-white hover:text-[#ffd700] font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all touch-manipulation text-center min-h-[48px]"
           >
             <span>Tất cả video xưởng Lộc Nam</span>
             <ExternalLink className="w-3.5 h-3.5 text-[#dfb755]" />
@@ -257,9 +257,9 @@ export function LocNamVideos() {
               <button
                 onClick={() => setSelectedVideo(null)}
                 aria-label="Đóng video"
-                className="w-8 h-8 rounded-full bg-[#122336] text-white hover:text-[#dfb755] flex items-center justify-center transition-colors flex-shrink-0 border border-[#1c2c3d] touch-manipulation cursor-pointer"
+                className="w-10 h-10 rounded-full bg-[#122336] text-white hover:text-[#dfb755] flex items-center justify-center transition-colors flex-shrink-0 border border-[#1c2c3d] touch-manipulation cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 

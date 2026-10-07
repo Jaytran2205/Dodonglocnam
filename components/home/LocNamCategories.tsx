@@ -17,7 +17,7 @@ export function LocNamCategories({ categories = DEFAULT_HOME_CATEGORIES }: { cat
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 sm:mb-8">
           <div className="text-left">
-            <div className="text-[#a67c2e] font-serif text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase mb-1 flex items-center gap-1.5">
+            <div className="text-[#785500] font-serif text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase mb-1 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-[#dfb755]" />
               <span>DANH MỤC SẢN PHẨM & CÔNG TRÌNH</span>
             </div>
@@ -29,7 +29,7 @@ export function LocNamCategories({ categories = DEFAULT_HOME_CATEGORIES }: { cat
           <Link
             href="/san-pham"
             prefetch={true}
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-serif font-bold text-[#b8860b] hover:text-[#8c6508] transition-colors uppercase tracking-wider group shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-serif font-bold text-[#785500] hover:text-[#523800] transition-colors uppercase tracking-wider group shrink-0"
           >
             <span>Xem tất cả danh mục</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

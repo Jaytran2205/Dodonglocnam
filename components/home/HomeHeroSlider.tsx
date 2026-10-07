@@ -17,13 +17,36 @@ export interface BannerSlide {
 
 
 
-export function HomeHeroSlider() {
-  const [slides, setSlides] = useState<BannerSlide[]>(DEFAULT_HOME_SLIDES);
+export function HomeHeroSlider({ initialSlides }: { initialSlides?: BannerSlide[] } = {}) {
+  const [slides, setSlides] = useState<BannerSlide[]>(initialSlides && initialSlides.length > 0 ? initialSlides : DEFAULT_HOME_SLIDES);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [autoplayDelay, setAutoplayDelay] = useState(5000);
+  // Performance: only render image for slide 0 initially to prioritize mobile LCP
+  const [loadedIndices, setLoadedIndices] = useState<Set<number>>(new Set([0]));
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+
+  // Preload neighboring slides when index changes
+  useEffect(() => {
+    setLoadedIndices((prev) => {
+      const next = new Set(prev);
+      next.add(currentIndex);
+      if (slides.length > 1) {
+        next.add((currentIndex + 1) % slides.length);
+        next.add((currentIndex - 1 + slides.length) % slides.length);
+      }
+      return next;
+    });
+  }, [currentIndex, slides.length]);
+
+  // Preload all remaining slides after initial paint settles (3s delay)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadedIndices(new Set(slides.map((_, i) => i)));
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [slides]);
 
   // Load custom settings from API
   useEffect(() => {
@@ -132,23 +155,27 @@ export function HomeHeroSlider() {
                   ? "opacity-100 z-10 scale-100 pointer-events-auto"
                   : "opacity-0 z-0 scale-[1.01] pointer-events-none"
               }`}
-              aria-hidden={!isActive}
+              aria-hidden={!isActive ? "true" : undefined}
+              inert={!isActive ? true : undefined}
             >
               <Link
                 href={slide.link || "/san-pham"}
+                tabIndex={isActive ? 0 : -1}
                 className="block w-full h-full relative group overflow-hidden"
                 title={slide.title}
               >
                 {/* Main Banner Artwork Image - Full bleed edge-to-edge */}
                 <div className="relative w-full h-full flex items-center justify-center p-0">
-                  <img
-                    src={slide.image}
-                    alt={slide.title || "Banner Đồ Đồng Lộc Nam"}
-                    className="w-full h-full object-cover object-center relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]"
-                    loading={index === 0 ? "eager" : "lazy"}
-                    fetchPriority={index === 0 ? "high" : "low"}
-                    decoding={index === 0 ? "sync" : "async"}
-                  />
+                  {loadedIndices.has(index) && (
+                    <img
+                      src={slide.image}
+                      alt={slide.title || "Banner Đồ Đồng Lộc Nam"}
+                      className="w-full h-full object-cover object-center relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]"
+                      loading={index === 0 ? "eager" : "lazy"}
+                      fetchPriority={index === 0 ? "high" : "low"}
+                      decoding={index === 0 ? "sync" : "async"}
+                    />
+                  )}
                 </div>
 
                 {/* Subtle Hover CTA Button */}
@@ -173,7 +200,7 @@ export function HomeHeroSlider() {
                 e.preventDefault();
                 prevSlide();
               }}
-              className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0c1420]/75 hover:bg-[#d4af37] text-[#d4af37] hover:text-[#0c1420] border border-[#d4af37]/60 shadow-2xl flex items-center justify-center transition-all duration-300 backdrop-blur-sm group/btn hover:scale-110 active:scale-95"
+              className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-[#0c1420]/75 hover:bg-[#d4af37] text-[#d4af37] hover:text-[#0c1420] border border-[#d4af37]/60 shadow-2xl flex items-center justify-center transition-all duration-300 backdrop-blur-sm group/btn hover:scale-110 active:scale-95"
               aria-label="Banner trước"
             >
               <ChevronLeft className="w-6 h-6 transform group-hover/btn:-translate-x-0.5 transition-transform" />
@@ -186,7 +213,7 @@ export function HomeHeroSlider() {
                 e.preventDefault();
                 nextSlide();
               }}
-              className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#0c1420]/75 hover:bg-[#d4af37] text-[#d4af37] hover:text-[#0c1420] border border-[#d4af37]/60 shadow-2xl flex items-center justify-center transition-all duration-300 backdrop-blur-sm group/btn hover:scale-110 active:scale-95"
+              className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-[#0c1420]/75 hover:bg-[#d4af37] text-[#d4af37] hover:text-[#0c1420] border border-[#d4af37]/60 shadow-2xl flex items-center justify-center transition-all duration-300 backdrop-blur-sm group/btn hover:scale-110 active:scale-95"
               aria-label="Banner tiếp theo"
             >
               <ChevronRight className="w-6 h-6 transform group-hover/btn:translate-x-0.5 transition-transform" />

@@ -519,3 +519,22 @@ export function homeCategories(settings: Record<string, string>): HomeCategory[]
     href: settings[`cat${idx+1}_link`] || settings[`cat${idx+1}_href`] || cat.href,
   }));
 }
+
+export function homeSlides(settings: Record<string, string>) {
+  if (settings.home_slider_banners) {
+    try {
+      const parsed = JSON.parse(settings.home_slider_banners);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const activeOnes = parsed.filter(
+          (item: any) => item && item.active !== false && item.image
+        );
+        if (activeOnes.length > 0) {
+          return activeOnes;
+        }
+      }
+    } catch {
+      /* Fall back to default slides */
+    }
+  }
+  return DEFAULT_HOME_SLIDES;
+}

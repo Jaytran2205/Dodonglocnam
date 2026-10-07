@@ -117,15 +117,6 @@ export default function RootLayout({
         <meta name="geo.position" content="20.3789;106.0124" />
         <meta name="ICBM" content="20.3789, 106.0124" />
         <link rel="icon" href="/images/logo.png" />
-        {/* Preload Hero LCP Banner Image */}
-        <link
-          rel="preload"
-          as="image"
-          href="/images/banners/banner_he_thong_showroom_xuong_v3.webp"
-          type="image/webp"
-          // @ts-ignore
-          fetchPriority="high"
-        />
         {/* Preconnect & DNS-Prefetch for External CDNs */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />

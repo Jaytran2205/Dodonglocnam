@@ -1,5 +1,5 @@
 import { getSettings } from "@/lib/settings";
-import { homeCategories } from "@/lib/home-content";
+import { homeCategories, homeSlides } from "@/lib/home-content";
 import type { Metadata } from "next";
 import { SITE_URL, siteUrl } from "@/lib/site";
 import React from "react";
@@ -21,6 +21,7 @@ export const metadata: Metadata = { alternates: { canonical: siteUrl("/") } };
 
 export default async function HomePage() {
   const settings = await getSettings();
+  const slides = homeSlides(settings);
   const homeFaqs = [
     {
       question: "Đồ Đồng Lộc Nam có nguồn gốc xuất xứ từ đâu?",
@@ -72,7 +73,7 @@ export default async function HomePage() {
       <link
         rel="preload"
         as="image"
-        href="/images/banners/banner_he_thong_showroom_xuong_v3.webp"
+        href={slides[0]?.image || "/images/banners/banner_he_thong_showroom_xuong_v3.webp"}
         type="image/webp"
         // @ts-ignore
         fetchPriority="high"
@@ -83,7 +84,7 @@ export default async function HomePage() {
 
       <main className="flex-grow">
         {/* 2. Hero Banner Slider: 4 Banners Lộc Nam & Tùy Chỉnh */}
-        <HomeHeroSlider />
+        <HomeHeroSlider initialSlides={slides} />
 
         {/* 3. 4-Column Dark Value Proposition Bar */}
         <ModernFeatures />
