@@ -1,5 +1,5 @@
 "use client";
-
+import { getClientSettings, getClientCatalog } from "@/lib/client-cache";
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -162,14 +162,11 @@ export function LeGiaProductListing({
   const [categoriesCatalog, setCategoriesCatalog] = useState<MainCategoryData[]>(HIERARCHICAL_CATEGORIES);
 
   useEffect(() => {
-    fetch("/api/subcategories")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-          setCategoriesCatalog(data.data);
-        }
-      })
-      .catch((err) => console.error("Error fetching subcategories:", err));
+    getClientCatalog().then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        setCategoriesCatalog(data);
+      }
+    }).catch(() => {});
   }, []);
 
   // Current category data object

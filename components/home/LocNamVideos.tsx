@@ -1,5 +1,5 @@
 "use client";
-
+import { getClientSettings, getClientCatalog } from "@/lib/client-cache";
 import { DEFAULT_HOME_VIDEOS } from "@/lib/home-content";
 
 import React, { useState, useEffect } from "react";
@@ -70,36 +70,32 @@ export function LocNamVideos() {
   const [showAllMobile, setShowAllMobile] = useState(false);
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.settings) {
-          const s = data.settings;
-          if (s.video_section_subtitle || s.video_section_title || s.video_section_desc) {
-            setSectionMeta({
-              subtitle: s.video_section_subtitle || "THƯ VIỆN VIDEO THỰC TẾ",
-              title: s.video_section_title || "VIDEO QUY TRÌNH CHẾ TÁC & SẢN PHẨM",
-              desc:
-                s.video_section_desc ||
-                "Kênh truyền hình & tư liệu trực quan giúp quý khách an tâm tuyệt đối về chất lượng đúc đồng thủ công của Đồ Đồng Lộc Nam.",
-            });
-          }
-          if (s.home_videos) {
-            try {
-              const parsed = JSON.parse(s.home_videos);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                const activeOnes = parsed.filter((v: any) => v.active !== false);
-                if (activeOnes.length > 0) {
-                  setVideos(activeOnes);
-                }
+    getClientSettings().then((s) => {
+      if (s && Object.keys(s).length) {
+        if (s.video_section_subtitle || s.video_section_title || s.video_section_desc) {
+          setSectionMeta({
+            subtitle: s.video_section_subtitle || "THƯ VIỆN VIDEO THỰC TẾ",
+            title: s.video_section_title || "VIDEO QUY TRÌNH CHẾ TÁC & SẢN PHẨM",
+            desc:
+              s.video_section_desc ||
+              "Kênh truyền hình & tư liệu trực quan giúp quý khách an tâm tuyệt đối về chất lượng đúc đồng thủ công của Đồ Đồng Lộc Nam.",
+          });
+        }
+        if (s.home_videos) {
+          try {
+            const parsed = JSON.parse(s.home_videos);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const activeOnes = parsed.filter((v: any) => v.active !== false);
+              if (activeOnes.length > 0) {
+                setVideos(activeOnes);
               }
-            } catch (err) {
-              console.error("Error parsing home_videos:", err);
             }
+          } catch (err) {
+            console.error("Error parsing home_videos:", err);
           }
         }
-      })
-      .catch((err) => console.error("Error loading video settings:", err));
+      }
+    }).catch(() => {});
   }, []);
 
   return (

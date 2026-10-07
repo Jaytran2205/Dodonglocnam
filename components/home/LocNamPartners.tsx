@@ -1,5 +1,5 @@
 "use client";
-
+import { getClientSettings, getClientCatalog } from "@/lib/client-cache";
 import { DEFAULT_FACILITY_SETTINGS } from "@/lib/home-content";
 
 import React, { useState, useEffect } from "react";
@@ -21,14 +21,11 @@ export function LocNamPartners() {
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.settings) {
-          setSettings((prev: any) => ({ ...prev, ...data.settings }));
-        }
-      })
-      .catch((err) => console.error("Error loading branch settings:", err));
+    getClientSettings().then((s) => {
+      if (s && Object.keys(s).length) {
+        setSettings((prev: any) => ({ ...prev, ...s }));
+      }
+    }).catch(() => {});
   }, []);
 
   const branches = [

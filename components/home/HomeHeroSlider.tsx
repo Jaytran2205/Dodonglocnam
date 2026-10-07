@@ -1,5 +1,5 @@
 "use client";
-
+import { getClientSettings, getClientCatalog } from "@/lib/client-cache";
 import { DEFAULT_HOME_SLIDES } from "@/lib/home-content";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -50,37 +50,31 @@ export function HomeHeroSlider({ initialSlides }: { initialSlides?: BannerSlide[
 
   // Load custom settings from API
   useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.settings) {
-          const s = data.settings;
-          // Parse slides if saved in settings
-          if (s.home_slider_banners) {
-            try {
-              const parsed = JSON.parse(s.home_slider_banners);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                const activeOnes = parsed.filter(
-                  (item: BannerSlide) => item.active !== false && item.image
-                );
-                if (activeOnes.length > 0) {
-                  setSlides(activeOnes);
-                }
+    getClientSettings().then((s) => {
+      if (s && Object.keys(s).length) {
+        if (s.home_slider_banners) {
+          try {
+            const parsed = JSON.parse(s.home_slider_banners);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const activeOnes = parsed.filter(
+                (item: BannerSlide) => item.active !== false && item.image
+              );
+              if (activeOnes.length > 0) {
+                setSlides(activeOnes);
               }
-            } catch (err) {
-              console.error("Parse home_slider_banners error:", err);
             }
-          }
-
-          if (s.home_slider_autoplay) {
-            const delay = parseInt(s.home_slider_autoplay, 10);
-            if (!isNaN(delay) && (delay === 0 || delay >= 2000)) {
-              setAutoplayDelay(delay);
-            }
+          } catch (err) {
+            console.error("Parse home_slider_banners error:", err);
           }
         }
-      })
-      .catch((e) => console.error("Error loading slider settings:", e));
+        if (s.home_slider_autoplay) {
+          const delay = parseInt(s.home_slider_autoplay, 10);
+          if (!isNaN(delay) && (delay === 0 || delay >= 2000)) {
+            setAutoplayDelay(delay);
+          }
+        }
+      }
+    }).catch(() => {});
   }, []);
 
   const totalSlides = slides.length;

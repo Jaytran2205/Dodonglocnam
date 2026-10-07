@@ -1,5 +1,5 @@
 "use client";
-
+import { getClientSettings, getClientCatalog } from "@/lib/client-cache";
 import { DEFAULT_HOME_FAVORITES } from "@/lib/home-content";
 
 import React, { useState, useEffect } from "react";
@@ -16,25 +16,21 @@ export function LocNamFavorites() {
   const [products, setProducts] = useState(DEFAULT_HOME_FAVORITES);
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.settings) {
-          const s = data.settings;
-          const dynamicFavs = DEFAULT_HOME_FAVORITES.map((prod, idx) => {
-            const i = idx + 1;
-            return {
-              ...prod,
-              name: s[`fav${i}_name`] || prod.name,
-              price: s[`fav${i}_price`] || prod.price,
-              image: s[`fav${i}_image`] || prod.image,
-              href: s[`fav${i}_link`] || prod.href,
-            };
-          });
-          setProducts(dynamicFavs);
-        }
-      })
-      .catch(() => {});
+    getClientSettings().then((s) => {
+      if (s && Object.keys(s).length) {
+        const dynamicFavs = DEFAULT_HOME_FAVORITES.map((prod, idx) => {
+          const i = idx + 1;
+          return {
+            ...prod,
+            name: s[`fav${i}_name`] || prod.name,
+            price: s[`fav${i}_price`] || prod.price,
+            image: s[`fav${i}_image`] || prod.image,
+            href: s[`fav${i}_link`] || prod.href,
+          };
+        });
+        setProducts(dynamicFavs);
+      }
+    }).catch(() => {});
   }, []);
 
   // Prefetch deferred to prioritize image loading

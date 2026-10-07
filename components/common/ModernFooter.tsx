@@ -1,5 +1,5 @@
 "use client";
-
+import { getClientSettings, getClientCatalog } from "@/lib/client-cache";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -45,14 +45,11 @@ export function ModernFooter() {
   });
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.settings) {
-          setSettings((prev: any) => ({ ...prev, ...data.settings }));
-        }
-      })
-      .catch((err) => console.error("Error loading footer settings:", err));
+    getClientSettings().then((s) => {
+      if (s && Object.keys(s).length) {
+        setSettings((prev: any) => ({ ...prev, ...s }));
+      }
+    }).catch(() => {});
   }, []);
 
   const cleanPhone1 = (settings.hotline || settings.hotline1 || "0836 122 222").replace(/\D/g, "");

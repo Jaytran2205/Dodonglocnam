@@ -58,7 +58,14 @@ const getCachedRelatedProducts = cache(
 // Render database-backed category/product pages on their first request (ISR),
 // rather than freezing a build machine's fallback catalogue into these routes.
 export async function generateStaticParams() {
-  return [];
+  return [
+    { category: "do-tho-cung" },
+    { category: "tuong-dong" },
+    { category: "tranh-dong" },
+    { category: "trong-dong" },
+    { category: "qua-tang-dong" },
+    { category: "duc-chuong-cong-trinh" },
+  ];
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {

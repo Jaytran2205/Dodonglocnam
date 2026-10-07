@@ -1,5 +1,5 @@
 "use client";
-
+import { getClientSettings, getClientCatalog } from "@/lib/client-cache";
 import React, { useState, useEffect } from "react";
 import { Phone, ArrowUp, MessageSquare, MapPin } from "lucide-react";
 
@@ -27,18 +27,15 @@ export function FloatingContact({
   });
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.settings) {
-          setPhoneData({
-            hotline: data.settings.hotline || data.settings.hotline1 || "0836 122 222",
-            hotline2: data.settings.hotline2 || data.settings.hotline_2 || "0846 699 997",
-            zalo: data.settings.zalo || "0846699997",
-          });
-        }
-      })
-      .catch((e) => console.error("Error fetching floating contact settings:", e));
+    getClientSettings().then((s) => {
+      if (s && Object.keys(s).length) {
+        setPhoneData({
+          hotline: s.hotline || s.hotline1 || "0836 122 222",
+          hotline2: s.hotline2 || s.hotline_2 || "0846 699 997",
+          zalo: s.zalo || "0846699997",
+        });
+      }
+    }).catch(() => {});
   }, []);
 
   // Clean numbers for tel: and zalo

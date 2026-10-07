@@ -1,5 +1,4 @@
 "use client";
-
 import { DEFAULT_HIERARCHICAL_CATEGORIES, MainCategoryData } from "@/lib/subcategories-data";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -20,10 +19,11 @@ import {
   User,
 } from "lucide-react";
 import { formatPrice, getWatermarkedImageUrl } from "@/lib/utils";
+import { getClientSettings, getClientCatalog } from "@/lib/client-cache";
 
 export function ModernHeader() {
   const [catalog, setCatalog] = useState<MainCategoryData[]>(DEFAULT_HIERARCHICAL_CATEGORIES);
-  useEffect(() => { fetch("/api/subcategories").then(res => res.json()).then(data => { if (data.success && data.data?.length) setCatalog(data.data); }).catch(() => {}); }, []);
+  useEffect(() => { getClientCatalog().then(data => { if (Array.isArray(data) && data.length) setCatalog(data); }); }, []);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -142,22 +142,19 @@ export function ModernHeader() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.settings) {
-          const h1 = data.settings.hotline1 || data.settings.hotline || "0836 122 222";
-          const h2 = data.settings.hotline2 || "0846 699 997";
-          setHotlineData({
-            hotline1: h1,
-            hotline2: h2,
-            cleanPhone1: h1.replace(/\D/g, "") || "0836122222",
-            cleanPhone2: h2.replace(/\D/g, "") || "0846699997",
-            zalo: (data.settings.zalo || h2 || "0846699997").replace(/\D/g, ""),
-          });
-        }
-      })
-      .catch((err) => console.error("Error fetching header settings:", err));
+    getClientSettings().then((settings) => {
+      if (settings && Object.keys(settings).length) {
+        const h1 = settings.hotline1 || settings.hotline || "0836 122 222";
+        const h2 = settings.hotline2 || "0846 699 997";
+        setHotlineData({
+          hotline1: h1,
+          hotline2: h2,
+          cleanPhone1: h1.replace(/\D/g, "") || "0836122222",
+          cleanPhone2: h2.replace(/\D/g, "") || "0846699997",
+          zalo: (settings.zalo || h2 || "0846699997").replace(/\D/g, ""),
+        });
+      }
+    }).catch(() => {});
   }, []);
 
   // Close mobile menu on route change

@@ -1,5 +1,5 @@
 "use client";
-
+import { getClientSettings, getClientCatalog } from "@/lib/client-cache";
 import { DEFAULT_HOME_REVIEWS } from "@/lib/home-content";
 
 import React, { useEffect, useState } from "react";

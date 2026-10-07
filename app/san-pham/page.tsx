@@ -17,7 +17,7 @@ const getCachedAllProducts = cache(
   unstable_cache(
     async () => {
       try {
-        return await prisma.product.findMany({
+        const rows = await prisma.product.findMany({
           orderBy: { createdAt: "desc" },
           select: {
             id: true,
@@ -33,6 +33,19 @@ const getCachedAllProducts = cache(
               select: { name: true, slug: true },
             },
           },
+        });
+        return rows.map((p) => {
+          let parsed: string[] = [];
+          try {
+            parsed = JSON.parse(p.images);
+            if (!Array.isArray(parsed)) parsed = [p.images];
+          } catch {
+            parsed = p.images ? [p.images] : [];
+          }
+          return {
+            ...p,
+            images: JSON.stringify(parsed.slice(0, 3)),
+          };
         });
       } catch (e) {
         console.error("Error fetching all products:", e);
