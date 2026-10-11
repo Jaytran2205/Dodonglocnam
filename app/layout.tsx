@@ -8,14 +8,14 @@ import "./globals.css";
 
 const notoSerif = Noto_Serif({
   subsets: ["latin", "vietnamese"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "700"],
   variable: "--font-serif",
   display: "swap",
+  preload: false,
 });
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
   display: "swap",
 });
@@ -179,23 +179,39 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
-        {/* Google Analytics 4 (GA4) loaded lazily on idle */}
-        <Script
-          strategy="lazyOnload"
-          src="https://www.googletagmanager.com/gtag/js?id=G-QW69056L1B"
-        />
-        <Script
-          id="google-analytics"
-          strategy="lazyOnload"
+        {/* Google Analytics 4 (GA4) non-blocking deferred load for Core Web Vitals [jaydev] */}
+        <script
           dangerouslySetInnerHTML={{
             __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-QW69056L1B', {
-                page_path: window.location.pathname,
-              });
-            `,
+              (function() {
+                var gtmLoaded = false;
+                function loadGTM() {
+                  if (gtmLoaded) return;
+                  gtmLoaded = true;
+                  window.removeEventListener('scroll', loadGTM);
+                  window.removeEventListener('mousemove', loadGTM);
+                  window.removeEventListener('touchstart', loadGTM);
+                  var s = document.createElement('script');
+                  s.async = true;
+                  s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QW69056L1B';
+                  document.head.appendChild(s);
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', 'G-QW69056L1B');
+                }
+                if (typeof window !== 'undefined') {
+                  window.addEventListener('scroll', loadGTM, { passive: true, once: true });
+                  window.addEventListener('mousemove', loadGTM, { passive: true, once: true });
+                  window.addEventListener('touchstart', loadGTM, { passive: true, once: true });
+                  if ('requestIdleCallback' in window) {
+                    requestIdleCallback(function() { setTimeout(loadGTM, 3500); });
+                  } else {
+                    setTimeout(loadGTM, 3500);
+                  }
+                }
+              })();
+            `
           }}
         />
       </head>

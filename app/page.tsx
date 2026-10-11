@@ -69,12 +69,22 @@ export default async function HomePage() {
       />
       <FaqJsonLd faqs={homeFaqs} />
 
-      {/* Preload first hero banner image for instant LCP render */}
+      {/* Preload first hero banner image for instant LCP render - responsive mobile & desktop [jaydev] */}
+      <link
+        rel="preload"
+        as="image"
+        href={slides[0]?.image ? slides[0].image.replace(".webp", "_m.webp") : "/images/banners/banner_he_thong_showroom_xuong_v3_m.webp"}
+        type="image/webp"
+        media="(max-width: 768px)"
+        // @ts-ignore
+        fetchPriority="high"
+      />
       <link
         rel="preload"
         as="image"
         href={slides[0]?.image || "/images/banners/banner_he_thong_showroom_xuong_v3.webp"}
         type="image/webp"
+        media="(min-width: 769px)"
         // @ts-ignore
         fetchPriority="high"
       />

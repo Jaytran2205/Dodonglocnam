@@ -40,13 +40,7 @@ export function HomeHeroSlider({ initialSlides }: { initialSlides?: BannerSlide[
     });
   }, [currentIndex, slides.length]);
 
-  // Preload all remaining slides after initial paint settles (3s delay)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoadedIndices(new Set(slides.map((_, i) => i)));
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [slides]);
+
 
   // Load custom settings from API
   useEffect(() => {
@@ -161,14 +155,23 @@ export function HomeHeroSlider({ initialSlides }: { initialSlides?: BannerSlide[
                 {/* Main Banner Artwork Image - Full bleed edge-to-edge */}
                 <div className="relative w-full h-full flex items-center justify-center p-0">
                   {loadedIndices.has(index) && (
-                    <img
-                      src={slide.image}
-                      alt={slide.title || "Banner Đồ Đồng Lộc Nam"}
-                      className="w-full h-full object-cover object-center relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]"
-                      loading={index === 0 ? "eager" : "lazy"}
-                      fetchPriority={index === 0 ? "high" : "low"}
-                      decoding={index === 0 ? "sync" : "async"}
-                    />
+                    <picture className="w-full h-full block">
+                      {slide.image && slide.image.endsWith(".webp") && !slide.image.includes("_m.webp") && (
+                        <source
+                          media="(max-width: 768px)"
+                          srcSet={slide.image.replace(".webp", "_m.webp")}
+                          type="image/webp"
+                        />
+                      )}
+                      <img
+                        src={slide.image}
+                        alt={slide.title || "Banner Đồ Đồng Lộc Nam"}
+                        className="w-full h-full object-cover object-center relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]"
+                        loading={index === 0 ? "eager" : "lazy"}
+                        fetchPriority={index === 0 ? "high" : "low"}
+                        decoding={index === 0 ? "sync" : "async"}
+                      />
+                    </picture>
                   )}
                 </div>
 

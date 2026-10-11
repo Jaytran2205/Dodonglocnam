@@ -57,3 +57,5 @@ cloudflared.exe
 prisma/sqlite_dump.json
 /scratch/
 import_manifest.json
+.originals_backup/
+/ag-kit-video/

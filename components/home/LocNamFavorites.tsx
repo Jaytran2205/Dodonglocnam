@@ -99,19 +99,26 @@ export function LocNamFavorites() {
                       LỘC NAM
                     </span>
 
-                    <img
-                      src={getWatermarkedImageUrl(prod.image)}
-                      alt={prod.name}
-                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (!target.src.includes("hero_golden_ship")) {
-                          target.src = "/images/hero_golden_ship.jpg";
-                        }
-                      }}
-                    />
+                    <picture className="w-full h-full block">
+                      {prod.image && prod.image.endsWith(".jpg") && (
+                        <source srcSet={prod.image.replace(".jpg", ".webp")} type="image/webp" />
+                      )}
+                      <img
+                        src={getWatermarkedImageUrl(prod.image)}
+                        alt={prod.name}
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        decoding="async"
+                        width="243"
+                        height="243"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.src.includes("hero_golden_ship")) {
+                            target.src = "/images/hero_golden_ship.jpg";
+                          }
+                        }}
+                      />
+                    </picture>
                   </Link>
 
                   {/* Product Title */}

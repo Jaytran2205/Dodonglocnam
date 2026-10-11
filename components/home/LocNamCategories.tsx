@@ -54,19 +54,26 @@ export function LocNamCategories({ categories = DEFAULT_HOME_CATEGORIES }: { cat
 
               {/* Right Column (~52%): Perfect Square Image */}
               <div className="w-[52%] aspect-square relative overflow-hidden bg-[#06101d]">
-                <img
-                  src={cat.image}
-                  alt={cat.title}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                  decoding="async"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (!target.src.includes("hero_golden_ship")) {
-                      target.src = "/images/hero_golden_ship.jpg";
-                    }
-                  }}
-                />
+                <picture className="w-full h-full block">
+                  {cat.image && cat.image.includes(".jpg") && (
+                    <source srcSet={cat.image.split("?")[0].replace(".jpg", ".webp")} type="image/webp" />
+                  )}
+                  <img
+                    src={cat.image}
+                    alt={cat.title}
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    decoding="async"
+                    width="200"
+                    height="200"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.includes("hero_golden_ship")) {
+                        target.src = "/images/hero_golden_ship.jpg";
+                      }
+                    }}
+                  />
+                </picture>
               </div>
             </Link>
           ))}
@@ -83,19 +90,26 @@ export function LocNamCategories({ categories = DEFAULT_HOME_CATEGORIES }: { cat
             >
               {/* Image Collage with Dark Luxury Background */}
               <div className="w-full h-full relative overflow-hidden bg-[#06101d]">
-                <img
-                  src={cat.image}
-                  alt={cat.title}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
-                  loading="lazy"
-                  decoding="async"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (!target.src.includes("hero_golden_ship")) {
-                      target.src = "/images/hero_golden_ship.jpg";
-                    }
-                  }}
-                />
+                <picture className="w-full h-full block">
+                  {cat.image && cat.image.includes(".jpg") && (
+                    <source srcSet={cat.image.split("?")[0].replace(".jpg", ".webp")} type="image/webp" />
+                  )}
+                  <img
+                    src={cat.image}
+                    alt={cat.title}
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                    decoding="async"
+                    width="342"
+                    height="342"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.includes("hero_golden_ship")) {
+                        target.src = "/images/hero_golden_ship.jpg";
+                      }
+                    }}
+                  />
+                </picture>
                 <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#060c14]/95 via-[#060c14]/40 to-transparent opacity-90 group-hover:opacity-75 transition-opacity" />
               </div>
 

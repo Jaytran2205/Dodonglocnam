@@ -294,11 +294,16 @@ export function ModernHeader() {
           {/* Round Circle Logo (Bigger & Clearer) */}
           <Link href="/" className="shrink-0 flex items-center group" aria-label="Trang chủ Đồ Đồng Lộc Nam">
             <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#122234] border-2 border-[#dfb755] p-1 flex items-center justify-center shadow-md overflow-hidden group-hover:scale-105 transition-transform">
-              <img
-                src="/images/logo.png"
-                alt="Đồ Đồng Lộc Nam"
-                className="w-full h-full object-contain"
-              />
+              <picture className="w-full h-full block">
+                <source srcSet="/images/logo.webp" type="image/webp" />
+                <img
+                  src="/images/logo.png"
+                  alt="Đồ Đồng Lộc Nam"
+                  className="w-full h-full object-contain"
+                  width="48"
+                  height="48"
+                />
+              </picture>
             </div>
           </Link>
 
@@ -412,11 +417,16 @@ export function ModernHeader() {
           {/* Logo LỘC NAM */}
           <Link href="/" className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 group">
             <div className="w-10 h-10 sm:w-11 sm:h-11 p-1 rounded-lg bg-[#122234] border border-[#c59b4e]/40 flex items-center justify-center group-hover:border-[#ffd700] group-hover:shadow-[0_0_15px_rgba(255,215,0,0.4)] group-hover:scale-105 transition-all duration-300 flex-shrink-0">
-              <img
-                src="/images/logo.png"
-                alt="Đồ Đồng Lộc Nam"
-                className="w-full h-full object-contain"
-              />
+              <picture className="w-full h-full block">
+                <source srcSet="/images/logo.webp" type="image/webp" />
+                <img
+                  src="/images/logo.png"
+                  alt="Đồ Đồng Lộc Nam"
+                  className="w-full h-full object-contain"
+                  width="44"
+                  height="44"
+                />
+              </picture>
             </div>
             <div className="flex flex-col text-left">
               <div className="flex items-center gap-1">
@@ -1018,7 +1028,10 @@ export function ModernHeader() {
             <div className="p-4 border-b border-[#1c2c3d] bg-[#0b1622] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-md bg-[#122234] border border-[#c59b4e]/40 p-1 flex items-center justify-center">
-                  <img src="/images/logo.png" alt="Lộc Nam" className="w-full h-full object-contain" />
+                  <picture className="w-full h-full block">
+                    <source srcSet="/images/logo.webp" type="image/webp" />
+                    <img src="/images/logo.png" alt="Lộc Nam" className="w-full h-full object-contain" width="36" height="36" />
+                  </picture>
                 </div>
                 <div>
                   <div className="font-serif text-sm font-black tracking-widest bg-gradient-to-r from-[#fce9b5] via-[#ffd700] to-[#dfb755] bg-clip-text text-transparent">
