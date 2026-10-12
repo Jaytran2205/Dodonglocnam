@@ -4,11 +4,10 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect admin dashboard routes except login and public guide
+  // Protect all admin dashboard routes except login
   if (
     pathname.startsWith('/admin') &&
-    !pathname.startsWith('/admin/login') &&
-    !pathname.startsWith('/admin/huong-dan')
+    !pathname.startsWith('/admin/login')
   ) {
     const adminToken = request.cookies.get('admin_token')?.value;
     if (!adminToken) {
