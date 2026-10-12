@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cẩm Nang Hướng Dẫn Quản Trị Website Đồ Đồng Lộc Nam</title>
+  <style>
+    :root {
+      --primary: #c59b27;
+      --primary-dark: #8c6d12;
+      --primary-light: #fef9e7;
+      --gold-gradient: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
+      --bg-dark: #0a1420;
+      --bg-card-dark: #112234;
+      --bg-light: #fbf9f5;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2d7c3;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --shadow-md: 0 8px 24px rgba(0,0,0,0.1);
+      --shadow-lg: 0 16px 40px rgba(0,0,0,0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-main);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    h1, h2, h3, h4, .font-serif {
+      font-family: "Georgia", "Times New Roman", serif;
+      letter-spacing: -0.01em;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        font-size: 13px !important;
+      }
+      .no-print, .sidebar, .top-bar-btn {
+        display: none !important;
+      }
+      .main-container {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 0 !important;
+      }
+      .section-card {
+        page-break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+        margin-bottom: 20px !important;
+      }
+      .header-cover {
+        background: #0a1420 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+
+    /* Layout */
+    .app-wrapper {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 290px;
+      background-color: var(--bg-dark);
+      color: #e2e8f0;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      overflow-y: auto;
+      border-right: 1px solid #1e293b;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid #1e293b;
+      background: #060e17;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      object-fit: cover;
+      background: white;
+    }
+
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.2;
+    }
+
+    .sidebar-subtitle {
+      font-size: 11px;
+      color: var(--primary);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .nav-list {
+      list-style: none;
+      padding: 16px 12px;
+      flex: 1;
+    }
+
+    .nav-item {
+      margin-bottom: 4px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background: rgba(197, 155, 39, 0.15);
+      color: #fce9b5;
+    }
+
+    .nav-badge {
+      font-size: 10px;
+      background: var(--primary);
+      color: #060e17;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 12px;
+      margin-left: auto;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #1e293b;
+      font-size: 11px;
+      color: #64748b;
+      text-align: center;
+      background: #060e17;
+    }
+
+    /* Main Content */
+    .main-container {
+      margin-left: 290px;
+      flex: 1;
+      padding: 36px 48px;
+      max-width: 1200px;
+    }
+
+    /* Top Floating Action Bar */
+    .top-action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      background: white;
+      padding: 14px 24px;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .doc-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .meta-tag {
+      background: #f1f5f9;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .btn-print {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gold-gradient);
+      color: #08121e;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+      transition: all 0.2s;
+    }
+
+    .btn-print:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+    }
+
+    /* Header Cover */
+    .header-cover {
+      background: linear-gradient(135deg, #091320 0%, #162a42 100%);
+      color: white;
+      padding: 48px 40px;
+      border-radius: 20px;
+      border: 2px solid #b8860b;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(212, 175, 55, 0.2);
+      border: 1px solid var(--primary);
+      color: #ffd700;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 16px;
+    }
+
+    .cover-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 12px;
+      line-height: 1.25;
+    }
+
+    .cover-title span {
+      background: linear-gradient(90deg, #fbe9b6, #d4af37);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cover-desc {
+      font-size: 15px;
+      color: #cbd5e1;
+      max-width: 800px;
+      line-height: 1.7;
+    }
+
+    /* Section Cards */
+    .section-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      padding: 36px 36px;
+      margin-bottom: 40px;
+      scroll-margin-top: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+
+    .section-num {
+      width: 40px;
+      height: 40px;
+      background: var(--gold-gradient);
+      color: #08121e;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(212, 175, 55, 0.25);
+    }
+
+    .section-title {
+      font-size: 22px;
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    /* Sub-sections */
+    .sub-section {
+      margin-top: 28px;
+    }
+
+    .sub-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sub-title::before {
+      content: "";
+      width: 4px;
+      height: 18px;
+      background: var(--primary);
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    /* Steps List */
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 16px;
+      background: #faf8f5;
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid #ede5d7;
+    }
+
+    .step-badge {
+      width: 28px;
+      height: 28px;
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-name {
+      font-weight: 700;
+      font-size: 14.5px;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .step-desc {
+      font-size: 13.5px;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    /* Pro-tip Box */
+    .callout-box {
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      font-size: 14px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .callout-tip {
+      background: #fdfbf3;
+      border-left: 4px solid #c59b27;
+      color: #634a04;
+    }
+
+    .callout-warning {
+      background: #fef2f2;
+      border-left: 4px solid #ef4444;
+      color: #991b1b;
+    }
+
+    .callout-info {
+      background: #f0fdf4;
+      border-left: 4px solid #22c55e;
+      color: #166534;
+    }
+
+    .callout-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    /* UI Visual Mockup Representation */
+    .ui-mockup {
+      background: #0c1825;
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 24px 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .mockup-header {
+      background: #060e17;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #1a2d42;
+    }
+
+    .mockup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .mockup-title {
+      font-size: 11px;
+      color: #94a3b8;
+      font-family: monospace;
+      margin-left: 8px;
+    }
+
+    .mockup-body {
+      padding: 24px;
+      color: white;
+    }
+
+    /* Table format */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      font-size: 13.5px;
+    }
+
+    .spec-table th {
+      background: #f8fafc;
+      color: #334155;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 2px solid #e2e8f0;
+      font-weight: 700;
+    }
+
+    .spec-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #475569;
+    }
+
+    .spec-table tr:hover td {
+      background: #fafaf9;
+    }
+
+    .tag-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+    .pill-gold { background: #fef3c7; color: #92400e; }
+    .pill-green { background: #dcfce7; color: #166534; }
+    .pill-blue { background: #e0f2fe; color: #075985; }
+
+    /* Footer */
+    .doc-footer {
+      text-align: center;
+      padding: 30px 0;
+      color: #94a3b8;
+      font-size: 13px;
+      border-top: 1px solid var(--border-color);
+      margin-top: 40px;
+    }
+  
+    /* Mobile Responsive Styles - Powered by jaydev */
+    @media (max-width: 900px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+        width: 280px;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 45;
+        backdrop-filter: blur(3px);
+      }
+      .sidebar-overlay.active {
+        display: block;
+      }
+      .main-container {
+        margin-left: 0 !important;
+        padding: 16px 12px 80px 12px !important;
+        width: 100% !important;
+      }
+      .top-action-bar {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        padding: 14px;
+      }
+      .header-cover {
+        padding: 24px 18px !important;
+        margin-bottom: 20px;
+        border-radius: 14px;
+      }
+      .cover-title {
+        font-size: 21px !important;
+      }
+      .section-card {
+        padding: 20px 14px !important;
+        margin-bottom: 20px !important;
+        border-radius: 12px;
+      }
+      .section-title {
+        font-size: 18px !important;
+      }
+      .section-num {
+        width: 32px;
+        height: 32px;
+        font-size: 15px;
+      }
+      .mockup-body {
+        padding: 12px !important;
+      }
+      .ui-mockup div[style*="grid-template-columns: repeat(4, 1fr)"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      .spec-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      .spec-table th, .spec-table td {
+        padding: 8px 10px !important;
+        font-size: 12px !important;
+      }
+      .mobile-menu-trigger {
+        display: flex !important;
+      }
+      .mobile-top-bar {
+        display: flex !important;
+      }
+    }
+
+    .mobile-top-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: #0a1420;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      border: 1px solid var(--primary);
+    }
+
+    .mobile-menu-trigger {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 60;
+      background: var(--gold-gradient);
+      color: #08121e;
+      border: none;
+      border-radius: 50px;
+      padding: 12px 22px;
+      font-weight: 800;
+      font-size: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      cursor: pointer;
+      align-items: center;
+      gap: 8px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- MOBILE OVERLAY & TRIGGER -->
+  <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+  <button class="mobile-menu-trigger no-print" onclick="toggleMobileMenu()">
+    ☰ Mục Lục
+  </button>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar no-print">
+    <div class="sidebar-header">
+      <img src="/images/logo.png" alt="Logo" class="sidebar-logo">
+      <div>
+        <div class="sidebar-title">ĐỒ ĐỒNG LỘC NAM</div>
+        <div class="sidebar-subtitle">CẨM NANG QUẢN TRỊ</div>
+      </div>
+    </div>
+
+    <ul class="nav-list">
+      <li class="nav-item"><a href="#phan-1" class="nav-link active"><span>1. Đăng nhập & Quyền hạn</span></a></li>
+      <li class="nav-item"><a href="#phan-2" class="nav-link"><span>2. Bảng điều khiển (Dashboard)</span></a></li>
+      <li class="nav-item"><a href="#phan-3" class="nav-link"><span>3. Quản lý Sản phẩm</span> <span class="nav-badge">HOT</span></a></li>
+      <li class="nav-item"><a href="#phan-4" class="nav-link"><span>4. Danh mục & Đồng bộ ảnh</span></a></li>
+      <li class="nav-item"><a href="#phan-5" class="nav-link"><span>5. Quản trị Trang chủ</span> <span class="nav-badge">7 TAB</span></a></li>
+      <li class="nav-item"><a href="#phan-6" class="nav-link"><span>6. Đơn hàng & Báo giá</span></a></li>
+      <li class="nav-item"><a href="#phan-7" class="nav-link"><span>7. Bài viết & Dự án lớn</span></a></li>
+      <li class="nav-item"><a href="#phan-8" class="nav-link"><span>8. Thư viện ảnh (Media)</span></a></li>
+      <li class="nav-item"><a href="#phan-9" class="nav-link"><span>9. Quản trị viên & Bảo mật</span></a></li>
+      <li class="nav-item"><a href="#phan-10" class="nav-link"><span>10. Câu hỏi thường gặp (FAQ)</span></a></li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div>Hệ thống Web Đồ Đồng Lộc Nam v2.0</div>
+      <div style="margin-top:4px; color: var(--primary);">Bản quyền phát triển © jaydev</div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="main-container">
+    <!-- Top Action Bar -->
+    <div class="top-action-bar no-print">
+      <div class="doc-meta">
+        <span class="meta-tag">Phiên bản: 2.0 High Performance</span>
+        <span>Cập nhật: Tháng 10/2026</span>
+        <span>Dành cho: Chủ cơ sở & Ban quản trị</span>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="HUONG_DAN_SU_DUNG_ADMIN_DODONGLOCNAM.pdf" download class="btn-print" style="text-decoration: none; background: #0c1825; color: #ffd700; border: 1px solid #ffd700;">
+          📥 Tải file PDF về máy
+        </a>
+        <button class="btn-print" onclick="window.print()">
+          🖨️ In / Xuất PDF
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Header Cover -->
+    <header class="header-cover">
+      <div class="cover-badge">TÀI LIỆU HƯỚNG DẪN BÀN GIAO NỘI BỘ</div>
+      <h1 class="cover-title">CẨM NANG QUẢN TRỊ NỘI DUNG & VẬN HÀNH<br>WEBSITE <span>ĐỒ ĐỒNG LỘC NAM</span></h1>
+      <p class="cover-desc">
+        Tài liệu hướng dẫn trực quan, chi tiết từng bước dành riêng cho Chủ xưởng và Nhân viên quản lý Đồ Đồng Lộc Nam (Ý Yên, Nam Định). Hỗ trợ làm chủ toàn diện hệ sinh thái: Quản lý 120+ sản phẩm, đơn hàng, danh mục 3 cấp, banner trang chủ, video quy trình đúc và tối ưu SEO Google.
+      </p>
+    </header>
+
+    <!-- PHẦN 1 -->
+    <section id="phan-1" class="section-card">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <h2 class="section-title">ĐĂNG NHẬP VÀ PHÂN QUYỀN HỆ THỐNG</h2>
+      </div>
+
+      <div class="sub-section">
+        <h3 class="sub-title">1.1. Địa chỉ truy cập và cơ chế bảo mật</h3>
+        <p>Để vào khu vực quản trị, mở trình duyệt (Chrome, Cốc Cốc, Safari) và gõ địa chỉ:</p>
+        <div style="background: #f1f5f9; padding: 12px 18px; border-radius: 8px; font-family: monospace; font-size: 15px; font-weight: 700; color: #0f172a; margin: 10px 0;">
+          👉 https://www.quatanglocnam.com/admin/login
+        </div>
+
+        <!-- UI MOCKUP: LOGIN SCREEN -->
+        <div class="ui-mockup">
+          <div class="mockup-header">
+            <span class="mockup-dot dot-red"></span>
+            <span class="mockup-dot dot-yellow"></span>
+            <span class="mockup-dot dot-green"></span>
+            <span class="mockup-title">GIAO DIỆN ĐĂNG NHẬP: /admin/login</span>
+          </div>
+          <div class="mockup-body" style="display:flex; justify-content:center; align-items:center; padding: 30px;">
+            <div style="background: #112234; padding: 24px; border-radius: 12px; border: 1px solid #c59b27; width: 340px; text-align: center;">
+              <img src="/images/logo.png" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #ffd700; margin-bottom: 10px;">
+              <div style="font-weight: 800; color: #ffd700; font-size: 15px;">ĐỒ ĐỒNG LỘC NAM</div>
+              <div style="font-size: 11px; color: #94a3b8; margin-bottom: 16px;">ĐĂNG NHẬP HỆ THỐNG QUẢN TRỊ</div>
+              <input type="text" placeholder="Tên đăng nhập / Email" style="width:100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; background: #0c1825; color: white; margin-bottom: 10px; font-size: 12px;" value="superadmin" readonly>
+              <input type="password" placeholder="Mật khẩu" style="width:100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; background: #0c1825; color: white; margin-bottom: 16px; font-size: 12px;" value="••••••••••••" readonly>
+              <div style="background: linear-gradient(135deg, #d4af37, #aa7c11); color: #08121e; font-weight: 700; padding: 10px; border-radius: 6px; font-size: 12px; cursor: pointer;">ĐĂNG NHẬP HỆ THỐNG</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h3 class="sub-title">1.2. Ba cấp bậc phân quyền tài khoản</h3>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>Cấp bậc</th>
+              <th>Huy hiệu hiển thị</th>
+              <th>Quyền hạn cho phép</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Super Admin</strong></td>
+              <td><span class="tag-pill pill-gold">SUPER ADMIN</span></td>
+              <td><strong>Toàn quyền tuyệt đối:</strong> Quản lý nhân viên, cấu hình trang chủ, phân quyền, cấu hình SEO và cơ sở dữ liệu.</td>
+            </tr>
+            <tr>
+              <td><strong>Admin</strong></td>
+              <td><span class="tag-pill pill-blue">QUẢN TRỊ VIÊN</span></td>
+              <td>Quản lý toàn bộ Sản phẩm, Danh mục, Đơn hàng, Khách hàng, Bài viết, Đánh giá và Thư viện ảnh.</td>
+            </tr>
+            <tr>
+              <td><strong>Editor</strong></td>
+              <td><span class="tag-pill pill-green">BIÊN TẬP VIÊN</span></td>
+              <td>Chỉ có quyền soạn thảo & cập nhật nội dung Sản phẩm, Tin tức, Dự án; không thể xóa tài khoản hay đổi cấu hình hệ thống.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PHẦN 2 -->
+    <section id="phan-2" class="section-card">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <h2 class="section-title">BẢNG ĐIỀU KHIỂN & BÁO CÁO (DASHBOARD)</h2>
+      </div>
+
+      <p>Bảng điều khiển tại <code>/admin</code> là nơi giúp chủ xưởng nắm bắt ngay lập tức tình hình kinh doanh trong ngày và tuần:</p>
+
+      <!-- UI MOCKUP: DASHBOARD STATS -->
+      <div class="ui-mockup">
+        <div class="mockup-header">
+          <span class="mockup-dot dot-red"></span>
+          <span class="mockup-dot dot-yellow"></span>
+          <span class="mockup-dot dot-green"></span>
+          <span class="mockup-title">BẢNG CHỈ SỐ DASHBOARD TỔNG QUAN</span>
+        </div>
+        <div class="mockup-body">
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+            <div style="background: #112234; padding: 16px; border-radius: 10px; border-left: 4px solid #ffd700;">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">DOANH THU THÁNG</div>
+              <div style="font-size: 20px; font-weight: 800; color: #ffd700; margin: 4px 0;">185.000.000đ</div>
+              <div style="font-size: 11px; color: #10b981;">↑ +14% so với tháng trước</div>
+            </div>
+            <div style="background: #112234; padding: 16px; border-radius: 10px; border-left: 4px solid #38bdf8;">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">ĐƠN HÀNG MỚI</div>
+              <div style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 4px 0;">18 Đơn chờ</div>
+              <div style="font-size: 11px; color: #38bdf8;">Cần gọi điện xác nhận</div>
+            </div>
+            <div style="background: #112234; padding: 16px; border-radius: 10px; border-left: 4px solid #10b981;">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">SẢN PHẨM ĐANG BÁN</div>
+              <div style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 4px 0;">122 Mẫu</div>
+              <div style="font-size: 11px; color: #10b981;">Đồng bộ 6 danh mục</div>
+            </div>
+            <div style="background: #112234; padding: 16px; border-radius: 10px; border-left: 4px solid #f43f5e;">
+              <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">LƯỢT TRUY CẬP</div>
+              <div style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 4px 0;">4.850 / tuần</div>
+              <div style="font-size: 11px; color: #f43f5e;">Khách hàng tiềm năng</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout-box callout-tip">
+        <span class="callout-icon">💡</span>
+        <div>
+          <strong>Mẹo cho chủ xưởng:</strong> Khi có khách gửi yêu cầu tư vấn hoặc đặt hàng, số <em>"Đơn hàng mới"</em> sẽ lập tức nhấp nháy. Hãy bấm trực tiếp vào danh sách đơn hàng để lấy số điện thoại gọi tư vấn chốt đơn cho khách ngay khi khách đang xem web!
+        </div>
+      </div>
+    </section>
+
+    <!-- PHẦN 3 -->
+    <section id="phan-3" class="section-card">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <h2 class="section-title">QUẢN LÝ SẢN PHẨM (TRỌNG TÂM CHI TIẾT)</h2>
+      </div>
+
+      <p>Truy cập: <strong>Menu trái > Sản phẩm</strong> (<code>/admin/products</code>). Đây là tính năng thường xuyên dùng nhất.</p>
+
+      <div class="sub-section">
+        <h3 class="sub-title">3.1. Hướng dẫn thêm mới một sản phẩm chuẩn từ A - Z</h3>
+        
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-badge">1</div>
+            <div class="step-content">
+              <div class="step-name">Điền Tên sản phẩm & Định giá</div>
+              <div class="step-desc">
+                - <strong>Tên sản phẩm:</strong> Đặt theo công thức: <em>[Loại đồ đồng] + [Chất liệu] + [Kích thước / Dáng]</em> (Ví dụ: <code>Bộ Đỉnh Đồng Cát Tút Ngũ Sự Cao 60cm Hoa Văn Sòi</code>).<br>
+                - <strong>Giá bán:</strong> Nhập số tiền nguyên (Ví dụ: <code>18500000</code>). Nếu sản phẩm hàng độc bản chế tác theo yêu cầu, nhập <code>0</code> để web hiện <em>"Liên hệ báo giá"</em>.
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-badge">2</div>
+            <div class="step-content">
+              <div class="step-name">Chọn Danh mục chính và Danh mục con</div>
+              <div class="step-desc">
+                Sử dụng bộ chọn phân cấp: Tích chọn Danh mục chính (ví dụ: <code>Đồ thờ cúng</code>) và chọn nhánh con (ví dụ: <code>Bộ ngũ sự bằng đồng</code>). Hệ thống hỗ trợ tích chọn 2 danh mục cùng lúc nếu sản phẩm vừa là Quà tặng vừa là Đồ phong thủy.
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-badge">3</div>
+            <div class="step-content">
+              <div class="step-name">Tải ảnh đại diện và Bộ sưu tập ảnh đa góc chụp</div>
+              <div class="step-desc">
+                - <strong>Ảnh đại diện:</strong> Bấm chọn 1 ảnh nét nhất toàn thân sản phẩm.<br>
+                - <strong>Ảnh góc chụp (Gallery):</strong> Tải từ 3 đến 5 tấm (ảnh chụp cận cảnh tai mây, nghê vờn cầu, hoa văn khắc tay, mộc đồng dưới đáy). Có thể kéo thả chuột để đổi vị trí thứ tự ảnh.
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-badge">4</div>
+            <div class="step-content">
+              <div class="step-name">Thiết lập Bề mặt hoàn thiện (Surface Box)</div>
+              <div class="step-desc">
+                Tích chọn đúng chất liệu đồng giúp khách hàng dễ chọn lựa: <em>Đồng đỏ, Đồng thau, Cát tút quân sự, Mạ vàng 24k, Dát vàng 9999, Khảm tam khí, Khảm ngũ sắc</em>.
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-badge">5</div>
+            <div class="step-content">
+              <div class="step-name">Thêm câu hỏi thường gặp (FAQ Box) & Chuẩn SEO</div>
+              <div class="step-desc">
+                Điền 1-2 câu hỏi mà khách hay gọi điện hỏi nhất (Ví dụ: <em>"Bảo hành thế nào?", "Bộ này hợp ban thờ bao nhiêu mét?"</em>). Dữ liệu này tự động tạo Google Schema FAQ giúp website tăng 300% tỉ lệ hiển thị trên Google.
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-badge">6</div>
+            <div class="step-content">
+              <div class="step-name">Bấm "LƯU SẢN PHẨM"</div>
+              <div class="step-desc">
+                Nút màu vàng ở góc trên hoặc góc dưới bên phải. Sau khi lưu, hệ thống tự động làm sạch bộ nhớ đệm CDN, sản phẩm lập tức có mặt ngoài website.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHẦN 4 -->
+    <section id="phan-4" class="section-card">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <h2 class="section-title">QUẢN LÝ DANH MỤC & ĐỒNG BỘ ẢNH CẤP BẬC</h2>
+      </div>
+
+      <p>Truy cập: <strong>Menu trái > Danh mục</strong> (<code>/admin/categories</code>).</p>
+
+      <div class="callout-box callout-warning">
+        <span class="callout-icon">⚡</span>
+        <div>
+          <strong>CƠ CHẾ ĐỒNG BỘ ẢNH TỰ ĐỘNG (UNIVERSAL SYNC):</strong><br>
+          Trước đây, nhiều quản trị viên gặp tình trạng trang chủ đổi ảnh danh mục nhưng trang admin hoặc trang danh sách sản phẩm vẫn bị lưu ảnh cũ. Hệ thống hiện tại đã kết nối đồng bộ 100%: <strong>Chỉ cần bạn cập nhật ảnh đại diện danh mục tại đây, toàn bộ Trang chủ, Mega Menu và Trang con sẽ tự động đổi theo!</strong>
+        </div>
+      </div>
+
+      <h3 class="sub-title">Cách thay đổi ảnh và tên danh mục chuẩn:</h3>
+      <ol style="padding-left: 20px; line-height: 1.8; margin: 12px 0;">
+        <li>Vào tab <strong>"Danh mục chính"</strong>.</li>
+        <li>Tìm danh mục cần cập nhật (Ví dụ: <em>Đồ Thờ Cúng</em> hoặc <em>Tượng Đồng</em>).</li>
+        <li>Bấm nút <strong>Sửa (Hình cây bút)</strong>.</li>
+        <li>Bấm <strong>"Tải ảnh mới"</strong>: Chọn ảnh vuông sắc nét (kích thước tối ưu <code>500 x 500 px</code>).</li>
+        <li>Bấm <strong>"Lưu danh mục"</strong>.</li>
+      </ol>
+    </section>
+
+    <!-- PHẦN 5 -->
+    <section id="phan-5" class="section-card">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <h2 class="section-title">QUẢN TRỊ TRANG CHỦ & CẤU HÌNH THƯƠNG HIỆU</h2>
+      </div>
+
+      <p>Truy cập: <strong>Menu trái > Quản trị Trang chủ</strong> (<code>/admin/landing-page</code>). Gồm 7 tab điều khiển chuyên biệt:</p>
+
+      <table class="spec-table">
+        <thead>
+          <tr>
+            <th>Tên Tab</th>
+            <th>Vị trí ngoài Trang chủ</th>
+            <th>Nhiệm vụ quản lý</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Hero Slider</strong></td>
+            <td>Khối Banner to nhất đầu trang</td>
+            <td>Thêm/sửa banner chuyển động. Cho phép chọn riêng ảnh máy tính (1600w) và ảnh di động (800w) để điện thoại tải siêu nhanh.</td>
+          </tr>
+          <tr>
+            <td><strong>2. 6 Danh mục nổi bật</strong></td>
+            <td>Khối card vàng "SẢN PHẨM NỔI BẬT"</td>
+            <td>Quản lý 6 danh mục chủ lực: Trống đồng, Tranh đồng, Tượng đồng, Đồ thờ, Quà tặng, 12 Con giáp.</td>
+          </tr>
+          <tr>
+            <td><strong>3. Sản phẩm yêu thích</strong></td>
+            <td>Khối 5 thẻ "TUYỆT TÁC CHẾ TÁC"</td>
+            <td>Ghim 5 sản phẩm đẹp nhất của xưởng (Thuyền buồm, Tượng ngựa, Tranh mạ vàng, Tượng Di Lặc, Mặt trống).</td>
+          </tr>
+          <tr>
+            <td><strong>4. Hệ thống Showroom</strong></td>
+            <td>Khối "1 XƯỞNG ĐÚC & 3 SHOWROOM"</td>
+            <td>Cập nhật địa chỉ, số hotline, ảnh mặt tiền và link Google Maps chỉ đường của Xưởng Ý Yên và 3 cơ sở Hà Nội, Nam Định, Ninh Bình.</td>
+          </tr>
+          <tr>
+            <td><strong>5. Video quy trình đúc</strong></td>
+            <td>Khối "VIDEO QUY TRÌNH CHẾ TÁC"</td>
+            <td>Gắn link video YouTube rót đồng, đúc chuông, chạm khắc hoa văn thủ công.</td>
+          </tr>
+          <tr>
+            <td><strong>6. Đánh giá khách hàng</strong></td>
+            <td>Khối chạy chữ vô tận nền đen</td>
+            <td>Thêm nhận xét và ảnh thực tế bàn giao cho khách hàng, chùa, cơ quan, doanh nghiệp.</td>
+          </tr>
+          <tr>
+            <td><strong>7. Liên hệ & SEO</strong></td>
+            <td>Header, Footer & Google Search</td>
+            <td>Đổi số điện thoại Hotline, Zalo, Email, Fanpage Facebook và tiêu đề Meta SEO trang chủ.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout-box callout-info">
+        <span class="callout-icon">✅</span>
+        <div>
+          <strong>LƯU Ý QUAN TRỌNG KHI SỬA TRANG CHỦ:</strong> Sau khi nhập thông tin ở bất kỳ tab nào, hãy bấm nút <strong>"LƯU THAY ĐỔI"</strong> (Nút lớn màu vàng). Khi thấy thông báo thành công hiện lên góc màn hình là dữ liệu đã được lưu vĩnh viễn vào hệ thống.
+        </div>
+      </div>
+    </section>
+
+    <!-- PHẦN 6 -->
+    <section id="phan-6" class="section-card">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <h2 class="section-title">QUẢN LÝ ĐƠN HÀNG & YÊU CẦU BÁO GIÁ</h2>
+      </div>
+
+      <p>Truy cập: <strong>Menu trái > Đơn hàng</strong> (<code>/admin/orders</code>).</p>
+      
+      <div class="sub-section">
+        <h3 class="sub-title">Quy trình xử lý đơn hàng:</h3>
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-badge">1</div>
+            <div class="step-content">
+              <div class="step-name">Tiếp nhận đơn hàng mới</div>
+              <div class="step-desc">Đơn vừa đặt sẽ ở trạng thái <code>Chờ xử lý</code>. Bấm vào dòng đơn hàng để xem danh sách sản phẩm, địa chỉ và ghi chú của khách.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-badge">2</div>
+            <div class="step-content">
+              <div class="step-name">Gọi điện tư vấn và chốt cọc</div>
+              <div class="step-desc">Bấm vào số điện thoại để gọi trực tiếp cho khách. Sau khi khách đồng ý, chuyển trạng thái đơn sang <code>Đã xác nhận</code> hoặc <code>Đang chế tác</code>.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-badge">3</div>
+            <div class="step-content">
+              <div class="step-name">Giao hàng và Hoàn thành</div>
+              <div class="step-desc">Khi gửi hàng đi (Viettel Post hoặc xe riêng), chuyển sang <code>Đang giao hàng</code>. Khi khách nhận, kiểm tra và thanh toán đủ, chuyển sang <code>Đã hoàn thành</code> để hệ thống cộng vào doanh thu tháng.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHẦN 7 -->
+    <section id="phan-7" class="section-card">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <h2 class="section-title">BÀI VIẾT, TIN TỨC & DỰ ÁN CÔNG TRÌNH</h2>
+      </div>
+
+      <p>Truy cập: <strong>Menu trái > Bài viết</strong> (<code>/admin/articles</code>).</p>
+      
+      <div class="sub-section">
+        <h3 class="sub-title">Bộ kiểm tra điểm SEO tự động (Article SEO Analyzer):</h3>
+        <p>Hệ thống tích hợp sẵn thước đo chuẩn SEO ngay bên cạnh khung soạn thảo:</p>
+        <ul style="padding-left: 20px; line-height: 1.8; margin: 12px 0;">
+          <li><strong>Thước đo màu Xanh lá (85 - 100 điểm):</strong> Bài viết hoàn hảo, tiêu đề hấp dẫn, nội dung đủ dài, có ảnh minh họa sắc nét kèm mô tả Alt.</li>
+          <li><strong>Thước đo màu Vàng / Đỏ:</strong> Nhắc bạn cần bổ sung thêm thẻ mô tả ngắn (Meta Description) hoặc tăng thêm chữ cho bài viết trước khi xuất bản.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PHẦN 8 -->
+    <section id="phan-8" class="section-card">
+      <div class="section-header">
+        <div class="section-num">8</div>
+        <h2 class="section-title">THƯ VIỆN HÌNH ẢNH (MEDIA) & QUY CHUẨN TỐI ƯU TỐC ĐỘ</h2>
+      </div>
+
+      <p>Để website luôn mở tức thì không có độ trễ trên cả mạng 4G yếu, hãy ghi nhớ bảng quy chuẩn kích thước ảnh dưới đây:</p>
+
+      <table class="spec-table">
+        <thead>
+          <tr>
+            <th>Loại ảnh</th>
+            <th>Kích thước chuẩn (Pixel)</th>
+            <th>Dung lượng tối ưu</th>
+            <th>Mẹo xử lý</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Ảnh đại diện sản phẩm</strong></td>
+            <td>600 x 600 px (Vuông)</td>
+            <td>Dưới 75 KB</td>
+            <td>Chụp phông trắng hoặc phông gỗ sang trọng, căn sản phẩm vào giữa.</td>
+          </tr>
+          <tr>
+            <td><strong>Banner máy tính (Desktop)</strong></td>
+            <td>1600 x 680 px (Ngang)</td>
+            <td>Dưới 120 KB</td>
+            <td>Ảnh sắc nét, không để chữ quá sát mép ngoài.</td>
+          </tr>
+          <tr>
+            <td><strong>Banner di động (Mobile)</strong></td>
+            <td>800 x 340 px (Ngang)</td>
+            <td>Dưới 45 KB</td>
+            <td>Tối ưu riêng cho điện thoại, chữ to rõ ràng.</td>
+          </tr>
+          <tr>
+            <td><strong>Ảnh 6 Danh mục nổi bật</strong></td>
+            <td>500 x 500 px (Vuông)</td>
+            <td>Dưới 65 KB</td>
+            <td>Chọn góc chụp đại diện đẹp nhất của từng dòng sản phẩm.</td>
+          </tr>
+          <tr>
+            <td><strong>Logo website</strong></td>
+            <td>200 x 189 px</td>
+            <td>Dưới 25 KB</td>
+            <td>Định dạng WebP hoặc PNG nền trong suốt.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout-box callout-warning">
+        <span class="callout-icon">⚠️</span>
+        <div>
+          <strong>CẢNH BÁO KHI DÙNG ẢNH TỪ ĐIỆN THOẠI IPHONE / SAMSUNG:</strong><br>
+          Ảnh chụp trực tiếp từ điện thoại đời mới có dung lượng rất lớn (từ 5MB đến 15MB mỗi tấm). <strong>Tuyệt đối không tải thẳng file 10MB lên web!</strong> Hãy gửi ảnh qua Zalo (ở chế độ thường, không chọn HD) hoặc dùng công cụ nén ảnh trước khi tải lên web.
+        </div>
+      </div>
+    </section>
+
+    <!-- PHẦN 9 -->
+    <section id="phan-9" class="section-card">
+      <div class="section-header">
+        <div class="section-num">9</div>
+        <h2 class="section-title">QUẢN TRỊ TÀI KHOẢN VÀ BẢO MẬT</h2>
+      </div>
+
+      <p>Truy cập: <strong>Menu trái > Quản trị viên</strong> (<code>/admin/users</code>).</p>
+      <ul style="padding-left: 20px; line-height: 1.8; margin: 12px 0;">
+        <li><strong>Tạo tài khoản riêng cho từng nhân viên:</strong> Không nên dùng chung 1 tài khoản để dễ dàng theo dõi ai là người đã đăng hoặc sửa sản phẩm trong phần <em>Nhật ký hoạt động (Logs)</em>.</li>
+        <li><strong>Đổi mật khẩu định kỳ:</strong> Nên đổi mật khẩu 3 - 6 tháng một lần. Mật khẩu chuẩn nên có từ 8 ký tự trở lên, gồm chữ in hoa, in thường và số.</li>
+      </ul>
+    </section>
+
+    <!-- PHẦN 10 -->
+    <section id="phan-10" class="section-card">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <h2 class="section-title">CÂU HỎI THƯỜNG GẶP & HỖ TRỢ KỸ THUẬT (FAQ)</h2>
+      </div>
+
+      <div class="sub-section">
+        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+          ❓ Câu hỏi 1: Tôi vừa sửa giá / đổi ảnh sản phẩm nhưng mở điện thoại ra vẫn thấy thông tin cũ?
+        </h4>
+        <p style="color: #475569; margin-bottom: 16px;">
+          👉 <strong>Giải thích:</strong> Để website mở nhanh trong 0.2 giây cho hàng ngàn người xem cùng lúc, máy chủ có bộ nhớ đệm (Edge Cache). Bộ nhớ này tự làm mới sau <strong>60 giây</strong>. Nếu bạn muốn thấy ngay lập tức: Trên máy tính bấm <code>Ctrl + F5</code> (hoặc <code>Cmd + Shift + R</code> trên Mac), trên điện thoại hãy vuốt mạnh xuống để làm mới trang.
+        </p>
+
+        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+          ❓ Câu hỏi 2: Có thể đăng 1 sản phẩm xuất hiện ở cả 2 danh mục khác nhau không?
+        </h4>
+        <p style="color: #475569; margin-bottom: 16px;">
+          👉 <strong>Trả lời:</strong> Có! Trong trang sửa sản phẩm, bạn có thể tích chọn nhiều danh mục cùng lúc (Ví dụ: Thuyền buồm mạ vàng vừa nằm ở <em>Quà tặng doanh nghiệp</em>, vừa nằm ở <em>Tượng phong thủy</em>).
+        </p>
+
+        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+          ❓ Câu hỏi 3: Nếu tôi lỡ tay xóa nhầm sản phẩm quan trọng thì làm thế nào?
+        </h4>
+        <p style="color: #475569; margin-bottom: 16px;">
+          👉 <strong>Trả lời:</strong> Hệ thống có bản sao lưu tự động hàng ngày trên Cloud. Hãy liên hệ ngay đội ngũ kỹ thuật để được khôi phục dữ liệu nhanh chóng.
+        </p>
+      </div>
+
+      <div class="callout-box callout-info" style="margin-top: 24px;">
+        <span class="callout-icon">📞</span>
+        <div>
+          <strong>KÊNH HỖ TRỢ KỸ THUẬT & BẢO HÀNH 24/7:</strong><br>
+          - <strong>Kỹ thuật viên phụ trách:</strong> Đội ngũ phát triển Jaydev<br>
+          - <strong>Website chính thức:</strong> <a href="https://www.quatanglocnam.com" target="_blank" style="color: #166534; font-weight:700;">https://www.quatanglocnam.com</a><br>
+          - Luôn đồng hành, bảo hành và hỗ trợ vận hành trọn đời cùng Đồ Đồng Lộc Nam.
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="doc-footer">
+      <div>CẨM NANG HƯỚNG DẪN QUẢN TRỊ WEBSITE ĐỒ ĐỒNG LỘC NAM (Ý YÊN, NAM ĐỊNH)</div>
+      <div style="margin-top: 4px;">Tài liệu lưu hành nội bộ | Bản quyền kỹ thuật © 2026 jaydev. Tất cả các quyền được bảo lưu.</div>
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Simple navigation active state on scroll
+  window.addEventListener('scroll', () => {
+    const sections = document.querySelectorAll('.section-card');
+    const scrollPos = window.scrollY + 100;
+    sections.forEach(section => {
+      const top = section.offsetTop;
+      const height = section.offsetHeight;
+      const id = section.getAttribute('id');
+      if (scrollPos >= top && scrollPos < top + height) {
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + id) {
+            link.classList.add('active');
+          }
+        });
+      }
+    });
+  });
+
+  function toggleMobileMenu() {
+    const sb = document.querySelector('.sidebar');
+    const ov = document.querySelector('.sidebar-overlay');
+    if (sb && ov) {
+      sb.classList.toggle('open');
+      ov.classList.toggle('active');
+    }
+  }
+
+  // Auto close mobile sidebar on link click
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      const sb = document.querySelector('.sidebar');
+      const ov = document.querySelector('.sidebar-overlay');
+      if (sb && ov) {
+        sb.classList.remove('open');
+        ov.classList.remove('active');
+      }
+    });
+  });
+
+</script>
+</body>
+</html>

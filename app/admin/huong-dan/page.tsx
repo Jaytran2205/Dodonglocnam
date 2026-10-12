@@ -40,7 +40,7 @@ export default function AdminGuidePage() {
 
           <div className="pt-2 flex flex-wrap gap-3">
             <a
-              href="/HUONG_DAN_SU_DUNG_ADMIN_DODONGLOCNAM.pdf"
+              href="/huong-dan.pdf"
               download
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#aa7c11] text-[#08121e] text-xs sm:text-sm font-bold shadow-lg hover:brightness-110 transition-all active:scale-95"
             >
@@ -49,7 +49,7 @@ export default function AdminGuidePage() {
             </a>
 
             <a
-              href="/HUONG_DAN_SU_DUNG_ADMIN_DODONGLOCNAM.html"
+              href="/huong-dan.html"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0c1825] border border-[#ffd700]/60 text-[#ffd700] text-xs sm:text-sm font-bold hover:bg-[#12243a] transition-all"

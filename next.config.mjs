@@ -229,6 +229,21 @@ const nextConfig = {
       destination: '/qua-tang/qua-tang-phong-thuy/:path*',
       permanent: true,
     },
+    {
+      source: '/huong-dan-su-dung',
+      destination: '/huong-dan',
+      permanent: false,
+    },
+    {
+      source: '/huong-dan-quan-tri',
+      destination: '/huong-dan',
+      permanent: false,
+    },
+    {
+      source: '/huongdan',
+      destination: '/huong-dan',
+      permanent: false,
+    },
   ],
   headers: async () => [
     { source: "/admin/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
