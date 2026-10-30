@@ -534,6 +534,8 @@ Tác phẩm **${productName}** được trực tiếp chế tác bởi các ngh�
     }
 
     let cleaned = description.trim();
+    // Tự động loại bỏ nút/chữ "Bấm để sửa hoặc thay ảnh" vô tình bị lưu vào nội dung
+    cleaned = cleaned.replace(/^.*(?:Bấm để sửa hoặc thay ảnh|image-edit-overlay).*$/gim, "");
     // Tự động gỡ các thẻ BBCode [size=...] rác khi copy từ Word/Google Docs
     cleaned = cleaned.replace(/\[size=\d+(?:px)?\]/gi, "").replace(/\[\/size\]/gi, "");
     // Tự động unescape các ký tự \| thành | để bảng Markdown không bị lỗi hiển thị

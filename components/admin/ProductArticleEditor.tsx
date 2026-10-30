@@ -371,7 +371,7 @@ export function markdownToHtml(md: string): string {
       htmlBlocks.push(
         `<figure data-image-block="true" class="my-4 text-center group relative inline-block max-w-full select-none cursor-pointer">
           <div class="relative inline-block overflow-hidden rounded-xl shadow-md border border-slate-200">
-            <AdminImage src="${safeSrc}" alt="${safeAlt}" class="max-h-80 mx-auto object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.01]" />
+            <img src="${safeSrc}" alt="${safeAlt}" class="max-h-80 mx-auto object-contain cursor-pointer transition-transform duration-200 group-hover:scale-[1.01]" loading="lazy" />
             <div class="image-edit-overlay absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity cursor-pointer text-white text-xs font-semibold">
               <span class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5 pointer-events-none transition-transform active:scale-95">
                 ✏️ Bấm để sửa hoặc thay ảnh
@@ -474,13 +474,21 @@ export function htmlToMarkdown(html: string): string {
       return `\n\n[video]${videoUrl}[/video]\n\n`;
     }
 
+    // Ignore image edit overlay so it is never converted to text
+    if (
+      el.classList?.contains("image-edit-overlay") ||
+      el.textContent?.includes("Bấm để sửa hoặc thay ảnh")
+    ) {
+      return "";
+    }
+
     // Image block container (figure, data-image-block, or div with img)
     if (
       tag === "figure" ||
       el.getAttribute("data-image-block") === "true" ||
-      (tag === "div" && (el.classList.contains("my-4") || el.classList.contains("text-center")) && el.querySelector("img"))
+      (tag === "div" && (el.classList.contains("my-4") || el.classList.contains("text-center")) && el.querySelector("img, adminimage"))
     ) {
-      const img = el.querySelector("img");
+      const img = el.querySelector("img, adminimage");
       if (img) {
         const src = img.getAttribute("src") || "";
         const figcaption = el.querySelector("figcaption");
