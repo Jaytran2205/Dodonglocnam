@@ -533,7 +533,12 @@ Tác phẩm **${productName}** được trực tiếp chế tác bởi các ngh�
 * **Giao Hàng & Kiểm Tra Tận Nơi:** Vận chuyển an toàn toàn quốc, quý khách được mở hàng kiểm tra ưng ý trước khi thanh toán.`;
     }
 
-    return description.trim();
+    let cleaned = description.trim();
+    // Tự động gỡ các thẻ BBCode [size=...] rác khi copy từ Word/Google Docs
+    cleaned = cleaned.replace(/\[size=\d+(?:px)?\]/gi, "").replace(/\[\/size\]/gi, "");
+    // Tự động unescape các ký tự \| thành | để bảng Markdown không bị lỗi hiển thị
+    cleaned = cleaned.replace(/\\\|/g, "|");
+    return cleaned;
   }, [description, productName]);
 
   // Parse lines into clean editorial blocks

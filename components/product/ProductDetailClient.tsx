@@ -94,7 +94,7 @@ export function ProductDetailClient({
   const defaultSizes = ["Nến 50", "Nến 60", "Nến 70"];
   const parsedSizes = product.dimensions
     ? product.dimensions
-        .split(/[,;\/|]/)
+        .split(/(?<!\d)[,](?!\d)|[;\/|]/)
         .map((s) => s.trim())
         .filter(Boolean)
     : [];
